@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convert STEP to STL Online — ISO-10303 CAD Tessellator</title>
+  <meta name="description" content="Convert STEP (.step, .stp) files to binary or ASCII STL meshes online in your browser. Control chordal deflection tolerance and mm/inch units." />
+  <link rel="canonical" href="https://meshkit.pro/step-to-stl-converter" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="step">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn active">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/stl-repair-online">STL Repair Online</a>
+      <a href="/step-to-stl-converter" class="active">STEP to STL Converter</a>
+      <a href="/resin-3d-print-cost-calculator">Resin Cost Calculator</a>
+      <a href="/filament-spool-weight-calculator">Spool Weight Calculator</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Convert STEP to STL Online — B-Rep CAD Tessellator</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">KERNEL: ISO-10303-21 CHORDAL DEFLECTION</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-step" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. B-Rep CAD Input (.STEP / .STP)</span>
+            <span id="stepParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="stepDropzone" tabindex="0" role="button" aria-label="Upload STEP file">
+            <input type="file" id="stepFileInput" accept=".step,.stp" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="stepFileName">[CLICK TO SELECT .STEP] OR DRAG CAD FILE HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="stepFileSub">Parses ISO-10303-21 B-Rep solids locally in browser memory.</div>
+            <div class="btn-row">
+              <button type="button" id="stepBrowseBtn" class="btn-primary">BROWSE .STEP...</button>
+              <button type="button" id="stepSampleBtn" class="btn-secondary">LOAD DEMO</button>
+              <button type="button" id="downloadTestStepBtn" class="btn-ghost" title="Download a real ISO-10303 .step file to test uploading">⬇ GET TEST .STEP</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Deflection Tolerance, Units &amp; Format</span>
+            <span id="stepTolLabel" style="color:var(--accent);">0.02 mm [FINE]</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="stepTolPresetSelect"><span>Tolerance Preset</span><span class="unit-tag">[mm]</span></label>
+              <select id="stepTolPresetSelect">
+                <option value="0.02" selected>Fine — 0.02 mm (CNC/SLA)</option>
+                <option value="0.08">Standard — 0.08 mm (FDM)</option>
+                <option value="0.25">Draft — 0.25 mm (Fast)</option>
+                <option value="custom">Custom deflection...</option>
+              </select>
+            </div>
+            <div id="stepCustomTolWrap" class="hidden">
+              <label class="field-label" for="stepCustomTolInput"><span>Linear Deflection</span><span class="unit-tag">[mm]</span></label>
+              <input type="number" id="stepCustomTolInput" value="0.05" step="0.01" min="0.005" max="5" />
+            </div>
+            <div>
+              <label class="field-label" for="stepUnitsSelect"><span>Export Units</span><span class="unit-tag">[scale]</span></label>
+              <select id="stepUnitsSelect">
+                <option value="mm" selected>Millimeters (mm)</option>
+                <option value="inch">Inches (in)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="stepOutputFormatSelect"><span>STL Encoding</span><span class="unit-tag">[format]</span></label>
+              <select id="stepOutputFormatSelect">
+                <option value="binary" selected>Binary STL (Compact)</option>
+                <option value="ascii">ASCII STL (Text)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section mono" id="stepLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// ISO-10303-21 STEP CONVERTER LOG</div>
+          <div>Awaiting .STEP or .STP file selection...</div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Bounding Box</div>
+            <div class="kpi-val" id="stepBbox" style="font-size:17px;">—</div>
+            <div class="kpi-sub">X / Y / Z extents</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Facets</div>
+            <div class="kpi-val" id="stepTriOut">—</div>
+            <div class="kpi-sub">Triangles</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Size</div>
+            <div class="kpi-val" id="stepFileSize">—</div>
+            <div class="kpi-sub" id="stepFormatSub">Binary STL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Linear Deflection</div>
+            <div class="kpi-val" id="stepChordVal">0.020 mm</div>
+            <div class="kpi-sub">Chord tolerance</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="stepExportStatus">Select a .STEP file to tessellate and export.</span>
+          <button type="button" id="downloadConvertedStlBtn" class="btn-primary">EXPORT TESSELLATED .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // Chordal Deflection Tolerance
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Linear deflection controls the maximum distance between a CAD NURBS surface and its triangulated planar facet. Use 0.02 mm for high-resolution SLA printing or CNC, and 0.08 mm for standard FDM printing.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; AUDIT &amp; REPAIR TESSELLATED STL MESH</a>
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; CALCULATE STL VOLUME &amp; PART WEIGHT</a>
+          <a href="/" class="btn-secondary route-link">01 -&gt; G-CODE TIME &amp; COST CALCULATOR</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

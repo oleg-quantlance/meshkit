@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Print Cost Calculator — Filament, Power &amp; Etsy Fees</title>
+  <meta name="description" content="Calculate 3D printing unit cost, electricity, machine wear, failure buffer, and marketplace selling price for Etsy, eBay, Whatnot, Shopify, and Direct orders." />
+  <link rel="canonical" href="https://meshkit.pro/3d-print-cost-calculator" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="cost-manual">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn active">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator" class="active">Manual 3D Print Cost Calculator</a>
+      <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title">3D Print Cost Calculator &amp; Commercial Quote Ledger</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span>MODE: MANUAL SLICER INPUTS + CHANNEL FEE SCHEDULE</span>
+        <span>FEES VERIFIED: 2026-11-01</span>
+      </div>
+    </div>
+
+    <section id="panel-gcode" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Job, Material &amp; Machine Parameters</span>
+            <span>MANUAL INPUT</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="filamentGrams"><span>Filament Mass</span><span class="unit-tag">[g]</span></label>
+              <input type="number" id="filamentGrams" value="48.5" step="0.1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="printHours"><span>Print Time</span><span class="unit-tag">[hrs]</span></label>
+              <input type="number" id="printHours" value="3.7" step="0.1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="gcodeMaterialSelect"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <select id="gcodeMaterialSelect">
+                <option value="1.24" selected>PLA (1.24)</option>
+                <option value="1.27">PETG (1.27)</option>
+                <option value="1.04">ABS (1.04)</option>
+                <option value="1.07">ASA (1.07)</option>
+                <option value="1.21">TPU (1.21)</option>
+                <option value="1.20">PC (1.20)</option>
+                <option value="1.14">Nylon / PA (1.14)</option>
+                <option value="1.04">HIPS (1.04)</option>
+                <option value="1.23">PVA (1.23)</option>
+                <option value="1.29">CF-Filled (1.29)</option>
+                <option value="custom">Custom density...</option>
+              </select>
+            </div>
+            <div id="gcodeCustomDensityWrap" class="hidden">
+              <label class="field-label" for="gcodeCustomDensity"><span>Custom Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <input type="number" id="gcodeCustomDensity" value="1.24" step="0.01" min="0.1" />
+            </div>
+            <div>
+              <label class="field-label" for="gcodeDiameterSelect"><span>Filament Diameter</span><span class="unit-tag">[mm]</span></label>
+              <select id="gcodeDiameterSelect">
+                <option value="1.75" selected>1.75 mm</option>
+                <option value="2.85">2.85 mm</option>
+                <option value="3.00">3.00 mm</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="spoolCost"><span>Material Rate</span><span class="unit-tag">[$/kg]</span></label>
+              <input type="number" id="spoolCost" value="22.00" step="0.5" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="printerWatts"><span>Avg Power Draw</span><span class="unit-tag">[W]</span></label>
+              <input type="number" id="printerWatts" value="150" step="10" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="electricityRate"><span>Electricity Rate</span><span class="unit-tag">[$/kWh]</span></label>
+              <input type="number" id="electricityRate" value="0.16" step="0.01" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="wearRate"><span>Machine Wear</span><span class="unit-tag">[$/hr]</span></label>
+              <input type="number" id="wearRate" value="0.15" step="0.01" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="failurePct"><span>Failure Buffer</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="failurePct" value="7" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="timeCorrectionPct"><span>Time Correction</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="timeCorrectionPct" value="0" step="0.5" />
+            </div>
+          </div>
+          <div class="field-hint">Tip: Use your own electricity bill for $/kWh. Have a .gcode file? <a href="/">Upload it in the G-Code Time Estimator</a>.</div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Commercial Fee Schedule</span>
+            <span id="channelVerifiedNote">FEES VERIFIED: 2026-11-01</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="marketplaceFee"><span>Selling Channel</span><span class="unit-tag">[fee]</span></label>
+              <select id="marketplaceFee">
+                <option value="etsy" selected>Etsy (9.5% + $0.45)</option>
+                <option value="ebay">eBay (13.25% + $0.30)</option>
+                <option value="whatnot">Whatnot (10.9% + $0.30)</option>
+                <option value="shopify">Shopify (2.9% + $0.30)</option>
+                <option value="amazon">Amazon Handmade (15.0% + $0.00)</option>
+                <option value="tiktok">TikTok Shop (6.0% + $0.00)</option>
+                <option value="direct">Direct Invoice (0% + $0.00)</option>
+                <option value="custom">Custom (% + fixed $)...</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="pricingModeSelect"><span>Pricing Mode</span><span class="unit-tag">[mode]</span></label>
+              <select id="pricingModeSelect">
+                <option value="multiplier" selected>Cost Multiplier (×)</option>
+                <option value="target_margin">Target Net Margin (%)</option>
+              </select>
+            </div>
+            <div id="customChannelFeeWrap" class="hidden">
+              <label class="field-label" for="customChannelPct"><span>Custom Channel %</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="customChannelPct" value="8.0" step="0.1" min="0" max="99.9" />
+            </div>
+            <div id="customChannelFixedWrap" class="hidden">
+              <label class="field-label" for="customChannelFixed"><span>Custom Fixed Fee</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="customChannelFixed" value="0.30" step="0.05" min="0" />
+            </div>
+            <div id="markupSelectWrap">
+              <label class="field-label" for="markupMult"><span>Target Multiplier</span><span class="unit-tag">[x]</span></label>
+              <select id="markupMult">
+                <option value="1.5">1.5x Minimal</option>
+                <option value="2.0">2.0x Batch</option>
+                <option value="2.5">2.5x Wholesale</option>
+                <option value="3.0">3.0x Standard</option>
+                <option value="3.5" selected>3.5x Retail Std</option>
+                <option value="4.0">4.0x Specialty</option>
+                <option value="5.0">5.0x Engineering Rush</option>
+                <option value="custom">Custom multiplier...</option>
+              </select>
+            </div>
+            <div id="customMarkupWrap" class="hidden">
+              <label class="field-label" for="customMarkupVal"><span>Custom Multiplier</span><span class="unit-tag">[x]</span></label>
+              <input type="number" id="customMarkupVal" value="3.5" step="0.1" min="0" />
+            </div>
+            <div id="targetMarginWrap" class="hidden">
+              <label class="field-label" for="targetMarginPct"><span>Target Margin</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="targetMarginPct" value="60" step="1" min="0" max="95" />
+            </div>
+          </div>
+          <div id="gcodeValidationBanner" class="validation-banner hidden" role="alert"></div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Print Duration</div>
+            <div class="kpi-val" id="outTrueTime">3h 42m</div>
+            <div class="kpi-sub" id="outTimeSub">Manual slicer time</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Polymer Cost</div>
+            <div class="kpi-val" id="outMaterialCost">$1.07</div>
+            <div class="kpi-sub" id="outMeters">16.3m @ 1.75mm</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Energy + Wear + Scrap</div>
+            <div class="kpi-val" id="outOverheadCost">$0.76</div>
+            <div class="kpi-sub" id="outOverheadSub">$0.16/kWh · $0.15/h · 7%</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Unit Cost Floor</div>
+            <div class="kpi-val" id="outUnitCost" style="color:var(--accent);">$1.83</div>
+            <div class="kpi-sub">Includes failure buffer</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <div>
+            <div class="mono" style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Recommended Commercial Quote (Incl. Platform Fees)</div>
+            <div style="display:flex; align-items:baseline; gap:14px; margin-top:2px;">
+              <span class="mono" style="font-size:30px; font-weight:700;" id="outSellingPrice">$7.58</span>
+              <span class="mono" style="font-size:12px; color:var(--status-ok); font-weight:600;" id="outNetProfit">NET PROFIT: $4.58 (60%)</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="window.print()" class="btn-primary">PRINT / EXPORT SPEC SHEET</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Formula // 3D Print Unit Cost &amp; Marketplace Price
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Unit Cost = (Material + Energy + Machine Wear) × (1 + Failure %). Recommended Price = (Unit Cost × Markup + Fixed Fee) ÷ (1 − Channel %).
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/" class="btn-secondary route-link">01 -&gt; UPLOAD .GCODE FOR AUTOMATIC TIME &amp; MASS</a>
+          <a href="/resin-3d-print-cost-calculator" class="btn-secondary route-link">04 -&gt; SLA / MSLA RESIN PRINT COST CALCULATOR</a>
+          <a href="/filament-spool-weight-calculator" class="btn-secondary route-link">05 -&gt; FILAMENT SPOOL WEIGHT &amp; REMAINING LENGTH</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

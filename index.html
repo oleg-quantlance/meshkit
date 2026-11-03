@@ -3,34 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MESHKIT // G-Code Costing, STL Repair & CAD Utility Workbench</title>
-  <meta name="description" content="Client-side G-Code time estimator, 3D print pricing ledger, watertight STL mesh repair, and STEP to STL tessellation utility." />
+  <title>G-Code Time Estimator Online &amp; 3D Print Cost Calculator</title>
+  <meta name="description" content="Free online G-code time estimator and 3D print cost calculator. Compute exact E-axis filament mass, print duration, electricity, wear, and marketplace fees." />
+  <link rel="canonical" href="https://meshkit.pro/" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body data-page="gcode">
 
-  <!-- STRUCTURAL HEADER -->
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand" onclick="switchTool('gcode')">
+      <a class="brand" href="/">
         <div class="brand-mark">MK</div>
         <div>
           <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
-          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">v2.5 // CAD &amp; PRINT LEDGER</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
         </div>
-      </div>
+      </a>
 
-      <nav class="nav-tabs" id="topNav">
-        <button type="button" data-tool="gcode" onclick="switchTool('gcode')" class="tab-btn active">01 G-CODE COST</button>
-        <button type="button" data-tool="stl" onclick="switchTool('stl')" class="tab-btn">02 STL REPAIR</button>
-        <button type="button" data-tool="step" onclick="switchTool('step')" class="tab-btn">03 STEP TO STL</button>
-        <button type="button" data-tool="resin" onclick="switchTool('resin')" class="tab-btn">04 SLA RESIN</button>
-        <button type="button" data-tool="spool" onclick="switchTool('spool')" class="tab-btn">05 SPOOL TARE DB</button>
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn active">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
       </nav>
 
-      <button type="button" class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+      <button type="button" class="theme-btn" id="themeToggle">
         THEME: PAPER [LIGHT]
       </button>
     </div>
@@ -38,19 +38,24 @@
 
   <main class="shell">
 
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/" class="active">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator">Manual 3D Print Cost Calculator</a>
+      <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
     <div class="spec-strip">
       <div>
-        <h1 class="spec-title" id="toolTitle">G-Code Kinematic Time &amp; Unit Costing Ledger</h1>
+        <h1 class="spec-title" id="toolTitle">G-Code Time Estimator Online &amp; Unit Costing Ledger</h1>
       </div>
       <div class="spec-meta mono">
-        <span id="toolSpecTag">PARSER: ISO-6983 / REPRAP / BAMBU</span>
+        <span id="toolSpecTag">PARSER: G20/G21 · G90/G91 · M82/M83 · G92</span>
         <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
       </div>
     </div>
 
-    <!-- =================================================================== -->
-    <!-- 01: G-CODE COST & TIME WORKBENCH                                    -->
-    <!-- =================================================================== -->
     <section id="panel-gcode" class="workbench tool-panel">
       <div class="wb-left">
         <div class="wb-section">
@@ -58,13 +63,13 @@
             <span>A. G-Code Input Source</span>
             <span id="gcodeParseState" style="color:var(--status-ok);">READY</span>
           </div>
-          <div id="gcodeDropzone" class="drop-area">
-            <input type="file" id="gcodeFileInput" accept=".gcode,.gco,.g,.txt" class="hidden" />
+          <div id="gcodeDropzone" class="drop-area" tabindex="0" role="button" aria-label="Upload G-code file">
+            <input type="file" id="gcodeFileInput" accept=".gcode,.gco,.g" class="hidden" />
             <div class="mono" style="font-weight:600; font-size:12px;" id="gcodeStatusTitle">[CLICK TO SELECT .GCODE] OR DRAG FILE HERE</div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="gcodeStatusSub">Parses G0/G1 coordinates, Z-layers, and slicer header metadata locally.</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="gcodeStatusSub">Parses E-axis extrusion, G0/G1 moves, Z-layers, and slicer header metadata locally.</div>
             <div class="btn-row">
               <button type="button" id="gcodeBrowseBtn" class="btn-primary">BROWSE FILE...</button>
-              <button type="button" id="gcodeSampleBtn" class="btn-secondary">LOAD IN-MEMORY DEMO</button>
+              <button type="button" id="gcodeSampleBtn" class="btn-secondary">LOAD SAMPLE .GCODE</button>
               <button type="button" id="downloadTestGcodeBtn" class="btn-ghost" title="Download a real .gcode file to your computer to test uploading">⬇ GET TEST .GCODE</button>
             </div>
           </div>
@@ -72,65 +77,143 @@
 
         <div class="wb-section">
           <div class="section-head">
-            <span>B. Job &amp; Machine Parameters</span>
-            <span>MANUAL OVERRIDE</span>
+            <span>B. Job, Material &amp; Machine Parameters</span>
+            <span>EDITABLE</span>
           </div>
           <div class="field-grid">
             <div>
-              <label class="field-label"><span>Filament Mass</span><span class="unit-tag">[g]</span></label>
-              <input type="number" id="filamentGrams" value="48.5" step="0.1" />
+              <label class="field-label" for="filamentGrams"><span>Filament Mass</span><span class="unit-tag">[g]</span></label>
+              <input type="number" id="filamentGrams" value="48.5" step="0.1" min="0" />
             </div>
             <div>
-              <label class="field-label"><span>Slicer Time</span><span class="unit-tag">[hrs]</span></label>
-              <input type="number" id="printHours" value="3.7" step="0.1" />
+              <label class="field-label" for="printHours"><span>Print Time</span><span class="unit-tag">[hrs]</span></label>
+              <input type="number" id="printHours" value="3.7" step="0.1" min="0" />
             </div>
             <div>
-              <label class="field-label"><span>Material Rate</span><span class="unit-tag">[$/kg]</span></label>
-              <input type="number" id="spoolCost" value="22.00" step="0.5" />
+              <label class="field-label" for="gcodeMaterialSelect"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <select id="gcodeMaterialSelect">
+                <option value="1.24" selected>PLA (1.24)</option>
+                <option value="1.27">PETG (1.27)</option>
+                <option value="1.04">ABS (1.04)</option>
+                <option value="1.07">ASA (1.07)</option>
+                <option value="1.21">TPU (1.21)</option>
+                <option value="1.20">PC (1.20)</option>
+                <option value="1.14">Nylon / PA (1.14)</option>
+                <option value="1.04">HIPS (1.04)</option>
+                <option value="1.23">PVA (1.23)</option>
+                <option value="1.29">CF-Filled (1.29)</option>
+                <option value="custom">Custom density...</option>
+              </select>
+            </div>
+            <div id="gcodeCustomDensityWrap" class="hidden">
+              <label class="field-label" for="gcodeCustomDensity"><span>Custom Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <input type="number" id="gcodeCustomDensity" value="1.24" step="0.01" min="0.1" />
             </div>
             <div>
-              <label class="field-label"><span>Avg Power Draw</span><span class="unit-tag">[W]</span></label>
-              <input type="number" id="printerWatts" value="150" step="10" />
+              <label class="field-label" for="gcodeDiameterSelect"><span>Filament Diameter</span><span class="unit-tag">[mm]</span></label>
+              <select id="gcodeDiameterSelect">
+                <option value="1.75" selected>1.75 mm</option>
+                <option value="2.85">2.85 mm</option>
+                <option value="3.00">3.00 mm</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="spoolCost"><span>Material Rate</span><span class="unit-tag">[$/kg]</span></label>
+              <input type="number" id="spoolCost" value="22.00" step="0.5" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="printerWatts"><span>Avg Power Draw</span><span class="unit-tag">[W]</span></label>
+              <input type="number" id="printerWatts" value="150" step="10" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="electricityRate"><span>Electricity Rate</span><span class="unit-tag">[$/kWh]</span></label>
+              <input type="number" id="electricityRate" value="0.16" step="0.01" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="wearRate"><span>Machine Wear</span><span class="unit-tag">[$/hr]</span></label>
+              <input type="number" id="wearRate" value="0.15" step="0.01" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="failurePct"><span>Failure Buffer</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="failurePct" value="7" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="timeCorrectionPct"><span>Time Correction</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="timeCorrectionPct" value="0" step="0.5" />
             </div>
           </div>
+          <div class="field-hint">Tip: Use your own electricity bill for $/kWh. Default rates reflect typical residential power and nozzle/belt reserve.</div>
         </div>
 
         <div class="wb-section">
           <div class="section-head">
             <span>C. Commercial Fee Schedule</span>
-            <span>MARGIN CALC</span>
+            <span id="channelVerifiedNote">FEES VERIFIED: 2026-11-01</span>
           </div>
           <div class="field-grid">
             <div>
-              <label class="field-label"><span>Channel Fee</span><span class="unit-tag">[%]</span></label>
+              <label class="field-label" for="marketplaceFee"><span>Selling Channel</span><span class="unit-tag">[fee]</span></label>
               <select id="marketplaceFee">
-                <option value="0.095">Etsy (9.5% + $0.45)</option>
-                <option value="0.1325">eBay (13.25% + $0.30)</option>
-                <option value="0.109">Whatnot (10.9% + $0.30)</option>
-                <option value="0">Direct Invoice (0%)</option>
+                <option value="etsy" selected>Etsy (9.5% + $0.45)</option>
+                <option value="ebay">eBay (13.25% + $0.30)</option>
+                <option value="whatnot">Whatnot (10.9% + $0.30)</option>
+                <option value="shopify">Shopify (2.9% + $0.30)</option>
+                <option value="amazon">Amazon Handmade (15.0% + $0.00)</option>
+                <option value="tiktok">TikTok Shop (6.0% + $0.00)</option>
+                <option value="direct">Direct Invoice (0% + $0.00)</option>
+                <option value="custom">Custom (% + fixed $)...</option>
               </select>
             </div>
             <div>
-              <label class="field-label"><span>Target Multiplier</span><span class="unit-tag">[x]</span></label>
-              <select id="markupMult">
-                <option value="2.5">2.5x Wholesale</option>
-                <option value="3.5" selected>3.5x Retail Std</option>
-                <option value="5.0">5.0x Engineering Rush</option>
+              <label class="field-label" for="pricingModeSelect"><span>Pricing Mode</span><span class="unit-tag">[mode]</span></label>
+              <select id="pricingModeSelect">
+                <option value="multiplier" selected>Cost Multiplier (×)</option>
+                <option value="target_margin">Target Net Margin (%)</option>
               </select>
             </div>
+            <div id="customChannelFeeWrap" class="hidden">
+              <label class="field-label" for="customChannelPct"><span>Custom Channel %</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="customChannelPct" value="8.0" step="0.1" min="0" max="99.9" />
+            </div>
+            <div id="customChannelFixedWrap" class="hidden">
+              <label class="field-label" for="customChannelFixed"><span>Custom Fixed Fee</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="customChannelFixed" value="0.30" step="0.05" min="0" />
+            </div>
+            <div id="markupSelectWrap">
+              <label class="field-label" for="markupMult"><span>Target Multiplier</span><span class="unit-tag">[x]</span></label>
+              <select id="markupMult">
+                <option value="1.5">1.5x Minimal</option>
+                <option value="2.0">2.0x Batch</option>
+                <option value="2.5">2.5x Wholesale</option>
+                <option value="3.0">3.0x Standard</option>
+                <option value="3.5" selected>3.5x Retail Std</option>
+                <option value="4.0">4.0x Specialty</option>
+                <option value="5.0">5.0x Engineering Rush</option>
+                <option value="custom">Custom multiplier...</option>
+              </select>
+            </div>
+            <div id="customMarkupWrap" class="hidden">
+              <label class="field-label" for="customMarkupVal"><span>Custom Multiplier</span><span class="unit-tag">[x]</span></label>
+              <input type="number" id="customMarkupVal" value="3.5" step="0.1" min="0" />
+            </div>
+            <div id="targetMarginWrap" class="hidden">
+              <label class="field-label" for="targetMarginPct"><span>Target Margin</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="targetMarginPct" value="60" step="1" min="0" max="95" />
+            </div>
           </div>
+          <div id="gcodeValidationBanner" class="validation-banner hidden" role="alert"></div>
         </div>
       </div>
 
       <div class="wb-right">
         <div>
           <div class="viewport-bar mono">
-            <span>ISOMETRIC TOOLPATH PROJECTION</span>
-            <span>Z-LAYERS: <strong style="color:#fff;" id="layerCountLabel">240</strong> &nbsp;|&nbsp; VECTORS: <strong style="color:#fff;" id="moveCountLabel">18,420</strong></span>
+            <span id="gcodePreviewModeLabel">2D XY TOOLPATH PROJECTION</span>
+            <span>Z-LAYERS: <strong style="color:#fff;" id="layerCountLabel">0</strong> &nbsp;|&nbsp; VECTORS: <strong style="color:#fff;" id="moveCountLabel">0</strong></span>
           </div>
           <canvas id="gcodeCanvas" width="760" height="250" style="width:100%; height:250px; display:block; background:var(--bg-canvas);"></canvas>
           <div class="scrubber-bar mono">
-            <span>Z-HEIGHT SCRUB:</span>
+            <label for="layerSlider">Z-HEIGHT SCRUB:</label>
             <input type="range" id="layerSlider" min="1" max="100" value="100" />
             <span id="layerPctLabel" style="width:42px; text-align:right; color:#FF5C1A; font-weight:700;">100%</span>
           </div>
@@ -138,9 +221,9 @@
 
         <div class="kpi-strip">
           <div class="kpi-cell">
-            <div class="kpi-label">Kinematic Time</div>
-            <div class="kpi-val" id="outTrueTime">4h 01m</div>
-            <div class="kpi-sub">+8.5% cornering jerk</div>
+            <div class="kpi-label">Print Duration</div>
+            <div class="kpi-val" id="outTrueTime">3h 42m</div>
+            <div class="kpi-sub" id="outTimeSub">Slicer / kinematic time</div>
           </div>
           <div class="kpi-cell">
             <div class="kpi-label">Polymer Cost</div>
@@ -148,14 +231,14 @@
             <div class="kpi-sub" id="outMeters">16.3m @ 1.75mm</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">Energy + Wear</div>
-            <div class="kpi-val" id="outOverheadCost">$0.88</div>
-            <div class="kpi-sub">$0.15/h machine + 7% scrap</div>
+            <div class="kpi-label">Energy + Wear + Scrap</div>
+            <div class="kpi-val" id="outOverheadCost">$0.76</div>
+            <div class="kpi-sub" id="outOverheadSub">$0.16/kWh · $0.15/h · 7%</div>
           </div>
           <div class="kpi-cell">
             <div class="kpi-label">Unit Cost Floor</div>
-            <div class="kpi-val" id="outUnitCost" style="color:var(--accent);">$1.95</div>
-            <div class="kpi-sub">Pre-margin break-even</div>
+            <div class="kpi-val" id="outUnitCost" style="color:var(--accent);">$1.83</div>
+            <div class="kpi-sub">Includes failure buffer</div>
           </div>
         </div>
 
@@ -163,8 +246,8 @@
           <div>
             <div class="mono" style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Recommended Commercial Quote (Incl. Platform Fees)</div>
             <div style="display:flex; align-items:baseline; gap:14px; margin-top:2px;">
-              <span class="mono" style="font-size:30px; font-weight:700;" id="outSellingPrice">$8.25</span>
-              <span class="mono" style="font-size:12px; color:var(--status-ok); font-weight:600;" id="outNetProfit">NET MARGIN: $5.07 (61%)</span>
+              <span class="mono" style="font-size:30px; font-weight:700;" id="outSellingPrice">$7.58</span>
+              <span class="mono" style="font-size:12px; color:var(--status-ok); font-weight:600;" id="outNetProfit">NET PROFIT: $4.58 (60%)</span>
             </div>
           </div>
           <div style="display:flex; gap:8px;">
@@ -174,303 +257,13 @@
       </div>
     </section>
 
-    <!-- =================================================================== -->
-    <!-- 02: STL MESH REPAIR WORKBENCH                                       -->
-    <!-- =================================================================== -->
-    <section id="panel-stl" class="workbench tool-panel hidden">
-      <div class="wb-left">
-        <div class="wb-section">
-          <div class="section-head">
-            <span>A. Input Mesh (.STL Binary/ASCII)</span>
-            <span id="stlParseState" style="color:var(--status-ok);">READY</span>
-          </div>
-          <div class="drop-area" id="stlDropzone">
-            <input type="file" id="stlFileInput" accept=".stl" class="hidden" />
-            <div class="mono" style="font-weight:600; font-size:12px;" id="stlFileName">[CLICK TO SELECT .STL] OR DRAG MESH HERE</div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="stlFileSub">Reads ASCII facets or 80-byte binary triangle buffers locally.</div>
-            <div class="btn-row">
-              <button type="button" id="stlBrowseBtn" class="btn-primary">BROWSE .STL...</button>
-              <button type="button" id="stlSampleBtn" class="btn-secondary">LOAD DEMO</button>
-              <button type="button" id="downloadTestStlBtn" class="btn-ghost" title="Download a real defective ASCII .stl file to test uploading">⬇ GET DEFECTIVE .STL</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="wb-section">
-          <div class="section-head"><span>B. Repair Solver Directives</span></div>
-          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
-            <label><input type="checkbox" checked /> Close open boundary loops (planar ear-clipping)</label>
-            <label><input type="checkbox" checked /> Unify face normal orientation outward</label>
-            <label><input type="checkbox" checked /> Cull zero-area degenerate facets</label>
-            <label><input type="checkbox" checked /> Weld coincident vertices (epsilon = 0.001 mm)</label>
-          </div>
-          <div style="margin-top:16px;">
-            <button type="button" id="runStlRepairBtn" class="btn-primary" style="width:100%; justify-content:center;">EXECUTE MANIFOLD REPAIR</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="wb-right">
-        <div>
-          <div class="viewport-bar mono">
-            <span>WIREFRAME DEFECT INSPECTOR</span>
-            <span id="stlStatusBadge" style="color:#FBBF24;">STATUS: 14 TOPOLOGY DEFECTS FOUND</span>
-          </div>
-          <canvas id="stlCanvas" width="760" height="240" style="width:100%; height:240px; display:block; background:var(--bg-canvas);"></canvas>
-        </div>
-
-        <div class="kpi-strip">
-          <div class="kpi-cell">
-            <div class="kpi-label">Facet Count</div>
-            <div class="kpi-val" id="stlTris">24,680</div>
-            <div class="kpi-sub">Triangles</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Open Loops</div>
-            <div class="kpi-val" id="stlHoles" style="color:var(--accent);">9</div>
-            <div class="kpi-sub">Boundary holes</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Flipped Normals</div>
-            <div class="kpi-val" id="stlNormals" style="color:var(--status-warn);">5</div>
-            <div class="kpi-sub">Inverted facets</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Signed Volume</div>
-            <div class="kpi-val" id="stlVolume">38.4 cm³</div>
-            <div class="kpi-sub">Watertight calc</div>
-          </div>
-        </div>
-
-        <div class="quote-bar">
-          <div class="mono" style="font-size:12px;" id="stlRepairLog">Awaiting solver execution on active mesh buffer.</div>
-          <button type="button" id="downloadRepairedStlBtn" class="btn-primary">DOWNLOAD WATERTIGHT .STL</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- 03: STEP TO STL TESSELLATOR                                         -->
-    <!-- =================================================================== -->
-    <section id="panel-step" class="workbench tool-panel hidden">
-      <div class="wb-left">
-        <div class="wb-section">
-          <div class="section-head">
-            <span>A. B-Rep CAD Input (.STEP / .STP)</span>
-            <span id="stepParseState" style="color:var(--status-ok);">READY</span>
-          </div>
-          <div class="drop-area" id="stepDropzone">
-            <input type="file" id="stepFileInput" accept=".step,.stp,.txt" class="hidden" />
-            <div class="mono" style="font-weight:600; font-size:12px;" id="stepFileName">[CLICK TO SELECT .STEP] OR DRAG CAD FILE HERE</div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="stepFileSub">Parses ISO-10303-21 entities (ADVANCED_FACE, CARTESIAN_POINT, EDGE_CURVE).</div>
-            <div class="btn-row">
-              <button type="button" id="stepBrowseBtn" class="btn-primary">BROWSE .STEP...</button>
-              <button type="button" id="stepSampleBtn" class="btn-secondary">LOAD DEMO</button>
-              <button type="button" id="downloadTestStepBtn" class="btn-ghost" title="Download a real ISO-10303 .step file to test uploading">⬇ GET TEST .STEP</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="wb-section">
-          <div class="section-head">
-            <span>B. Chordal Deflection Tolerance</span>
-            <span id="stepTolLabel" style="color:var(--accent);">0.02 mm [FINE]</span>
-          </div>
-          <input type="range" id="stepTolSlider" min="1" max="3" value="1" style="width:100%;" />
-          <div class="mono" style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); margin-top:4px;">
-            <span>0.02mm (CNC/SLA)</span>
-            <span>0.08mm (FDM STD)</span>
-            <span>0.25mm (DRAFT)</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="wb-right">
-        <div class="wb-section mono" id="stepLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
-          <div style="color:#FF5C1A; margin-bottom:8px;">// ISO-10303-21 STEP PARSER LOG</div>
-          <div>[00.01s] SCHEMA: AUTOMOTIVE_DESIGN (AP214)</div>
-          <div>[00.04s] TOPOLOGY: 1 MANIFOLD_SOLID_BREP, 142 ADVANCED_FACE</div>
-          <div>[00.09s] TESSELLATION: DELAUNAY SURFACE MESHING COMPLETE</div>
-        </div>
-
-        <div class="kpi-strip">
-          <div class="kpi-cell">
-            <div class="kpi-label">Bounding Box</div>
-            <div class="kpi-val" id="stepBbox" style="font-size:17px;">84×62×45 mm</div>
-            <div class="kpi-sub">X / Y / Z extents</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Output Facets</div>
-            <div class="kpi-val" id="stepTriOut">68,420</div>
-            <div class="kpi-sub">Triangles</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Binary Size</div>
-            <div class="kpi-val" id="stepFileSize">3.42 MB</div>
-            <div class="kpi-sub">80-byte header + tris</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Max Chord Error</div>
-            <div class="kpi-val" id="stepChordVal">0.020 mm</div>
-            <div class="kpi-sub">Arc deviation</div>
-          </div>
-        </div>
-
-        <div class="quote-bar">
-          <span class="mono" style="font-size:12px; color:var(--text-muted);">Ready to export binary STL stream.</span>
-          <button type="button" id="downloadConvertedStlBtn" class="btn-primary">EXPORT TESSELLATED .STL</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- 04: SLA / MSLA RESIN CALCULATOR                                     -->
-    <!-- =================================================================== -->
-    <section id="panel-resin" class="workbench tool-panel hidden">
-      <div class="wb-left">
-        <div class="wb-section">
-          <div class="section-head"><span>SLA / MSLA Photopolymer Parameters</span></div>
-          <div class="field-grid">
-            <div>
-              <label class="field-label"><span>Solid Volume</span><span class="unit-tag">[mL]</span></label>
-              <input type="number" id="resinVolMl" value="65" step="1" />
-            </div>
-            <div>
-              <label class="field-label"><span>Support Overhead</span><span class="unit-tag">[%]</span></label>
-              <input type="number" id="resinSupportPct" value="22" step="1" />
-            </div>
-            <div>
-              <label class="field-label"><span>Shell Mode</span><span class="unit-tag">[wall]</span></label>
-              <select id="resinHollowMode">
-                <option value="1">Solid Body (100%)</option>
-                <option value="0.42" selected>Hollow 2.0mm (42%)</option>
-                <option value="0.30">Hollow 1.5mm (30%)</option>
-              </select>
-            </div>
-            <div>
-              <label class="field-label"><span>Resin Cost</span><span class="unit-tag">[$/L]</span></label>
-              <input type="number" id="resinBottleCost" value="26.00" step="1" />
-            </div>
-            <div>
-              <label class="field-label"><span>Z-Height</span><span class="unit-tag">[mm]</span></label>
-              <input type="number" id="resinHeightMm" value="120" step="5" />
-            </div>
-            <div>
-              <label class="field-label"><span>Exposure</span><span class="unit-tag">[s/0.05mm]</span></label>
-              <input type="number" id="resinExpSec" value="2.4" step="0.1" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="wb-right">
-        <div class="kpi-strip">
-          <div class="kpi-cell">
-            <div class="kpi-label">Total Resin Draw</div>
-            <div class="kpi-val" id="outResinMl">33.3 mL</div>
-            <div class="kpi-sub">Incl. supports + cling</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Resin Cost</div>
-            <div class="kpi-val" id="outResinLiquidCost">$0.87</div>
-            <div class="kpi-sub">Photopolymer</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">IPA + FEP Amortization</div>
-            <div class="kpi-val" id="outResinConsumables">$0.64</div>
-            <div class="kpi-sub">Wash + film release</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Exposure Time</div>
-            <div class="kpi-val" id="outResinTime">4h 16m</div>
-            <div class="kpi-sub" id="outResinLayers">2,400 Z-slices</div>
-          </div>
-        </div>
-        <div class="quote-bar">
-          <div>
-            <div class="mono" style="font-size:11px; color:var(--text-muted);">RECOMMENDED COMMERCIAL QUOTE (4.0x MARKUP)</div>
-            <div class="mono" style="font-size:26px; font-weight:700; margin-top:2px;" id="outResinPrice">$6.04</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- 05: EMPTY SPOOL TARE WEIGHT DATABASE                                -->
-    <!-- =================================================================== -->
-    <section id="panel-spool" class="workbench tool-panel hidden">
-      <div class="wb-left">
-        <div class="wb-section">
-          <div class="section-head"><span>Spool Scale Tare Subtraction</span></div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label class="field-label"><span>Manufacturer Spool Type</span><span class="unit-tag">[tare g]</span></label>
-              <select id="spoolBrandSelect">
-                <option value="250">Bambu Lab Reusable ABS Spool — 250g</option>
-                <option value="140">Polymaker Cardboard 1kg — 140g</option>
-                <option value="132">Elegoo Cardboard 1kg — 132g</option>
-                <option value="195">Sunlu Black Plastic 1kg — 195g</option>
-                <option value="225">eSUN Plastic 1kg — 225g</option>
-                <option value="202">Prusament Hex Plastic — 202g</option>
-                <option value="238">Hatchbox 1kg Plastic — 238g</option>
-              </select>
-            </div>
-            <div class="field-grid">
-              <div>
-                <label class="field-label"><span>Gross Scale Weight</span><span class="unit-tag">[g]</span></label>
-                <input type="number" id="grossScaleGrams" value="412" step="1" />
-              </div>
-              <div>
-                <label class="field-label"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
-                <select id="spoolMaterialDensity">
-                  <option value="1.24">PLA (1.24)</option>
-                  <option value="1.27">PETG (1.27)</option>
-                  <option value="1.04">ABS (1.04)</option>
-                  <option value="1.21">TPU (1.21)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="wb-right">
-        <div class="kpi-strip">
-          <div class="kpi-cell">
-            <div class="kpi-label">Empty Spool Tare</div>
-            <div class="kpi-val" id="outSpoolTare">250 g</div>
-            <div class="kpi-sub">Verified dry weight</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Net Filament Left</div>
-            <div class="kpi-val" id="outNetFilament" style="color:var(--accent);">162 g</div>
-            <div class="kpi-sub" id="outSpoolPct">16.2% of 1kg</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Remaining Length</div>
-            <div class="kpi-val" id="outRemainingMeters">54.3 m</div>
-            <div class="kpi-sub">1.75mm diameter</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">Est. 3DBenchys</div>
-            <div class="kpi-val" id="outBenchyCount">3.7</div>
-            <div class="kpi-sub">@ 43g per hull</div>
-          </div>
-        </div>
-        <div class="quote-bar">
-          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="spoolStatusNote">Tip: Cardboard spools can absorb 3–6g of ambient humidity before drying.</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- BELOW-THE-FOLD TECHNICAL REFERENCE & SPEC TABLES -->
     <section class="doc-grid">
       <div>
         <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
           Reference // Machine Power Draw &amp; Hourly Depreciation Schedule
         </h2>
         <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
-          Slicer time estimates divide toolpath length by nominal feedrate (`F`), ignoring cornering deceleration governed by firmware junction deviation and acceleration limits (`M201`/`M204`). MeshKit applies an 8.5% kinematic overhead factor plus machine hourly wear.
+          MeshKit computes filament mass directly from E-axis extrusion (`G0`/`G1` moves in `M82` absolute or `M83` relative mode, respecting `G92` resets) and reads slicer header time or calculates trapezoidal acceleration duration (`M204`).
         </p>
         <table class="tech-table mono">
           <thead>
@@ -515,10 +308,11 @@
           Pipeline // Direct Tool Routing
         </h2>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <button onclick="switchTool('stl')" class="btn-secondary" style="text-align:left; padding:10px 12px;">02 -> AUDIT &amp; SEAL NON-MANIFOLD STL HOLES</button>
-          <button onclick="switchTool('step')" class="btn-secondary" style="text-align:left; padding:10px 12px;">03 -> TESSELLATE ISO-10303 STEP TO STL</button>
-          <button onclick="switchTool('resin')" class="btn-secondary" style="text-align:left; padding:10px 12px;">04 -> CALCULATE MSLA RESIN &amp; HOLLOW SAVINGS</button>
-          <button onclick="switchTool('spool')" class="btn-secondary" style="text-align:left; padding:10px 12px;">05 -> LOOKUP EMPTY SPOOL TARE WEIGHTS</button>
+          <a href="/3d-print-cost-calculator" class="btn-secondary route-link">01B -&gt; MANUAL 3D PRINT COST &amp; MARGIN CALCULATOR</a>
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; AUDIT &amp; SEAL NON-MANIFOLD STL HOLES</a>
+          <a href="/step-to-stl-converter" class="btn-secondary route-link">03 -&gt; TESSELLATE ISO-10303 STEP TO STL</a>
+          <a href="/resin-3d-print-cost-calculator" class="btn-secondary route-link">04 -&gt; CALCULATE MSLA RESIN &amp; HOLLOW SAVINGS</a>
+          <a href="/filament-spool-weight-calculator" class="btn-secondary route-link">05 -&gt; LOOKUP EMPTY SPOOL TARE WEIGHTS</a>
         </div>
       </div>
     </section>

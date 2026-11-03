@@ -1,38 +1,60 @@
 import './style.css';
-import { spoolRemaining } from './core/spool';
+import channelsData from './data/channels.json';
+import {
+  formatCurrency,
+  formatDurationHours,
+  parseStrictNumber,
+} from './core/format';
+import { calculatePrintCost } from './core/cost';
+import { parseGcode, ToolpathPoint } from './core/gcode';
+import { calculateResinCost, calculateResinTime } from './core/resin';
+import {
+  spoolRemaining,
+  gramsToMeters,
+  metersToGrams,
+  willPrintFinish,
+} from './core/spool';
 
-// =========================================================================
-// THEME & TAB ROUTER
-// =========================================================================
-type ToolKey = 'gcode' | 'stl' | 'step' | 'resin' | 'spool';
+function maybeEl<T extends HTMLElement = HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null;
+}
 
 function getEl<T extends HTMLElement = HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 
+// =========================================================================
+// THEME MANAGEMENT
+// =========================================================================
+function applyTheme(theme: 'light' | 'dark'): void {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = maybeEl('themeToggle');
+  if (btn) {
+    btn.textContent = theme === 'dark' ? 'THEME: CAD [DARK]' : 'THEME: PAPER [LIGHT]';
+  }
+}
+
 function toggleTheme(): void {
-  const root = document.documentElement;
-  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  root.setAttribute('data-theme', next);
-  getEl('themeToggle').textContent = next === 'dark' ? 'THEME: CAD [DARK]' : 'THEME: PAPER [LIGHT]';
+  const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  try {
+    localStorage.setItem('meshkit-theme', next);
+  } catch {
+    // ignore storage errors
+  }
+  applyTheme(next);
 }
 
-const toolMeta: Record<ToolKey, { title: string; tag: string }> = {
-  gcode: { title: 'G-Code Kinematic Time & Unit Costing Ledger', tag: 'PARSER: ISO-6983 / REPRAP / BAMBU' },
-  stl:   { title: 'Watertight STL Topology Audit & Hole Solver', tag: 'SOLVER: MANIFOLD EDGE & NORMAL UNIFICATION' },
-  step:  { title: 'ISO-10303 STEP to Triangulated STL Tessellator', tag: 'KERNEL: NURBS CHORDAL DEFLECTION' },
-  resin: { title: 'SLA / MSLA Photopolymer Volume & Hollowing Ledger', tag: 'PROCESS: 405nm MONO LCD EXPOSURE' },
-  spool: { title: 'Empty Filament Spool Tare Weight & Length Reference', tag: 'DATABASE: VERIFIED DRY SPOOL MASS' }
-};
-
-function switchTool(key: ToolKey): void {
-  document.querySelectorAll('.tool-panel').forEach(p => p.classList.add('hidden'));
-  getEl(`panel-${key}`).classList.remove('hidden');
-  document.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === key));
-  getEl('toolTitle').textContent = toolMeta[key].title;
-  getEl('toolSpecTag').textContent = toolMeta[key].tag;
-  if (key === 'stl') drawStlMesh(false);
+try {
+  const savedTheme = localStorage.getItem('meshkit-theme');
+  if (savedTheme === 'dark' || savedTheme === 'light') {
+    applyTheme(savedTheme);
+  }
+} catch {
+  // ignore
 }
+
+maybeEl('themeToggle')?.addEventListener('click', toggleTheme);
 
 function downloadTextFile(filename: string, content: string): void {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -44,23 +66,30 @@ function downloadTextFile(filename: string, content: string): void {
   a.remove();
 }
 
-// Universal Dropzone Wiring Helper (Fixes click popup & drag-and-drop)
 function wireDropzone(
   dropzoneId: string,
   fileInputId: string,
   browseBtnId: string,
   onFileSelected: (file: File) => void
 ): void {
-  const zone = getEl(dropzoneId);
-  const input = getEl<HTMLInputElement>(fileInputId);
-  const browseBtn = getEl<HTMLButtonElement>(browseBtnId);
+  const zone = maybeEl(dropzoneId);
+  const input = maybeEl<HTMLInputElement>(fileInputId);
+  const browseBtn = maybeEl<HTMLButtonElement>(browseBtnId);
+  if (!zone || !input || !browseBtn) return;
 
-  // Clicking the dropzone background or Browse button triggers native file dialog
   zone.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.tagName === 'BUTTON' && target.id !== browseBtnId) return;
-    input.value = ''; // allow re-selecting same file
+    input.value = '';
     input.click();
+  });
+
+  zone.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      input.value = '';
+      input.click();
+    }
   });
 
   browseBtn.addEventListener('click', (e: MouseEvent) => {
@@ -91,498 +120,810 @@ function wireDropzone(
 }
 
 // =========================================================================
-// TOOL 01: G-CODE PARSER, REAL FILE UPLOAD & TEST FILE GENERATOR
+// TOOL 01: G-CODE TIME & COST / MANUAL 3D PRINT COST CALCULATOR
 // =========================================================================
-interface LayerPoint {
-  x: number;
-  y: number;
-  z: number;
-}
+let activeToolpathLayers: ToolpathPoint[][] = [];
+let activeBounds: {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  minZ: number;
+  maxZ: number;
+} | null = null;
 
-let currentLayers: LayerPoint[][] = [];
-
-function generateSampleToolpath(totalLayers = 110): LayerPoint[][] {
-  const layers: LayerPoint[][] = [];
-  for (let l = 0; l < totalLayers; l++) {
-    const z = l / totalLayers;
-    const pts: LayerPoint[] = [];
-    const rx = 60 + z * 18 - (z > 0.45 ? (z - 0.45) * 45 : 0);
-    const ry = 30 + z * 8 - (z > 0.45 ? (z - 0.45) * 18 : 0);
-    for (let i = 0; i <= 40; i++) {
-      const a = (i / 40) * Math.PI * 2;
-      pts.push({ x: Math.cos(a) * rx, y: Math.sin(a) * ry, z: l * 0.95 });
-    }
-    layers.push(pts);
-  }
-  return layers;
-}
-
-function renderToolpath(maxPct = 100): void {
-  const canvas = getEl<HTMLCanvasElement>('gcodeCanvas');
+function renderRealToolpath(maxPct = 100): void {
+  const canvas = maybeEl<HTMLCanvasElement>('gcodeCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Subtle background grid
   ctx.strokeStyle = '#262624';
   ctx.lineWidth = 1;
-  for (let i = -6; i <= 6; i++) {
+  for (let x = 40; x < canvas.width; x += 40) {
     ctx.beginPath();
-    ctx.moveTo(canvas.width / 2 + i * 38 - 100, canvas.height - 20);
-    ctx.lineTo(canvas.width / 2 + i * 38 + 100, 30);
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 30; y < canvas.height; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
     ctx.stroke();
   }
 
-  const limit = Math.max(1, Math.floor(currentLayers.length * (maxPct / 100)));
-  for (let l = 0; l < limit; l++) {
-    const pts = currentLayers[l];
-    if (!pts || pts.length < 2) continue;
-    ctx.strokeStyle = l === limit - 1 ? '#FF5C1A' : 'rgba(235, 233, 225, 0.58)';
-    ctx.lineWidth = l === limit - 1 ? 2.0 : 1.05;
-    ctx.beginPath();
-    pts.forEach((p, idx) => {
-      const x = canvas.width / 2 + (p.x - p.y) * 1.2;
-      const y = canvas.height - 38 + (p.x + p.y) * 0.42 - p.z * 0.95;
-      if (idx === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-  }
-}
-
-function parseRealGcodeBuffer(text: string, filename: string): void {
-  const lines = text.split(/\r?\n/);
-  let moveCount = 0;
-  let layerCount = 0;
-  let parsedGrams: number | null = null;
-  let parsedHours: number | null = null;
-  const extractedLayers: LayerPoint[][] = [];
-  let currentLayerPts: LayerPoint[] = [];
-  let curZ = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.startsWith('G1 ') || line.startsWith('G0 ')) {
-      moveCount++;
-      const xm = line.match(/X([-\d.]+)/);
-      const ym = line.match(/Y([-\d.]+)/);
-      const zm = line.match(/Z([-\d.]+)/);
-      if (zm) {
-        curZ = parseFloat(zm[1]);
-        if (currentLayerPts.length > 1) extractedLayers.push(currentLayerPts);
-        currentLayerPts = [];
-      }
-      if (xm && ym && currentLayerPts.length < 120) {
-        currentLayerPts.push({
-          x: (parseFloat(xm[1]) - 100) * 0.9,
-          y: (parseFloat(ym[1]) - 100) * 0.9,
-          z: curZ * 3.2
-        });
-      }
-    }
-    if (line.includes(';LAYER:') || line.includes('; CHANGE_LAYER')) layerCount++;
-    if (line.includes('filament used [g]')) {
-      const m = line.match(/=\s*([\d.]+)/);
-      if (m) parsedGrams = parseFloat(m[1]);
-    }
-    if (line.includes(';TIME:')) {
-      const secs = parseInt(line.replace(';TIME:', '').trim(), 10);
-      if (!isNaN(secs)) parsedHours = +(secs / 3600).toFixed(2);
-    }
-    if (line.includes('estimated printing time')) {
-      const h = line.match(/(\d+)h/);
-      const m = line.match(/(\d+)m/);
-      const hrs = (h ? parseInt(h[1], 10) : 0) + (m ? parseInt(m[1], 10) / 60 : 0);
-      if (hrs > 0) parsedHours = +hrs.toFixed(2);
-    }
-  }
-  if (currentLayerPts.length > 1) extractedLayers.push(currentLayerPts);
-
-  if (!parsedGrams) parsedGrams = +(Math.max(12.4, moveCount * 0.045)).toFixed(1);
-  if (!parsedHours) parsedHours = +(Math.max(0.8, moveCount * 0.0025)).toFixed(2);
-  if (layerCount === 0) layerCount = Math.max(extractedLayers.length, 48);
-
-  getEl<HTMLInputElement>('filamentGrams').value = String(parsedGrams);
-  getEl<HTMLInputElement>('printHours').value = String(parsedHours);
-  getEl('layerCountLabel').textContent = layerCount.toLocaleString();
-  getEl('moveCountLabel').textContent = moveCount.toLocaleString();
-  getEl('gcodeStatusTitle').textContent = `FILE LOADED: ${filename}`;
-  getEl('gcodeStatusSub').textContent = `Parsed ${moveCount.toLocaleString()} G0/G1 blocks across ${layerCount} Z-layers.`;
-  getEl('gcodeParseState').textContent = 'PARSED OK';
-
-  currentLayers = extractedLayers.length >= 5 ? extractedLayers : generateSampleToolpath(90);
-  getEl<HTMLInputElement>('layerSlider').value = '100';
-  getEl('layerPctLabel').textContent = '100%';
-  renderToolpath(100);
-  calcGcodePricing();
-}
-
-wireDropzone('gcodeDropzone', 'gcodeFileInput', 'gcodeBrowseBtn', (file) => {
-  const reader = new FileReader();
-  reader.onload = (ev) => parseRealGcodeBuffer(String(ev.target?.result ?? ''), file.name);
-  reader.readAsText(file);
-});
-
-// Generate & download a real, valid multi-layer .gcode test file
-getEl('downloadTestGcodeBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  let gcode = `; generated by OrcaSlicer 2.2.0\n; filament used [g] = 64.2\n; estimated printing time (normal mode) = 2h 45m\n;TIME:9900\nG21 ; metric values\nG90 ; absolute positioning\nM82 ; extruder absolute\n`;
-  for (let layer = 0; layer < 45; layer++) {
-    const z = (0.2 + layer * 0.2).toFixed(2);
-    gcode += `;LAYER:${layer}\nG0 F6000 Z${z}\n`;
-    const radius = 38 - (layer > 25 ? (layer - 25) * 0.8 : 0);
-    for (let step = 0; step <= 28; step++) {
-      const ang = (step / 28) * Math.PI * 2;
-      const x = (100 + Math.cos(ang) * radius).toFixed(2);
-      const y = (100 + Math.sin(ang) * (radius * 0.65)).toFixed(2);
-      const e = (layer * 12 + step * 0.4).toFixed(3);
-      gcode += `G1 F2400 X${x} Y${y} E${e}\n`;
-    }
-  }
-  gcode += `M104 S0\nM140 S0\nM84\n`;
-  downloadTextFile('Sample_Enclosure_Bracket.gcode', gcode);
-});
-
-function calcGcodePricing(): void {
-  const grams = parseFloat(getEl<HTMLInputElement>('filamentGrams').value) || 0;
-  const hrs = (parseFloat(getEl<HTMLInputElement>('printHours').value) || 0) * 1.085;
-  const spool = parseFloat(getEl<HTMLInputElement>('spoolCost').value) || 22;
-  const watts = parseFloat(getEl<HTMLInputElement>('printerWatts').value) || 150;
-  const feeRate = parseFloat(getEl<HTMLSelectElement>('marketplaceFee').value) || 0;
-  const markup = parseFloat(getEl<HTMLSelectElement>('markupMult').value) || 3.5;
-
-  const matCost = (grams / 1000) * spool;
-  const overhead = ((watts / 1000) * hrs * 0.16 + hrs * 0.15) * 1.07;
-  const unitCost = matCost + overhead;
-  const fixedFee = feeRate > 0 ? 0.35 : 0;
-  const price = (unitCost * markup + fixedFee) / (1 - feeRate);
-  const profit = price - unitCost - (price * feeRate + fixedFee);
-
-  getEl('outTrueTime').textContent = `${Math.floor(hrs)}h ${String(Math.round((hrs % 1) * 60)).padStart(2, '0')}m`;
-  getEl('outMaterialCost').textContent = `$${matCost.toFixed(2)}`;
-  getEl('outMeters').textContent = `${(grams / 2.98).toFixed(1)}m @ 1.75mm`;
-  getEl('outOverheadCost').textContent = `$${overhead.toFixed(2)}`;
-  getEl('outUnitCost').textContent = `$${unitCost.toFixed(2)}`;
-  getEl('outSellingPrice').textContent = `$${price.toFixed(2)}`;
-  getEl('outNetProfit').textContent = `NET MARGIN: $${profit.toFixed(2)} (${Math.round((profit / price) * 100)}%)`;
-}
-
-['filamentGrams', 'printHours', 'spoolCost', 'printerWatts', 'marketplaceFee', 'markupMult'].forEach(id => {
-  getEl(id).addEventListener('input', calcGcodePricing);
-});
-getEl<HTMLInputElement>('layerSlider').addEventListener('input', e => {
-  const val = (e.target as HTMLInputElement).value;
-  getEl('layerPctLabel').textContent = `${val}%`;
-  renderToolpath(parseInt(val, 10));
-});
-getEl('gcodeSampleBtn').addEventListener('click', e => {
-  e.stopPropagation();
-  currentLayers = generateSampleToolpath(110);
-  renderToolpath(100);
-  getEl<HTMLInputElement>('filamentGrams').value = '42.8';
-  getEl<HTMLInputElement>('printHours').value = '2.3';
-  getEl('gcodeStatusTitle').textContent = 'DEMO BUFFER: 3DBenchy_PLA.gcode [14,250 BLOCKS]';
-  calcGcodePricing();
-});
-
-// =========================================================================
-// TOOL 02: STL MESH REPAIR, REAL FILE UPLOAD & DEFECTIVE STL GENERATOR
-// =========================================================================
-function drawStlMesh(repaired = false): void {
-  const c = getEl<HTMLCanvasElement>('stlCanvas');
-  const ctx = c.getContext('2d');
-  if (!ctx) return;
-  ctx.clearRect(0, 0, c.width, c.height);
-  ctx.strokeStyle = repaired ? '#34D399' : '#D4D3CD';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 20; i++) {
-    const a = (i / 20) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(c.width / 2, 32);
-    ctx.lineTo(c.width / 2 + Math.cos(a) * 155, 175 + Math.sin(a) * 32);
-    ctx.lineTo(c.width / 2 + Math.cos(a + 0.31) * 155, 175 + Math.sin(a + 0.31) * 32);
-    ctx.closePath();
-    ctx.stroke();
-  }
-  if (!repaired) {
-    ctx.strokeStyle = '#FF5C1A';
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(c.width / 2 - 30, 95, 60, 34);
-  }
-}
-
-wireDropzone('stlDropzone', 'stlFileInput', 'stlBrowseBtn', (file) => {
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const buffer = ev.target?.result as ArrayBuffer;
-    if (!buffer) return;
-    const text = new TextDecoder().decode(buffer.slice(0, 2000));
-    let triCount = 0;
-    let openHoles = 2;
-    let flipped = 1;
-
-    if (text.trim().startsWith('solid')) {
-      const fullText = new TextDecoder().decode(buffer);
-      const matches = fullText.match(/facet normal/g);
-      triCount = matches ? matches.length : 12;
-      openHoles = fullText.includes('DEFECT_OPEN_EDGE') ? 4 : 2;
-      flipped = fullText.includes('DEFECT_INVERTED_NORMAL') ? 3 : 1;
-    } else if (buffer.byteLength > 84) {
-      triCount = new DataView(buffer).getUint32(80, true);
-    }
-
-    const volCm3 = Math.max(4.2, (triCount * 0.0018)).toFixed(1);
-    getEl('stlFileName').textContent = `FILE LOADED: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-    getEl('stlFileSub').textContent = `Audited ${triCount.toLocaleString()} facets in local memory buffer.`;
-    getEl('stlTris').textContent = triCount.toLocaleString();
-    getEl('stlHoles').textContent = String(openHoles);
-    getEl('stlNormals').textContent = String(flipped);
-    getEl('stlVolume').textContent = `${volCm3} cm³`;
-    getEl('stlStatusBadge').textContent = `STATUS: ${openHoles + flipped} TOPOLOGY DEFECTS FOUND`;
-    getEl('stlStatusBadge').style.color = '#FBBF24';
-    getEl('stlRepairLog').textContent = `Detected ${openHoles} unclosed boundary edges and ${flipped} inverted normals in ${file.name}.`;
-    drawStlMesh(false);
-  };
-  reader.readAsArrayBuffer(file);
-});
-
-// Generate & download a real defective ASCII .STL (open top face + inverted normal)
-getEl('downloadTestStlBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const defectiveStl = `solid Defective_Motor_Mount_DEFECT_OPEN_EDGE_DEFECT_INVERTED_NORMAL
-  facet normal 0 0 -1
-    outer loop
-      vertex 0 0 0
-      vertex 20 20 0
-      vertex 20 0 0
-    endloop
-  endfacet
-  facet normal 0 0 -1
-    outer loop
-      vertex 0 0 0
-      vertex 0 20 0
-      vertex 20 20 0
-    endloop
-  endfacet
-  facet normal 0 -1 0
-    outer loop
-      vertex 0 0 0
-      vertex 20 0 0
-      vertex 20 0 15
-    endloop
-  endfacet
-  facet normal 0 1 0
-    outer loop
-      vertex 0 0 0
-      vertex 20 0 15
-      vertex 0 0 15
-    endloop
-  endfacet
-  facet normal 1 0 0
-    outer loop
-      vertex 20 0 0
-      vertex 20 20 0
-      vertex 20 20 15
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex 0 0 0
-      vertex 0 20 15
-      vertex 0 20 0
-    endloop
-  endfacet
-endsolid Defective_Motor_Mount_DEFECT_OPEN_EDGE_DEFECT_INVERTED_NORMAL
-`;
-  downloadTextFile('Defective_Motor_Mount.stl', defectiveStl);
-});
-
-getEl('stlSampleBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  getEl('stlFileName').textContent = 'DEMO LOADED: Motor_Mount_Defective.stl';
-  getEl('stlTris').textContent = '24,680';
-  getEl('stlHoles').textContent = '9';
-  getEl('stlNormals').textContent = '5';
-  getEl('stlStatusBadge').textContent = 'STATUS: 14 TOPOLOGY DEFECTS FOUND';
-  getEl('stlStatusBadge').style.color = '#FBBF24';
-  drawStlMesh(false);
-});
-
-getEl('runStlRepairBtn').addEventListener('click', () => {
-  const currentTris = parseInt((getEl('stlTris').textContent ?? '').replace(/,/g, ''), 10) || 10;
-  const openHoles = parseInt(getEl('stlHoles').textContent ?? '', 10) || 2;
-  getEl('stlHoles').textContent = '0';
-  getEl('stlNormals').textContent = '0';
-  getEl('stlTris').textContent = (currentTris + openHoles * 2).toLocaleString();
-  getEl('stlStatusBadge').textContent = 'STATUS: MANIFOLD VERIFIED (0 DEFECTS)';
-  getEl('stlStatusBadge').style.color = '#34D399';
-  getEl('stlRepairLog').textContent = `SOLVER OK: Bridged ${openHoles} boundary loops (+${openHoles * 2} facets) and unified normals.`;
-  drawStlMesh(true);
-});
-
-getEl('downloadRepairedStlBtn').addEventListener('click', () => {
-  const stl = `solid meshkit_watertight\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 20 0 0\nvertex 0 20 0\nendloop\nendfacet\nendsolid meshkit_watertight\n`;
-  downloadTextFile('Motor_Mount_Watertight_Fixed.stl', stl);
-});
-
-// =========================================================================
-// TOOL 03: STEP TO STL, REAL FILE UPLOAD & ISO-10303 GENERATOR
-// =========================================================================
-wireDropzone('stepDropzone', 'stepFileInput', 'stepBrowseBtn', (file) => {
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const text = String(ev.target?.result ?? '');
-    const faces = (text.match(/ADVANCED_FACE/g) || []).length || 18;
-    const edges = (text.match(/EDGE_CURVE/g) || []).length || 48;
-    const pts   = (text.match(/CARTESIAN_POINT/g) || []).length || 96;
-    const estTris = faces * 420;
-
-    getEl('stepFileName').textContent = `FILE LOADED: ${file.name}`;
-    getEl('stepFileSub').textContent = `Parsed ${faces} ADVANCED_FACE and ${edges} EDGE_CURVE entities.`;
-    getEl('stepTriOut').textContent = estTris.toLocaleString();
-    getEl('stepFileSize').textContent = `${((estTris * 50) / (1024 * 1024)).toFixed(2)} MB`;
-    getEl('stepLogBox').innerHTML = `
-      <div style="color:#FF5C1A; margin-bottom:8px;">// ISO-10303-21 STEP PARSER LOG (${file.name})</div>
-      <div>[00.01s] FILE_SCHEMA: AP214 MECHANICAL CAD EXCHANGE</div>
-      <div>[00.03s] ENTITIES: ${faces} ADVANCED_FACE | ${edges} EDGE_CURVE | ${pts} CARTESIAN_POINT</div>
-      <div>[00.07s] TESSELLATION: GENERATED ${estTris.toLocaleString()} DELAUNAY TRIANGLES</div>
-    `;
-  };
-  reader.readAsText(file);
-});
-
-// Generate & download a real ISO-10303-21 .STEP file
-getEl('downloadTestStepBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const stepContent = `ISO-10303-21;
-HEADER;
-FILE_DESCRIPTION(('MeshKit Test B-Rep Solid Housing'),'2;1');
-FILE_NAME('Planetary_Gear_Housing.step','2026-11-01T12:00:00',('MeshKit'),('MeshKit CAD'),'','','');
-FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));
-ENDSEC;
-DATA;
-#10=MANIFOLD_SOLID_BREP('Gear_Housing',#20);
-#20=CLOSED_SHELL('',(#30,#31,#32,#33,#34,#35,#36,#37,#38,#39,#40,#41));
-#30=ADVANCED_FACE('',(#50),#100,.T.);
-#31=ADVANCED_FACE('',(#51),#101,.T.);
-#32=ADVANCED_FACE('',(#52),#102,.T.);
-#33=ADVANCED_FACE('',(#53),#103,.T.);
-#34=ADVANCED_FACE('',(#54),#104,.T.);
-#35=ADVANCED_FACE('',(#55),#105,.T.);
-#36=ADVANCED_FACE('',(#56),#106,.T.);
-#37=ADVANCED_FACE('',(#57),#107,.T.);
-#38=ADVANCED_FACE('',(#58),#108,.T.);
-#39=ADVANCED_FACE('',(#59),#109,.T.);
-#40=ADVANCED_FACE('',(#60),#110,.T.);
-#41=ADVANCED_FACE('',(#61),#111,.T.);
-#70=EDGE_CURVE('',#80,#81,#90,.T.);
-#71=EDGE_CURVE('',#81,#82,#91,.T.);
-#72=EDGE_CURVE('',#82,#83,#92,.T.);
-#73=EDGE_CURVE('',#83,#80,#93,.T.);
-#80=CARTESIAN_POINT('',(0.0,0.0,0.0));
-#81=CARTESIAN_POINT('',(84.0,0.0,0.0));
-#82=CARTESIAN_POINT('',(84.0,62.0,0.0));
-#83=CARTESIAN_POINT('',(0.0,62.0,45.0));
-ENDSEC;
-END-ISO-10303-21;
-`;
-  downloadTextFile('Planetary_Gear_Housing.step', stepContent);
-});
-
-getEl<HTMLInputElement>('stepTolSlider').addEventListener('input', e => {
-  const v = parseInt((e.target as HTMLInputElement).value, 10);
-  const map: Record<number, { label: string; tris: string; size: string; chord: string }> = {
-    1: { label: '0.02 mm [FINE]', tris: '68,420', size: '3.42 MB', chord: '0.020 mm' },
-    2: { label: '0.08 mm [STD]',  tris: '24,110', size: '1.21 MB', chord: '0.080 mm' },
-    3: { label: '0.25 mm [DRAFT]',tris: '7,840',  size: '0.39 MB', chord: '0.250 mm' }
-  };
-  if (map[v]) {
-    getEl('stepTolLabel').textContent = map[v].label;
-    getEl('stepTriOut').textContent = map[v].tris;
-    getEl('stepFileSize').textContent = map[v].size;
-    getEl('stepChordVal').textContent = map[v].chord;
-  }
-});
-
-getEl('stepSampleBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  getEl('stepFileName').textContent = 'DEMO LOADED: Planetary_Carrier.step [AP214]';
-});
-
-getEl('downloadConvertedStlBtn').addEventListener('click', () => {
-  const stl = `solid step_mesh\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 84 0 0\nvertex 0 62 0\nendloop\nendfacet\nendsolid step_mesh\n`;
-  downloadTextFile('Planetary_Carrier_Tessellated.stl', stl);
-});
-
-// =========================================================================
-// TOOL 04 & 05: RESIN + SPOOL TARE CALCULATORS
-// =========================================================================
-function calcResin(): void {
-  const vol = parseFloat(getEl<HTMLInputElement>('resinVolMl').value) || 0;
-  const sup = parseFloat(getEl<HTMLInputElement>('resinSupportPct').value) || 0;
-  const hollow = parseFloat(getEl<HTMLSelectElement>('resinHollowMode').value) || 1;
-  const bottle = parseFloat(getEl<HTMLInputElement>('resinBottleCost').value) || 26;
-  const hMm = parseFloat(getEl<HTMLInputElement>('resinHeightMm').value) || 120;
-  const exp = parseFloat(getEl<HTMLInputElement>('resinExpSec').value) || 2.4;
-
-  const ml = vol * hollow * (1 + sup / 100);
-  const liqCost = (ml / 1000) * bottle;
-  const cons = 0.45 + ml * 0.0055;
-  const layers = Math.round(hMm / 0.05);
-  const hrs = (layers * (exp + 4.0)) / 3600;
-  const unit = liqCost + cons;
-
-  getEl('outResinMl').textContent = `${ml.toFixed(1)} mL`;
-  getEl('outResinLiquidCost').textContent = `$${liqCost.toFixed(2)}`;
-  getEl('outResinConsumables').textContent = `$${cons.toFixed(2)}`;
-  getEl('outResinTime').textContent = `${Math.floor(hrs)}h ${Math.round((hrs % 1) * 60)}m`;
-  getEl('outResinLayers').textContent = `${layers.toLocaleString()} Z-slices`;
-  getEl('outResinPrice').textContent = `$${(unit * 4).toFixed(2)} (Unit Cost: $${unit.toFixed(2)})`;
-}
-['resinVolMl', 'resinSupportPct', 'resinHollowMode', 'resinBottleCost', 'resinHeightMm', 'resinExpSec'].forEach(id => {
-  getEl(id).addEventListener('input', calcResin);
-});
-
-function calcSpool(): void {
-  const tare = parseFloat(getEl<HTMLSelectElement>('spoolBrandSelect').value);
-  const gross = parseFloat(getEl<HTMLInputElement>('grossScaleGrams').value);
-  const density = parseFloat(getEl<HTMLSelectElement>('spoolMaterialDensity').value);
-  const noteEl = getEl('spoolStatusNote');
-
-  const res = spoolRemaining(gross, tare, density, 1.75, 1000);
-  if (!res.ok) {
-    getEl('outSpoolTare').textContent = Number.isFinite(tare) ? `${tare} g` : '—';
-    getEl('outNetFilament').textContent = '—';
-    getEl('outSpoolPct').textContent = '—';
-    getEl('outRemainingMeters').textContent = '—';
-    getEl('outBenchyCount').textContent = '—';
-    noteEl.textContent = res.error;
-    noteEl.style.color = 'var(--status-warn)';
+  if (activeToolpathLayers.length === 0 || !activeBounds) {
+    ctx.fillStyle = '#9E9D97';
+    ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('No preview available — upload a .gcode file with XY moves', canvas.width / 2, canvas.height / 2);
     return;
   }
 
-  getEl('outSpoolTare').textContent = `${tare} g`;
-  getEl('outNetFilament').textContent = `${res.netG} g`;
-  getEl('outSpoolPct').textContent = `${res.pctLeft.toFixed(1)}% of 1kg`;
-  getEl('outRemainingMeters').textContent = `${res.meters.toFixed(1)} m`;
-  getEl('outBenchyCount').textContent = (res.netG / 43).toFixed(1);
+  const spanX = Math.max(1, activeBounds.maxX - activeBounds.minX);
+  const spanY = Math.max(1, activeBounds.maxY - activeBounds.minY);
+  const pad = 28;
+  const scale = Math.min((canvas.width - pad * 2) / spanX, (canvas.height - pad * 2) / spanY);
+  const offsetX = (canvas.width - spanX * scale) / 2;
+  const offsetY = (canvas.height - spanY * scale) / 2;
 
-  if (res.belowTare) {
-    noteEl.textContent = 'Scale weight is below the empty spool weight; check the brand or use custom tare.';
-    noteEl.style.color = 'var(--status-warn)';
-  } else {
-    noteEl.textContent = 'Tip: Cardboard spools can absorb 3–6g of ambient humidity before drying.';
-    noteEl.style.color = 'var(--text-muted)';
+  const limit = Math.max(1, Math.ceil(activeToolpathLayers.length * (maxPct / 100)));
+  for (let l = 0; l < limit; l++) {
+    const pts = activeToolpathLayers[l];
+    if (!pts || pts.length < 2) continue;
+    const isTopLayer = l === limit - 1;
+    ctx.strokeStyle = isTopLayer ? '#FF5C1A' : 'rgba(235, 233, 225, 0.45)';
+    ctx.lineWidth = isTopLayer ? 2.0 : 1.0;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const cx = offsetX + (p.x - activeBounds.minX) * scale;
+      const cy = canvas.height - (offsetY + (p.y - activeBounds.minY) * scale);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
   }
 }
-['spoolBrandSelect', 'grossScaleGrams', 'spoolMaterialDensity'].forEach(id => {
-  getEl(id).addEventListener('input', calcSpool);
-});
 
-// Initial boot
-currentLayers = generateSampleToolpath(110);
-renderToolpath(100);
-calcGcodePricing();
-calcResin();
-calcSpool();
+function initGcodeAndCostPage(): void {
+  if (!maybeEl('filamentGrams')) return;
 
-Object.assign(window, { switchTool, toggleTheme });
+  const matSelect = getEl<HTMLSelectElement>('gcodeMaterialSelect');
+  const customDensityWrap = getEl('gcodeCustomDensityWrap');
+  const channelSelect = getEl<HTMLSelectElement>('marketplaceFee');
+  const customFeeWrap = getEl('customChannelFeeWrap');
+  const customFixedWrap = getEl('customChannelFixedWrap');
+  const pricingModeSelect = getEl<HTMLSelectElement>('pricingModeSelect');
+  const markupSelectWrap = getEl('markupSelectWrap');
+  const markupSelect = getEl<HTMLSelectElement>('markupMult');
+  const customMarkupWrap = getEl('customMarkupWrap');
+  const targetMarginWrap = getEl('targetMarginWrap');
+  const banner = getEl('gcodeValidationBanner');
+
+  const verifiedEl = maybeEl('channelVerifiedNote');
+  if (verifiedEl) {
+    verifiedEl.textContent = `FEES VERIFIED: ${channelsData.lastVerified}`;
+  }
+
+  function syncVisibility(): void {
+    customDensityWrap.classList.toggle('hidden', matSelect.value !== 'custom');
+    const isCustomChannel = channelSelect.value === 'custom';
+    customFeeWrap.classList.toggle('hidden', !isCustomChannel);
+    customFixedWrap.classList.toggle('hidden', !isCustomChannel);
+
+    const isTargetMargin = pricingModeSelect.value === 'target_margin';
+    markupSelectWrap.classList.toggle('hidden', isTargetMargin);
+    targetMarginWrap.classList.toggle('hidden', !isTargetMargin);
+    customMarkupWrap.classList.toggle(
+      'hidden',
+      isTargetMargin || markupSelect.value !== 'custom'
+    );
+  }
+
+  function pauseOutputs(errorMsg: string): void {
+    banner.textContent = errorMsg;
+    banner.classList.remove('hidden');
+    getEl('outTrueTime').textContent = '—';
+    getEl('outMaterialCost').textContent = '—';
+    getEl('outMeters').textContent = '—';
+    getEl('outOverheadCost').textContent = '—';
+    getEl('outUnitCost').textContent = '—';
+    getEl('outSellingPrice').textContent = '—';
+    getEl('outNetProfit').textContent = 'NET PROFIT: —';
+  }
+
+  function getSelectedDensity(): number {
+    return matSelect.value === 'custom'
+      ? parseStrictNumber(getEl<HTMLInputElement>('gcodeCustomDensity').value)
+      : parseStrictNumber(matSelect.value);
+  }
+
+  function getSelectedDiameter(): number {
+    return parseStrictNumber(getEl<HTMLSelectElement>('gcodeDiameterSelect').value);
+  }
+
+  function recalculateCost(): void {
+    syncVisibility();
+
+    const grams = parseStrictNumber(getEl<HTMLInputElement>('filamentGrams').value);
+    const hours = parseStrictNumber(getEl<HTMLInputElement>('printHours').value);
+    const density = getSelectedDensity();
+    const diameter = getSelectedDiameter();
+    const pricePerKg = parseStrictNumber(getEl<HTMLInputElement>('spoolCost').value);
+    const watts = parseStrictNumber(getEl<HTMLInputElement>('printerWatts').value);
+    const electricityRatePerKwh = parseStrictNumber(getEl<HTMLInputElement>('electricityRate').value);
+    const wearRatePerHour = parseStrictNumber(getEl<HTMLInputElement>('wearRate').value);
+    const failurePct = parseStrictNumber(getEl<HTMLInputElement>('failurePct').value);
+    const timeCorrectionPct = parseStrictNumber(getEl<HTMLInputElement>('timeCorrectionPct').value);
+
+    if (!Number.isFinite(density) || density <= 0 || !Number.isFinite(diameter) || diameter <= 0) {
+      pauseOutputs('Enter a valid polymer density and filament diameter above zero.');
+      return;
+    }
+
+    let channelFeePct = 0;
+    let channelFixedFee = 0;
+    if (channelSelect.value === 'custom') {
+      channelFeePct = parseStrictNumber(getEl<HTMLInputElement>('customChannelPct').value);
+      channelFixedFee = parseStrictNumber(getEl<HTMLInputElement>('customChannelFixed').value);
+    } else {
+      const ch = channelsData.channels.find((c) => c.id === channelSelect.value);
+      if (ch) {
+        channelFeePct = ch.feePct;
+        channelFixedFee = ch.fixedFee;
+      }
+    }
+
+    const pricingMode = pricingModeSelect.value === 'target_margin' ? 'target_margin' : 'multiplier';
+    const markupMultiplier =
+      markupSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('customMarkupVal').value)
+        : parseStrictNumber(markupSelect.value);
+    const targetMarginPct = parseStrictNumber(getEl<HTMLInputElement>('targetMarginPct').value);
+
+    const res = calculatePrintCost({
+      grams,
+      hours,
+      pricePerKg,
+      watts,
+      electricityRatePerKwh,
+      wearRatePerHour,
+      failurePct,
+      channelFeePct,
+      channelFixedFee,
+      pricingMode,
+      markupMultiplier,
+      targetMarginPct,
+      timeCorrectionPct,
+    });
+
+    if (!res.ok) {
+      pauseOutputs(res.error);
+      return;
+    }
+
+    if (res.belowCostWarning) {
+      banner.textContent = 'Warning: Selling price is below unit cost.';
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+
+    const lenRes = gramsToMeters(grams, density, diameter);
+    const metersStr = lenRes.ok ? `${lenRes.meters.toFixed(1)}m @ ${diameter.toFixed(2)}mm` : '—';
+
+    getEl('outTrueTime').textContent = formatDurationHours(res.adjustedHours);
+    getEl('outMaterialCost').textContent = formatCurrency(res.materialCost);
+    getEl('outMeters').textContent = metersStr;
+    getEl('outOverheadCost').textContent = formatCurrency(res.overheadCost);
+    getEl('outOverheadSub').textContent = `$${electricityRatePerKwh.toFixed(2)}/kWh · $${wearRatePerHour.toFixed(2)}/h · ${failurePct}%`;
+    getEl('outUnitCost').textContent = formatCurrency(res.unitCost);
+    getEl('outSellingPrice').textContent = formatCurrency(res.sellingPrice);
+
+    const marginLabel = res.marginPct !== null ? `${res.marginPct}%` : '—';
+    getEl('outNetProfit').textContent = `NET PROFIT: ${formatCurrency(res.profit)} (${marginLabel})`;
+  }
+
+  function loadGcodeText(text: string, labelName: string): void {
+    const density = getSelectedDensity() || 1.24;
+    const diameter = getSelectedDiameter() || 1.75;
+    const parsed = parseGcode(text, { densityGPerCm3: density, diameterMm: diameter });
+
+    const statusTitle = maybeEl('gcodeStatusTitle');
+    const statusSub = maybeEl('gcodeStatusSub');
+    const parseState = maybeEl('gcodeParseState');
+
+    if (!parsed.ok) {
+      if (statusTitle) statusTitle.textContent = parsed.error;
+      if (parseState) {
+        parseState.textContent = 'ERROR';
+        parseState.style.color = 'var(--status-warn)';
+      }
+      return;
+    }
+
+    getEl<HTMLInputElement>('filamentGrams').value = parsed.filamentGrams.toFixed(1);
+    getEl<HTMLInputElement>('printHours').value = parsed.printHours.toFixed(2);
+
+    const layerLabel = maybeEl('layerCountLabel');
+    const moveLabel = maybeEl('moveCountLabel');
+    if (layerLabel) layerLabel.textContent = parsed.layerCount.toLocaleString();
+    if (moveLabel) moveLabel.textContent = parsed.moveCount.toLocaleString();
+
+    if (statusTitle) statusTitle.textContent = `FILE LOADED: ${labelName}`;
+    if (statusSub) {
+      statusSub.textContent = `Parsed ${parsed.moveCount.toLocaleString()} moves across ${parsed.layerCount.toLocaleString()} Z-layers (${parsed.filamentMm.toFixed(1)} mm E-axis).`;
+    }
+    if (parseState) {
+      parseState.textContent = 'PARSED OK';
+      parseState.style.color = 'var(--status-ok)';
+    }
+
+    const timeSub = maybeEl('outTimeSub');
+    if (timeSub) {
+      timeSub.textContent =
+        parsed.timeSource === 'slicer_header'
+          ? 'Slicer header time'
+          : 'Estimate (trapezoidal accel)';
+    }
+
+    activeToolpathLayers = parsed.layers;
+    activeBounds = parsed.bounds;
+    const slider = maybeEl<HTMLInputElement>('layerSlider');
+    const pctLabel = maybeEl('layerPctLabel');
+    if (slider) slider.value = '100';
+    if (pctLabel) pctLabel.textContent = '100%';
+    renderRealToolpath(100);
+    recalculateCost();
+  }
+
+  const inputIds = [
+    'filamentGrams',
+    'printHours',
+    'gcodeMaterialSelect',
+    'gcodeCustomDensity',
+    'gcodeDiameterSelect',
+    'spoolCost',
+    'printerWatts',
+    'electricityRate',
+    'wearRate',
+    'failurePct',
+    'timeCorrectionPct',
+    'marketplaceFee',
+    'customChannelPct',
+    'customChannelFixed',
+    'pricingModeSelect',
+    'markupMult',
+    'customMarkupVal',
+    'targetMarginPct',
+  ];
+
+  inputIds.forEach((id) => {
+    maybeEl(id)?.addEventListener('input', recalculateCost);
+    maybeEl(id)?.addEventListener('change', recalculateCost);
+  });
+
+  wireDropzone('gcodeDropzone', 'gcodeFileInput', 'gcodeBrowseBtn', (file) => {
+    if (file.size === 0) {
+      const titleEl = maybeEl('gcodeStatusTitle');
+      if (titleEl) titleEl.textContent = 'This file is empty (0 bytes). Please choose another file.';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => loadGcodeText(String(ev.target?.result ?? ''), file.name);
+    reader.readAsText(file);
+  });
+
+  maybeEl<HTMLInputElement>('layerSlider')?.addEventListener('input', (e) => {
+    const val = (e.target as HTMLInputElement).value;
+    const pctEl = maybeEl('layerPctLabel');
+    if (pctEl) pctEl.textContent = `${val}%`;
+    renderRealToolpath(parseInt(val, 10));
+  });
+
+  maybeEl('gcodeSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const resp = await fetch('/samples/enclosure-bracket.gcode');
+      if (resp.ok) {
+        const text = await resp.text();
+        loadGcodeText(text, 'enclosure-bracket.gcode');
+      }
+    } catch {
+      // ignore fetch errors offline
+    }
+  });
+
+  maybeEl('downloadTestGcodeBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const resp = await fetch('/samples/enclosure-bracket.gcode');
+      if (resp.ok) {
+        const text = await resp.text();
+        downloadTextFile('Sample_Enclosure_Bracket.gcode', text);
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  recalculateCost();
+  if (maybeEl('gcodeCanvas')) {
+    fetch('/samples/enclosure-bracket.gcode')
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((text) => {
+        if (text) {
+          const parsed = parseGcode(text);
+          if (parsed.ok) {
+            activeToolpathLayers = parsed.layers;
+            activeBounds = parsed.bounds;
+            const layerLabel = maybeEl('layerCountLabel');
+            const moveLabel = maybeEl('moveCountLabel');
+            if (layerLabel) layerLabel.textContent = parsed.layerCount.toLocaleString();
+            if (moveLabel) moveLabel.textContent = parsed.moveCount.toLocaleString();
+            renderRealToolpath(100);
+          }
+        }
+      })
+      .catch(() => renderRealToolpath(100));
+  }
+}
+
+// =========================================================================
+// TOOL 02B: STL VOLUME & WEIGHT CALCULATOR PAGE
+// =========================================================================
+function initStlVolumePage(): void {
+  if (!maybeEl('stlVolInputCm3')) return;
+
+  const matSelect = getEl<HTMLSelectElement>('stlVolMaterialSelect');
+  const customWrap = getEl('stlVolCustomDensityWrap');
+  const banner = getEl('stlVolValidationBanner');
+
+  function calc(): void {
+    customWrap.classList.toggle('hidden', matSelect.value !== 'custom');
+    const volCm3 = parseStrictNumber(getEl<HTMLInputElement>('stlVolInputCm3').value);
+    const infillPct = parseStrictNumber(getEl<HTMLInputElement>('stlVolInfillPct').value);
+    const density =
+      matSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('stlVolCustomDensity').value)
+        : parseStrictNumber(matSelect.value);
+    const diameter = parseStrictNumber(getEl<HTMLSelectElement>('stlVolDiameterSelect').value);
+
+    if (
+      !Number.isFinite(volCm3) ||
+      volCm3 < 0 ||
+      !Number.isFinite(infillPct) ||
+      infillPct <= 0 ||
+      infillPct > 100 ||
+      !Number.isFinite(density) ||
+      density <= 0 ||
+      !Number.isFinite(diameter) ||
+      diameter <= 0
+    ) {
+      banner.textContent = 'Enter valid positive numbers for volume, fill % (1–100%), and density.';
+      banner.classList.remove('hidden');
+      getEl('outStlVolCm3').textContent = '—';
+      getEl('outStlWeightG').textContent = '—';
+      getEl('outStlMeters').textContent = '—';
+      getEl('outStlSpoolPct').textContent = '—';
+      return;
+    }
+
+    banner.classList.add('hidden');
+    const effectiveVol = volCm3 * (infillPct / 100);
+    const weightG = effectiveVol * density;
+    const lenRes = gramsToMeters(weightG, density, diameter);
+
+    getEl('outStlVolCm3').textContent = `${effectiveVol.toFixed(1)} cm³`;
+    getEl('outStlWeightG').textContent = `${weightG.toFixed(1)} g`;
+    getEl('outStlDensitySub').textContent = `@ ${density.toFixed(2)} g/cm³`;
+    getEl('outStlMeters').textContent = lenRes.ok ? `${lenRes.meters.toFixed(1)} m` : '—';
+    getEl('outStlDiaSub').textContent = `${diameter.toFixed(2)} mm diameter`;
+    getEl('outStlSpoolPct').textContent = `${((weightG / 1000) * 100).toFixed(1)}%`;
+  }
+
+  ['stlVolInputCm3', 'stlVolInfillPct', 'stlVolMaterialSelect', 'stlVolCustomDensity', 'stlVolDiameterSelect'].forEach(
+    (id) => {
+      maybeEl(id)?.addEventListener('input', calc);
+      maybeEl(id)?.addEventListener('change', calc);
+    }
+  );
+
+  calc();
+}
+
+// =========================================================================
+// TOOL 02 & 03: STL REPAIR & STEP TO STL (WEEK 2 FULL WASM SOLVERS)
+// =========================================================================
+function initStlPage(): void {
+  if (!maybeEl('stlCanvas')) return;
+
+  function drawStlMesh(repaired = false): void {
+    const c = getEl<HTMLCanvasElement>('stlCanvas');
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.strokeStyle = repaired ? '#34D399' : '#D4D3CD';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 20; i++) {
+      const a = (i / 20) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(c.width / 2, 32);
+      ctx.lineTo(c.width / 2 + Math.cos(a) * 155, 175 + Math.sin(a) * 32);
+      ctx.lineTo(c.width / 2 + Math.cos(a + 0.31) * 155, 175 + Math.sin(a + 0.31) * 32);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  wireDropzone('stlDropzone', 'stlFileInput', 'stlBrowseBtn', (file) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const buffer = ev.target?.result as ArrayBuffer;
+      if (!buffer) return;
+      let triCount = 0;
+      if (buffer.byteLength >= 84) {
+        const expectedN = new DataView(buffer).getUint32(80, true);
+        if (buffer.byteLength === 84 + 50 * expectedN) {
+          triCount = expectedN;
+        } else {
+          const fullText = new TextDecoder().decode(buffer);
+          const matches = fullText.match(/facet normal/g);
+          triCount = matches ? matches.length : 0;
+        }
+      }
+      getEl('stlFileName').textContent = `FILE LOADED: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      getEl('stlTris').textContent = triCount.toLocaleString();
+      drawStlMesh(false);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  drawStlMesh(false);
+}
+
+function initStepPage(): void {
+  if (!maybeEl('stepTolPresetSelect')) return;
+
+  const presetSelect = getEl<HTMLSelectElement>('stepTolPresetSelect');
+  const customWrap = getEl('stepCustomTolWrap');
+  const customInput = getEl<HTMLInputElement>('stepCustomTolInput');
+  const formatSelect = getEl<HTMLSelectElement>('stepOutputFormatSelect');
+
+  function updateStepControls(): void {
+    const isCustom = presetSelect.value === 'custom';
+    customWrap.classList.toggle('hidden', !isCustom);
+    const tol = isCustom ? parseStrictNumber(customInput.value) : parseStrictNumber(presetSelect.value);
+    if (Number.isFinite(tol) && tol > 0) {
+      getEl('stepTolLabel').textContent = `${tol.toFixed(3)} mm`;
+      getEl('stepChordVal').textContent = `${tol.toFixed(3)} mm`;
+    } else {
+      getEl('stepTolLabel').textContent = '—';
+      getEl('stepChordVal').textContent = '—';
+    }
+    getEl('stepFormatSub').textContent = formatSelect.value === 'ascii' ? 'ASCII STL' : 'Binary STL';
+  }
+
+  ['stepTolPresetSelect', 'stepCustomTolInput', 'stepUnitsSelect', 'stepOutputFormatSelect'].forEach((id) => {
+    maybeEl(id)?.addEventListener('input', updateStepControls);
+    maybeEl(id)?.addEventListener('change', updateStepControls);
+  });
+
+  updateStepControls();
+}
+
+// =========================================================================
+// TOOL 04: SLA / MSLA RESIN CALCULATOR
+// =========================================================================
+function initResinPage(): void {
+  if (!maybeEl('resinVolMl')) return;
+
+  const hollowSelect = getEl<HTMLSelectElement>('resinHollowMode');
+  const customRetainedWrap = getEl('resinCustomRetainedWrap');
+  const layerSelect = getEl<HTMLSelectElement>('resinLayerHeightSelect');
+  const customLayerWrap = getEl('resinCustomLayerWrap');
+  const priceBasisSelect = getEl<HTMLSelectElement>('resinPriceBasis');
+  const banner = getEl('resinValidationBanner');
+
+  function calcResin(): void {
+    customRetainedWrap.classList.toggle('hidden', hollowSelect.value !== 'custom');
+    customLayerWrap.classList.toggle('hidden', layerSelect.value !== 'custom');
+
+    const basis = priceBasisSelect.value === 'per_kg' ? 'per_kg' : 'per_liter';
+    getEl('resinRateUnitTag').textContent = basis === 'per_kg' ? '[$/kg]' : '[$/L]';
+
+    const solidVolumeMl = parseStrictNumber(getEl<HTMLInputElement>('resinVolMl').value);
+    const supportPct = parseStrictNumber(getEl<HTMLInputElement>('resinSupportPct').value);
+    const retainedFraction =
+      hollowSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('resinCustomRetainedPct').value) / 100
+        : parseStrictNumber(hollowSelect.value);
+    const pricePerUnit = parseStrictNumber(getEl<HTMLInputElement>('resinBottleCost').value);
+    const densityGPerMl = parseStrictNumber(getEl<HTMLInputElement>('resinDensity').value);
+
+    const ipaPerPrint = parseStrictNumber(getEl<HTMLInputElement>('resinIpaCost').value);
+    const glovesPerPrint = parseStrictNumber(getEl<HTMLInputElement>('resinGlovesCost').value);
+    const fepCost = parseStrictNumber(getEl<HTMLInputElement>('resinFepCost').value);
+    const printsPerFep = parseStrictNumber(getEl<HTMLInputElement>('resinPrintsPerFep').value);
+    const lcdCost = parseStrictNumber(getEl<HTMLInputElement>('resinLcdCost').value);
+    const printsPerLcd = parseStrictNumber(getEl<HTMLInputElement>('resinPrintsPerLcd').value);
+
+    const heightMm = parseStrictNumber(getEl<HTMLInputElement>('resinHeightMm').value);
+    const layerHeightMm =
+      layerSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('resinCustomLayerMm').value)
+        : parseStrictNumber(layerSelect.value);
+    const exposureSec = parseStrictNumber(getEl<HTMLInputElement>('resinExpSec').value);
+    const liftRetractSec = parseStrictNumber(getEl<HTMLInputElement>('resinLiftSec').value);
+    const bottomLayers = parseStrictNumber(getEl<HTMLInputElement>('resinBottomLayers').value);
+    const bottomExposureSec = parseStrictNumber(getEl<HTMLInputElement>('resinBottomExpSec').value);
+    const markupMultiplier = parseStrictNumber(getEl<HTMLInputElement>('resinMarkup').value);
+
+    const costRes = calculateResinCost({
+      solidVolumeMl,
+      retainedFraction,
+      supportPct,
+      pricePerUnit,
+      priceBasis: basis,
+      densityGPerMl,
+      ipaPerPrint,
+      glovesPerPrint,
+      fepCost,
+      printsPerFep,
+      lcdCost,
+      printsPerLcd,
+      markupMultiplier,
+    });
+
+    const timeRes = calculateResinTime({
+      heightMm,
+      layerHeightMm,
+      exposureSec,
+      liftRetractSec,
+      bottomLayers,
+      bottomExposureSec,
+    });
+
+    if (!costRes.ok || !timeRes.ok) {
+      banner.textContent = !costRes.ok ? costRes.error : (!timeRes.ok ? timeRes.error : 'Invalid input.');
+      banner.classList.remove('hidden');
+      getEl('outResinMl').textContent = '—';
+      getEl('outResinLiquidCost').textContent = '—';
+      getEl('outResinConsumables').textContent = '—';
+      getEl('outResinTime').textContent = '—';
+      getEl('outResinLayers').textContent = '—';
+      getEl('outResinPrice').textContent = '—';
+      return;
+    }
+
+    banner.classList.add('hidden');
+    getEl('outResinMl').textContent = `${costRes.resinMl.toFixed(1)} mL`;
+    getEl('outResinGramsSub').textContent = `${costRes.resinGrams.toFixed(1)} g @ ${densityGPerMl.toFixed(2)} g/mL`;
+    getEl('outResinLiquidCost').textContent = formatCurrency(costRes.resinLiquidCost);
+    getEl('outResinConsumables').textContent = formatCurrency(costRes.consumablesCost);
+    getEl('outResinTime').textContent = timeRes.formattedTime;
+    getEl('outResinLayers').textContent = `${timeRes.layers.toLocaleString()} Z-slices`;
+    getEl('outResinQuoteLabel').textContent = `RECOMMENDED COMMERCIAL QUOTE (${markupMultiplier.toFixed(1)}x MARKUP)`;
+    getEl('outResinPrice').textContent = `${formatCurrency(costRes.recommendedQuote)} (Unit Cost: ${formatCurrency(costRes.unitCost)})`;
+  }
+
+  const ids = [
+    'resinVolMl',
+    'resinSupportPct',
+    'resinHollowMode',
+    'resinCustomRetainedPct',
+    'resinPriceBasis',
+    'resinBottleCost',
+    'resinDensity',
+    'resinIpaCost',
+    'resinGlovesCost',
+    'resinFepCost',
+    'resinPrintsPerFep',
+    'resinLcdCost',
+    'resinPrintsPerLcd',
+    'resinHeightMm',
+    'resinLayerHeightSelect',
+    'resinCustomLayerMm',
+    'resinExpSec',
+    'resinLiftSec',
+    'resinBottomLayers',
+    'resinBottomExpSec',
+    'resinMarkup',
+  ];
+
+  ids.forEach((id) => {
+    maybeEl(id)?.addEventListener('input', calcResin);
+    maybeEl(id)?.addEventListener('change', calcResin);
+  });
+
+  calcResin();
+}
+
+// =========================================================================
+// TOOL 05: SPOOL WEIGHT CALCULATOR, TARE DATABASE & GRAMS-TO-METERS
+// =========================================================================
+function initSpoolPage(): void {
+  if (!maybeEl('spoolBrandSelect')) return;
+
+  const brandSelect = getEl<HTMLSelectElement>('spoolBrandSelect');
+  const customTareWrap = getEl('customTareWrap');
+  const sizeSelect = getEl<HTMLSelectElement>('spoolSizeSelect');
+  const customSizeWrap = getEl('customSpoolSizeWrap');
+  const diaSelect = getEl<HTMLSelectElement>('spoolDiameterSelect');
+  const customDiaWrap = getEl('customSpoolDiameterWrap');
+  const densitySelect = getEl<HTMLSelectElement>('spoolMaterialDensity');
+  const customDensityWrap = getEl('customSpoolDensityWrap');
+
+  function calcSpool(): void {
+    customTareWrap.classList.toggle('hidden', brandSelect.value !== 'custom');
+    customSizeWrap.classList.toggle('hidden', sizeSelect.value !== 'custom');
+    customDiaWrap.classList.toggle('hidden', diaSelect.value !== 'custom');
+    customDensityWrap.classList.toggle('hidden', densitySelect.value !== 'custom');
+
+    const tare =
+      brandSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('customTareGrams').value)
+        : parseStrictNumber(brandSelect.value);
+    const gross = parseStrictNumber(getEl<HTMLInputElement>('grossScaleGrams').value);
+    const spoolSize =
+      sizeSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolSizeGrams').value)
+        : parseStrictNumber(sizeSelect.value);
+    const diameter =
+      diaSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDiameterMm').value)
+        : parseStrictNumber(diaSelect.value);
+    const density =
+      densitySelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDensityVal').value)
+        : parseStrictNumber(densitySelect.value);
+
+    const noteEl = getEl('spoolStatusNote');
+    const finishBadge = getEl('willItFinishBadge');
+
+    const res = spoolRemaining(gross, tare, density, diameter, spoolSize);
+    if (!res.ok) {
+      getEl('outSpoolTare').textContent = Number.isFinite(tare) && tare >= 0 ? `${tare} g` : '—';
+      getEl('outNetFilament').textContent = '—';
+      getEl('outSpoolPct').textContent = '—';
+      getEl('outRemainingMeters').textContent = '—';
+      getEl('outGramsPerMeter').textContent = '—';
+      finishBadge.textContent = '—';
+      noteEl.textContent = res.error;
+      noteEl.style.color = 'var(--status-warn)';
+      return;
+    }
+
+    const g2m = gramsToMeters(res.netG, density, diameter);
+    getEl('outSpoolTare').textContent = `${tare} g`;
+    getEl('outNetFilament').textContent = `${res.netG.toFixed(0)} g`;
+    getEl('outSpoolPct').textContent = `${res.pctLeft.toFixed(1)}% of ${spoolSize}g`;
+    getEl('outRemainingMeters').textContent = `${res.meters.toFixed(1)} m`;
+    getEl('outSpoolDiaSub').textContent = `${diameter.toFixed(2)}mm diameter`;
+    getEl('outGramsPerMeter').textContent = g2m.ok ? `${g2m.gramsPerMeter.toFixed(2)} g/m` : '—';
+
+    if (res.belowTare) {
+      noteEl.textContent = 'Scale weight is below the empty spool weight; check the brand or use custom tare.';
+      noteEl.style.color = 'var(--status-warn)';
+    } else if (res.overCapacity) {
+      noteEl.textContent = `Notice: Net filament (${res.netG.toFixed(0)} g) exceeds nominal spool size (${spoolSize} g); capped at 100%.`;
+      noteEl.style.color = 'var(--status-warn)';
+    } else {
+      noteEl.textContent = 'Tip: Cardboard spools can absorb 3–6g of ambient humidity before drying.';
+      noteEl.style.color = 'var(--text-muted)';
+    }
+
+    const reqG = parseStrictNumber(getEl<HTMLInputElement>('nextPrintGrams').value);
+    const fin = willPrintFinish(res.netG, reqG);
+    if (!fin.ok) {
+      finishBadge.textContent = '—';
+      finishBadge.style.color = 'var(--text-muted)';
+    } else if (fin.canFinish) {
+      finishBadge.textContent = `YES (+${fin.marginG.toFixed(1)} g margin)`;
+      finishBadge.style.color = 'var(--status-ok)';
+    } else {
+      finishBadge.textContent = `NO (short by ${Math.abs(fin.marginG).toFixed(1)} g)`;
+      finishBadge.style.color = 'var(--status-warn)';
+    }
+  }
+
+  const ids = [
+    'spoolBrandSelect',
+    'customTareGrams',
+    'grossScaleGrams',
+    'spoolSizeSelect',
+    'customSpoolSizeGrams',
+    'spoolDiameterSelect',
+    'customSpoolDiameterMm',
+    'spoolMaterialDensity',
+    'customSpoolDensityVal',
+    'nextPrintGrams',
+  ];
+
+  ids.forEach((id) => {
+    maybeEl(id)?.addEventListener('input', calcSpool);
+    maybeEl(id)?.addEventListener('change', calcSpool);
+  });
+
+  calcSpool();
+}
+
+function initSpoolDatabasePage(): void {
+  const searchInput = maybeEl<HTMLInputElement>('spoolDbSearch');
+  const table = maybeEl<HTMLTableElement>('spoolDbTable');
+  if (!searchInput || !table) return;
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach((row) => {
+      const text = (row.textContent ?? '').toLowerCase();
+      (row as HTMLElement).style.display = text.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+function initGramsMetersPage(): void {
+  if (!maybeEl('gmDirectionSelect')) return;
+
+  const dirSelect = getEl<HTMLSelectElement>('gmDirectionSelect');
+  const matSelect = getEl<HTMLSelectElement>('gmMaterialSelect');
+  const customWrap = getEl('gmCustomDensityWrap');
+  const banner = getEl('gmValidationBanner');
+
+  function calc(): void {
+    customWrap.classList.toggle('hidden', matSelect.value !== 'custom');
+    const isG2M = dirSelect.value === 'g2m';
+    getEl('gmInputLabel').textContent = isG2M ? 'Filament Weight' : 'Filament Length';
+    getEl('gmInputUnit').textContent = isG2M ? '[g]' : '[m]';
+
+    const val = parseStrictNumber(getEl<HTMLInputElement>('gmInputVal').value);
+    const density =
+      matSelect.value === 'custom'
+        ? parseStrictNumber(getEl<HTMLInputElement>('gmCustomDensity').value)
+        : parseStrictNumber(matSelect.value);
+    const diameter = parseStrictNumber(getEl<HTMLSelectElement>('gmDiameterSelect').value);
+
+    const res = isG2M ? gramsToMeters(val, density, diameter) : metersToGrams(val, density, diameter);
+    if (!res.ok) {
+      banner.textContent = res.error;
+      banner.classList.remove('hidden');
+      getEl('outGmGrams').textContent = '—';
+      getEl('outGmMeters').textContent = '—';
+      getEl('outGmLinear').textContent = '—';
+      getEl('outGmArea').textContent = '—';
+      return;
+    }
+
+    banner.classList.add('hidden');
+    const grams = isG2M ? val : (res as { ok: true; grams: number; gramsPerMeter: number }).grams;
+    const meters = isG2M ? (res as { ok: true; meters: number; gramsPerMeter: number }).meters : val;
+    const areaMm2 = Math.PI * Math.pow(diameter / 2, 2);
+
+    getEl('outGmGrams').textContent = `${grams.toFixed(1)} g`;
+    getEl('outGmMeters').textContent = `${meters.toFixed(1)} m`;
+    getEl('outGmLinear').textContent = `${res.gramsPerMeter.toFixed(2)} g/m`;
+    getEl('outGmArea').textContent = `${areaMm2.toFixed(2)} mm²`;
+  }
+
+  ['gmDirectionSelect', 'gmInputVal', 'gmMaterialSelect', 'gmCustomDensity', 'gmDiameterSelect'].forEach((id) => {
+    maybeEl(id)?.addEventListener('input', calc);
+    maybeEl(id)?.addEventListener('change', calc);
+  });
+
+  calc();
+}
+
+initGcodeAndCostPage();
+initStlVolumePage();
+initStlPage();
+initStepPage();
+initResinPage();
+initSpoolPage();
+initSpoolDatabasePage();
+initGramsMetersPage();

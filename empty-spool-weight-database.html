@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empty Filament Spool Weight Database — Tare Chart (g)</title>
+  <meta name="description" content="Reference table of empty filament spool weights (tare in grams) for Bambu Lab, Polymaker, Elegoo, Overture, Sunlu, eSUN, Prusament, Hatchbox, Jessie, and Inland." />
+  <link rel="canonical" href="https://meshkit.pro/empty-spool-weight-database" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="spool-db">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn active">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/filament-spool-weight-calculator">Spool Weight Calculator</a>
+      <a href="/empty-spool-weight-database" class="active">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title">Empty Filament Spool Weight Database (Tare Reference)</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span>NOTE: TYPICAL EMPTY SPOOL WEIGHTS; SPOOLS VARY BY PRODUCTION BATCH</span>
+        <span>UPDATED: 2026-11-01</span>
+      </div>
+    </div>
+
+    <section style="background:var(--bg-panel); border:1px solid var(--border-strong); padding:20px;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+        <div>
+          <label for="spoolDbSearch" class="field-label"><span>Filter Brand or Spool Material</span></label>
+          <input type="text" id="spoolDbSearch" placeholder="e.g. Bambu, Polymaker, Cardboard..." style="padding:7px 10px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-main); font-family:'IBM Plex Mono', monospace; width:280px;" />
+        </div>
+        <a href="/filament-spool-weight-calculator" class="btn-primary" style="text-decoration:none;">OPEN SPOOL CALCULATOR -&gt;</a>
+      </div>
+
+      <table class="tech-table mono" id="spoolDbTable">
+        <thead>
+          <tr>
+            <th>Brand and Spool</th>
+            <th>Spool Material</th>
+            <th>Typical Empty Tare (g)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Bambu Lab reusable spool</td><td>Plastic</td><td>250 g</td></tr>
+          <tr><td>Bambu Lab cardboard spool</td><td>Cardboard</td><td>132 g</td></tr>
+          <tr><td>Polymaker 1 kg</td><td>Cardboard</td><td>140 g</td></tr>
+          <tr><td>Elegoo 1 kg</td><td>Cardboard</td><td>132 g</td></tr>
+          <tr><td>Overture 1 kg</td><td>Cardboard</td><td>168 g</td></tr>
+          <tr><td>Sunlu 1 kg (black)</td><td>Plastic</td><td>195 g</td></tr>
+          <tr><td>Sunlu 1 kg (eco)</td><td>Cardboard</td><td>140 g</td></tr>
+          <tr><td>eSUN 1 kg</td><td>Plastic</td><td>225 g</td></tr>
+          <tr><td>Prusament 1 kg (hex)</td><td>Plastic</td><td>202 g</td></tr>
+          <tr><td>Hatchbox 1 kg</td><td>Plastic</td><td>238 g</td></tr>
+          <tr><td>Jessie Premium 1 kg</td><td>Plastic</td><td>240 g</td></tr>
+          <tr><td>Inland (Micro Center) 1 kg</td><td>Cardboard</td><td>130 g</td></tr>
+          <tr><td>Generic cardboard (fallback)</td><td>Cardboard</td><td>140 g</td></tr>
+          <tr><td>Generic plastic (fallback)</td><td>Plastic</td><td>220 g</td></tr>
+        </tbody>
+      </table>
+      <p class="field-hint" style="margin-top:12px;">
+        Disclaimer: Typical empty spool weights; spools vary by production batch and ambient humidity (cardboard spools can shift by 3–6 g). Weigh an empty spool of the same brand once for highest accuracy.
+      </p>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

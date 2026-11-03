@@ -1,0 +1,26 @@
+{
+  "lastVerified": "2026-11-01",
+  "note": "Typical polymer densities (g/cm³); check your filament manufacturer's technical datasheet.",
+  "materials": [
+    { "id": "pla", "name": "PLA", "density": 1.24 },
+    { "id": "petg", "name": "PETG", "density": 1.27 },
+    { "id": "abs", "name": "ABS", "density": 1.04 },
+    { "id": "asa", "name": "ASA", "density": 1.07 },
+    { "id": "tpu", "name": "TPU", "density": 1.21 },
+    { "id": "pc", "name": "PC (Polycarbonate)", "density": 1.20 },
+    { "id": "pa", "name": "Nylon / PA", "density": 1.14 },
+    { "id": "hips", "name": "HIPS", "density": 1.04 },
+    { "id": "pva", "name": "PVA", "density": 1.23 },
+    { "id": "cf", "name": "CF-Filled (typical datasheet)", "density": 1.29 }
+  ],
+  "diametersMm": [1.75, 2.85, 3.00],
+  "spoolSizesG": [
+    { "label": "250 g", "grams": 250 },
+    { "label": "500 g", "grams": 500 },
+    { "label": "750 g", "grams": 750 },
+    { "label": "1 kg (1,000 g)", "grams": 1000 },
+    { "label": "2 kg (2,000 g)", "grams": 2000 },
+    { "label": "3 kg (3,000 g)", "grams": 3000 },
+    { "label": "5 kg (5,000 g)", "grams": 5000 }
+  ]
+}

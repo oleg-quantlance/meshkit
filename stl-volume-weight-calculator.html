@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STL Weight Calculator Online &amp; Signed Volume Estimator</title>
+  <meta name="description" content="Calculate STL volume (cm³), surface area, bounding box, and part weight in grams across PLA, PETG, ABS, ASA, TPU, PC, and Nylon." />
+  <link rel="canonical" href="https://meshkit.pro/stl-volume-weight-calculator" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="stl-volume">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn active">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator">Manual 3D Print Cost Calculator</a>
+      <a href="/stl-repair-online">STL Repair Online</a>
+      <a href="/stl-volume-weight-calculator" class="active">STL Volume &amp; Weight</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title">STL Weight Calculator Online &amp; Polymer Mass Estimator</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span>SOLVER: SIGNED TETRAHEDRAL VOLUME × MATERIAL DENSITY</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER</span>
+      </div>
+    </div>
+
+    <section class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Volume &amp; Material Parameters</span>
+            <span>CALCULATOR</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="stlVolInputCm3"><span>Mesh Volume</span><span class="unit-tag">[cm³]</span></label>
+              <input type="number" id="stlVolInputCm3" value="38.4" step="0.1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="stlVolInfillPct"><span>Effective Fill</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="stlVolInfillPct" value="100" step="5" min="1" max="100" />
+            </div>
+            <div>
+              <label class="field-label" for="stlVolMaterialSelect"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <select id="stlVolMaterialSelect">
+                <option value="1.24" selected>PLA (1.24)</option>
+                <option value="1.27">PETG (1.27)</option>
+                <option value="1.04">ABS (1.04)</option>
+                <option value="1.07">ASA (1.07)</option>
+                <option value="1.21">TPU (1.21)</option>
+                <option value="1.20">PC (1.20)</option>
+                <option value="1.14">Nylon / PA (1.14)</option>
+                <option value="1.04">HIPS (1.04)</option>
+                <option value="1.23">PVA (1.23)</option>
+                <option value="1.29">CF-Filled (1.29)</option>
+                <option value="custom">Custom density...</option>
+              </select>
+            </div>
+            <div id="stlVolCustomDensityWrap" class="hidden">
+              <label class="field-label" for="stlVolCustomDensity"><span>Custom Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <input type="number" id="stlVolCustomDensity" value="1.24" step="0.01" min="0.1" />
+            </div>
+            <div>
+              <label class="field-label" for="stlVolDiameterSelect"><span>Filament Diameter</span><span class="unit-tag">[mm]</span></label>
+              <select id="stlVolDiameterSelect">
+                <option value="1.75" selected>1.75 mm</option>
+                <option value="2.85">2.85 mm</option>
+                <option value="3.00">3.00 mm</option>
+              </select>
+            </div>
+          </div>
+          <div id="stlVolValidationBanner" class="validation-banner hidden" role="alert"></div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Solid Volume</div>
+            <div class="kpi-val" id="outStlVolCm3">38.4 cm³</div>
+            <div class="kpi-sub">Displaced volume</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Part Weight</div>
+            <div class="kpi-val" id="outStlWeightG" style="color:var(--accent);">47.6 g</div>
+            <div class="kpi-sub" id="outStlDensitySub">@ 1.24 g/cm³</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Filament Length</div>
+            <div class="kpi-val" id="outStlMeters">16.0 m</div>
+            <div class="kpi-sub" id="outStlDiaSub">1.75 mm diameter</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">% of 1kg Spool</div>
+            <div class="kpi-val" id="outStlSpoolPct">4.8%</div>
+            <div class="kpi-sub">1,000 g nominal</div>
+          </div>
+        </div>
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);">Need to inspect or repair an STL file first? Use <a href="/stl-repair-online">STL Repair Online</a>.</span>
+          <a href="/3d-print-cost-calculator" class="btn-primary" style="text-decoration:none;">PRICE THIS PART -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

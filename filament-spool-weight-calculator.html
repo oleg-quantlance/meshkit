@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Much Filament Is Left on Spool — Weight Calculator</title>
+  <meta name="description" content="Calculate how much 3D printer filament is left on a spool in grams and meters by subtracting empty spool tare weight for Bambu Lab, Polymaker, Elegoo, Prusament, Sunlu, eSUN, and Overture." />
+  <link rel="canonical" href="https://meshkit.pro/filament-spool-weight-calculator" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="spool">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn active">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/filament-spool-weight-calculator" class="active">Spool Weight Calculator</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Filament Spool Weight Calculator — How Much Filament Is Left?</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">REFERENCE: 14 BRAND PRESETS + CUSTOM TARE</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER</span>
+      </div>
+    </div>
+
+    <section id="panel-spool" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head"><span>A. Spool Scale Tare Subtraction</span></div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label class="field-label" for="spoolBrandSelect"><span>Manufacturer Spool Type</span><span class="unit-tag">[tare g]</span></label>
+              <select id="spoolBrandSelect">
+                <option value="250" selected>Bambu Lab reusable spool (Plastic) — 250 g</option>
+                <option value="132">Bambu Lab cardboard spool (Cardboard) — 132 g</option>
+                <option value="140">Polymaker 1 kg (Cardboard) — 140 g</option>
+                <option value="132">Elegoo 1 kg (Cardboard) — 132 g</option>
+                <option value="168">Overture 1 kg (Cardboard) — 168 g</option>
+                <option value="195">Sunlu 1 kg black (Plastic) — 195 g</option>
+                <option value="140">Sunlu 1 kg eco (Cardboard) — 140 g</option>
+                <option value="225">eSUN 1 kg (Plastic) — 225 g</option>
+                <option value="202">Prusament 1 kg hex (Plastic) — 202 g</option>
+                <option value="238">Hatchbox 1 kg (Plastic) — 238 g</option>
+                <option value="240">Jessie Premium 1 kg (Plastic) — 240 g</option>
+                <option value="130">Inland / Micro Center 1 kg (Cardboard) — 130 g</option>
+                <option value="140">Generic cardboard fallback — 140 g</option>
+                <option value="220">Generic plastic fallback — 220 g</option>
+                <option value="custom">Custom empty spool tare (g)...</option>
+              </select>
+            </div>
+
+            <div id="customTareWrap" class="hidden">
+              <label class="field-label" for="customTareGrams"><span>Custom Empty Spool Tare</span><span class="unit-tag">[g]</span></label>
+              <input type="number" id="customTareGrams" value="200" step="1" min="0" />
+            </div>
+
+            <div class="field-grid">
+              <div>
+                <label class="field-label" for="grossScaleGrams"><span>Gross Scale Weight</span><span class="unit-tag">[g]</span></label>
+                <input type="number" id="grossScaleGrams" value="412" step="1" min="0" />
+              </div>
+              <div>
+                <label class="field-label" for="spoolSizeSelect"><span>Nominal Spool Net Size</span><span class="unit-tag">[capacity]</span></label>
+                <select id="spoolSizeSelect">
+                  <option value="250">250 g</option>
+                  <option value="500">500 g</option>
+                  <option value="750">750 g</option>
+                  <option value="1000" selected>1 kg (1,000 g)</option>
+                  <option value="2000">2 kg (2,000 g)</option>
+                  <option value="3000">3 kg (3,000 g)</option>
+                  <option value="5000">5 kg (5,000 g)</option>
+                  <option value="custom">Custom spool size...</option>
+                </select>
+              </div>
+              <div id="customSpoolSizeWrap" class="hidden">
+                <label class="field-label" for="customSpoolSizeGrams"><span>Custom Spool Net Size</span><span class="unit-tag">[g]</span></label>
+                <input type="number" id="customSpoolSizeGrams" value="1000" step="50" min="1" />
+              </div>
+              <div>
+                <label class="field-label" for="spoolDiameterSelect"><span>Filament Diameter</span><span class="unit-tag">[mm]</span></label>
+                <select id="spoolDiameterSelect">
+                  <option value="1.75" selected>1.75 mm</option>
+                  <option value="2.85">2.85 mm</option>
+                  <option value="3.00">3.00 mm</option>
+                  <option value="custom">Custom diameter...</option>
+                </select>
+              </div>
+              <div id="customSpoolDiameterWrap" class="hidden">
+                <label class="field-label" for="customSpoolDiameterMm"><span>Custom Diameter</span><span class="unit-tag">[mm]</span></label>
+                <input type="number" id="customSpoolDiameterMm" value="1.75" step="0.05" min="0.1" />
+              </div>
+              <div>
+                <label class="field-label" for="spoolMaterialDensity"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
+                <select id="spoolMaterialDensity">
+                  <option value="1.24" selected>PLA (1.24)</option>
+                  <option value="1.27">PETG (1.27)</option>
+                  <option value="1.04">ABS (1.04)</option>
+                  <option value="1.07">ASA (1.07)</option>
+                  <option value="1.21">TPU (1.21)</option>
+                  <option value="1.20">PC (1.20)</option>
+                  <option value="1.14">Nylon / PA (1.14)</option>
+                  <option value="1.04">HIPS (1.04)</option>
+                  <option value="1.23">PVA (1.23)</option>
+                  <option value="1.29">CF-Filled (1.29)</option>
+                  <option value="custom">Custom density...</option>
+                </select>
+              </div>
+              <div id="customSpoolDensityWrap" class="hidden">
+                <label class="field-label" for="customSpoolDensityVal"><span>Custom Density</span><span class="unit-tag">[g/cm³]</span></label>
+                <input type="number" id="customSpoolDensityVal" value="1.24" step="0.01" min="0.1" />
+              </div>
+            </div>
+            <div class="field-hint">Tip: Typical empty spool weights; spools vary by production batch. Weigh an empty spool of the same brand once to confirm.</div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head"><span>B. Will My Next Print Finish? (Optional)</span></div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="nextPrintGrams"><span>Next Print Needed</span><span class="unit-tag">[g]</span></label>
+              <input type="number" id="nextPrintGrams" value="48.5" step="1" min="0" />
+            </div>
+            <div>
+              <div class="field-label"><span>Print Feasibility</span><span class="unit-tag">[status]</span></div>
+              <div id="willItFinishBadge" class="mono" style="padding:7px 9px; border:1px solid var(--border); background:var(--bg-subtle); font-weight:600; color:var(--status-ok);">
+                YES (+113.5 g margin)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Empty Spool Tare</div>
+            <div class="kpi-val" id="outSpoolTare">250 g</div>
+            <div class="kpi-sub">Typical empty spool weight</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Net Filament Left</div>
+            <div class="kpi-val" id="outNetFilament" style="color:var(--accent);">162 g</div>
+            <div class="kpi-sub" id="outSpoolPct">16.2% of 1000g</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Remaining Length</div>
+            <div class="kpi-val" id="outRemainingMeters">54.3 m</div>
+            <div class="kpi-sub" id="outSpoolDiaSub">1.75mm diameter</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Grams per Meter</div>
+            <div class="kpi-val" id="outGramsPerMeter">2.98 g/m</div>
+            <div class="kpi-sub">Linear mass density</div>
+          </div>
+        </div>
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="spoolStatusNote">Tip: Cardboard spools can absorb 3–6g of ambient humidity before drying.</span>
+          <a href="/empty-spool-weight-database" class="btn-secondary" style="text-decoration:none;">VIEW FULL TARE TABLE -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Formula // Remaining Filament Mass &amp; Length
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Net Filament (g) = max(0, Gross Scale Weight − Empty Spool Tare). Remaining Length (m) = Net Grams ÷ (π × (d_cm ÷ 2)² × 100 × Density).
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/empty-spool-weight-database" class="btn-secondary route-link">05B -&gt; EMPTY FILAMENT SPOOL WEIGHT DATABASE</a>
+          <a href="/filament-grams-to-meters" class="btn-secondary route-link">05C -&gt; FILAMENT GRAMS TO METERS CONVERTER</a>
+          <a href="/" class="btn-secondary route-link">01 -&gt; G-CODE TIME &amp; COST CALCULATOR</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

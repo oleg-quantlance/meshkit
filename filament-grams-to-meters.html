@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filament Grams to Meters Converter — 1.75mm &amp; 2.85mm</title>
+  <meta name="description" content="Convert 3D printer filament weight in grams to length in meters (and meters to grams) for 1.75 mm, 2.85 mm, and 3.00 mm PLA, PETG, ABS, ASA, TPU, PC, and Nylon." />
+  <link rel="canonical" href="https://meshkit.pro/filament-grams-to-meters" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="grams-meters">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn active">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/filament-spool-weight-calculator">Spool Weight Calculator</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters" class="active">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title">Filament Grams to Meters &amp; Meters to Grams Converter</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span>FORMULA: g/m = π × (d_cm / 2)² × 100 × ρ</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER</span>
+      </div>
+    </div>
+
+    <section class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head"><span>Filament Mass, Length &amp; Polymer Parameters</span></div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="gmDirectionSelect"><span>Conversion Mode</span><span class="unit-tag">[dir]</span></label>
+              <select id="gmDirectionSelect">
+                <option value="g2m" selected>Grams (g) -&gt; Meters (m)</option>
+                <option value="m2g">Meters (m) -&gt; Grams (g)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="gmInputVal"><span id="gmInputLabel">Filament Weight</span><span class="unit-tag" id="gmInputUnit">[g]</span></label>
+              <input type="number" id="gmInputVal" value="500" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="gmMaterialSelect"><span>Polymer Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <select id="gmMaterialSelect">
+                <option value="1.24" selected>PLA (1.24)</option>
+                <option value="1.27">PETG (1.27)</option>
+                <option value="1.04">ABS (1.04)</option>
+                <option value="1.07">ASA (1.07)</option>
+                <option value="1.21">TPU (1.21)</option>
+                <option value="1.20">PC (1.20)</option>
+                <option value="1.14">Nylon / PA (1.14)</option>
+                <option value="1.04">HIPS (1.04)</option>
+                <option value="1.23">PVA (1.23)</option>
+                <option value="1.29">CF-Filled (1.29)</option>
+                <option value="custom">Custom density...</option>
+              </select>
+            </div>
+            <div id="gmCustomDensityWrap" class="hidden">
+              <label class="field-label" for="gmCustomDensity"><span>Custom Density</span><span class="unit-tag">[g/cm³]</span></label>
+              <input type="number" id="gmCustomDensity" value="1.24" step="0.01" min="0.1" />
+            </div>
+            <div>
+              <label class="field-label" for="gmDiameterSelect"><span>Filament Diameter</span><span class="unit-tag">[mm]</span></label>
+              <select id="gmDiameterSelect">
+                <option value="1.75" selected>1.75 mm</option>
+                <option value="2.85">2.85 mm</option>
+                <option value="3.00">3.00 mm</option>
+              </select>
+            </div>
+          </div>
+          <div id="gmValidationBanner" class="validation-banner hidden" role="alert"></div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Filament Weight</div>
+            <div class="kpi-val" id="outGmGrams">500.0 g</div>
+            <div class="kpi-sub">Net polymer mass</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Filament Length</div>
+            <div class="kpi-val" id="outGmMeters" style="color:var(--accent);">167.6 m</div>
+            <div class="kpi-sub">Total linear length</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Linear Density</div>
+            <div class="kpi-val" id="outGmLinear">2.98 g/m</div>
+            <div class="kpi-sub">Grams per meter</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Cross-Section Area</div>
+            <div class="kpi-val" id="outGmArea">2.41 mm²</div>
+            <div class="kpi-sub">π × r²</div>
+          </div>
+        </div>
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);">Weighing a spool on a scale? Subtract the empty spool tare weight first.</span>
+          <a href="/filament-spool-weight-calculator" class="btn-primary" style="text-decoration:none;">SPOOL TARE CALCULATOR -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

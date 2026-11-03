@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STL Repair Online Free — Audit &amp; Fix Non-Manifold Mesh</title>
+  <meta name="description" content="Free online STL repair and topology audit tool. Inspect open boundary loops, non-manifold edges, inverted normals, and signed watertight volume locally." />
+  <link rel="canonical" href="https://meshkit.pro/stl-repair-online" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="stl">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn active">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator">Manual 3D Print Cost Calculator</a>
+      <a href="/stl-repair-online" class="active">STL Repair Online</a>
+      <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a>
+      <a href="/empty-spool-weight-database">Empty Spool Tare Database</a>
+      <a href="/filament-grams-to-meters">Filament Grams to Meters</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">STL Repair Online &amp; Watertight Topology Audit</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">SOLVER: EDGE TOPOLOGY &amp; SIGNED VOLUME</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-stl" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Input Mesh (.STL Binary/ASCII)</span>
+            <span id="stlParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="stlDropzone" tabindex="0" role="button" aria-label="Upload STL file">
+            <input type="file" id="stlFileInput" accept=".stl" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="stlFileName">[CLICK TO SELECT .STL] OR DRAG MESH HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="stlFileSub">Reads ASCII facets or 80-byte binary triangle buffers locally.</div>
+            <div class="btn-row">
+              <button type="button" id="stlBrowseBtn" class="btn-primary">BROWSE .STL...</button>
+              <button type="button" id="stlSampleBtn" class="btn-secondary">LOAD DEMO</button>
+              <button type="button" id="downloadTestStlBtn" class="btn-ghost" title="Download a real defective ASCII .stl file to test uploading">⬇ GET DEFECTIVE .STL</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head"><span>B. Repair Solver Directives</span></div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <label><input type="checkbox" checked /> Close open boundary loops (planar ear-clipping)</label>
+            <label><input type="checkbox" checked /> Unify face normal orientation outward</label>
+            <label><input type="checkbox" checked /> Cull zero-area degenerate facets</label>
+            <label><input type="checkbox" checked /> Weld coincident vertices (epsilon = 1e-6 × bbox)</label>
+          </div>
+          <div style="margin-top:16px;">
+            <button type="button" id="runStlRepairBtn" class="btn-primary" style="width:100%; justify-content:center;">EXECUTE MANIFOLD REPAIR</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div>
+          <div class="viewport-bar mono">
+            <span>WIREFRAME DEFECT INSPECTOR</span>
+            <span id="stlStatusBadge" style="color:#FBBF24;">STATUS: AWAITING MESH UPLOAD</span>
+          </div>
+          <canvas id="stlCanvas" width="760" height="240" style="width:100%; height:240px; display:block; background:var(--bg-canvas);"></canvas>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Facet Count</div>
+            <div class="kpi-val" id="stlTris">—</div>
+            <div class="kpi-sub">Triangles</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Open Loops</div>
+            <div class="kpi-val" id="stlHoles" style="color:var(--accent);">—</div>
+            <div class="kpi-sub">Boundary holes</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Flipped Normals</div>
+            <div class="kpi-val" id="stlNormals" style="color:var(--status-warn);">—</div>
+            <div class="kpi-sub">Inverted facets</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Signed Volume</div>
+            <div class="kpi-val" id="stlVolume">—</div>
+            <div class="kpi-sub">Watertight calc</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <div class="mono" style="font-size:12px;" id="stlRepairLog">Awaiting solver execution on active mesh buffer.</div>
+          <button type="button" id="downloadRepairedStlBtn" class="btn-primary">DOWNLOAD WATERTIGHT .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // STL Edge Topology &amp; Signed Volume
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          A watertight manifold mesh requires every undirected edge to be shared by exactly two triangles with opposite half-edge directions. Signed volume is computed via tetrahedra divergence Σ v₁·(v₂×v₃)/6.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; STL VOLUME &amp; MATERIAL WEIGHT CALCULATOR</a>
+          <a href="/step-to-stl-converter" class="btn-secondary route-link">03 -&gt; TESSELLATE ISO-10303 STEP TO STL</a>
+          <a href="/" class="btn-secondary route-link">01 -&gt; G-CODE TIME &amp; UNIT COST CALCULATOR</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

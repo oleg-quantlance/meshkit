@@ -1,0 +1,13 @@
+{
+  "lastVerified": "2026-11-01",
+  "channels": [
+    { "id": "etsy", "name": "Etsy (9.5% + $0.45)", "feePct": 9.5, "fixedFee": 0.45 },
+    { "id": "ebay", "name": "eBay (13.25% + $0.30)", "feePct": 13.25, "fixedFee": 0.30 },
+    { "id": "whatnot", "name": "Whatnot (10.9% + $0.30)", "feePct": 10.9, "fixedFee": 0.30 },
+    { "id": "shopify", "name": "Shopify (2.9% + $0.30)", "feePct": 2.9, "fixedFee": 0.30 },
+    { "id": "amazon", "name": "Amazon Handmade (15.0% + $0.00)", "feePct": 15.0, "fixedFee": 0.00 },
+    { "id": "tiktok", "name": "TikTok Shop (6.0% + $0.00)", "feePct": 6.0, "fixedFee": 0.00 },
+    { "id": "direct", "name": "Direct Invoice (0% + $0.00)", "feePct": 0.0, "fixedFee": 0.00 }
+  ],
+  "markups": [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0]
+}

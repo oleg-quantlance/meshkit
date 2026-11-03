@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resin Print Cost Calculator — SLA / MSLA Volume &amp; Time</title>
+  <meta name="description" content="Calculate SLA and MSLA resin 3D printing cost, hollow shell volume, support overhead, FEP/LCD screen amortization, and layer exposure time." />
+  <link rel="canonical" href="https://meshkit.pro/resin-3d-print-cost-calculator" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="resin">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn active">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Related calculators">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator">Manual FDM Cost Calculator</a>
+      <a href="/resin-3d-print-cost-calculator" class="active">SLA Resin Cost Calculator</a>
+      <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a>
+      <a href="/filament-spool-weight-calculator">Spool Weight Calculator</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Resin Print Cost Calculator — SLA / MSLA Volume &amp; Exposure Ledger</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">PROCESS: 405nm MONO LCD EXPOSURE &amp; CONSUMABLES</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER</span>
+      </div>
+    </div>
+
+    <section id="panel-resin" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head"><span>A. Photopolymer Volume &amp; Pricing</span></div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="resinVolMl"><span>Solid Volume</span><span class="unit-tag">[mL]</span></label>
+              <input type="number" id="resinVolMl" value="65" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinSupportPct"><span>Support Overhead</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="resinSupportPct" value="22" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinHollowMode"><span>Shell Mode</span><span class="unit-tag">[retained]</span></label>
+              <select id="resinHollowMode">
+                <option value="1">Solid Body (100%)</option>
+                <option value="0.22">Hollow 1.0 mm (~22%)</option>
+                <option value="0.30">Hollow 1.5 mm (~30%)</option>
+                <option value="0.42" selected>Hollow 2.0 mm (~42%)</option>
+                <option value="0.52">Hollow 2.5 mm (~52%)</option>
+                <option value="0.60">Hollow 3.0 mm (~60%)</option>
+                <option value="custom">Custom retained %...</option>
+              </select>
+            </div>
+            <div id="resinCustomRetainedWrap" class="hidden">
+              <label class="field-label" for="resinCustomRetainedPct"><span>Retained Volume</span><span class="unit-tag">[%]</span></label>
+              <input type="number" id="resinCustomRetainedPct" value="42" step="1" min="1" max="100" />
+            </div>
+            <div>
+              <label class="field-label" for="resinPriceBasis"><span>Price Basis</span><span class="unit-tag">[unit]</span></label>
+              <select id="resinPriceBasis">
+                <option value="per_liter" selected>$ per Liter ($/L)</option>
+                <option value="per_kg">$ per Kilogram ($/kg)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="resinBottleCost"><span>Resin Rate</span><span class="unit-tag" id="resinRateUnitTag">[$/L]</span></label>
+              <input type="number" id="resinBottleCost" value="26.00" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinDensity"><span>Resin Density</span><span class="unit-tag">[g/mL]</span></label>
+              <input type="number" id="resinDensity" value="1.10" step="0.01" min="0.5" />
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head"><span>B. Consumables &amp; Film Amortization</span></div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="resinIpaCost"><span>IPA Wash / Print</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="resinIpaCost" value="0.25" step="0.05" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinGlovesCost"><span>Gloves &amp; Towels</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="resinGlovesCost" value="0.15" step="0.05" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinFepCost"><span>FEP Sheet Cost</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="resinFepCost" value="18.00" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinPrintsPerFep"><span>Prints per FEP</span><span class="unit-tag">[prints]</span></label>
+              <input type="number" id="resinPrintsPerFep" value="40" step="5" min="1" />
+            </div>
+            <div>
+              <label class="field-label" for="resinLcdCost"><span>LCD Screen Cost</span><span class="unit-tag">[$]</span></label>
+              <input type="number" id="resinLcdCost" value="110.00" step="5" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinPrintsPerLcd"><span>Prints per LCD</span><span class="unit-tag">[prints]</span></label>
+              <input type="number" id="resinPrintsPerLcd" value="400" step="25" min="1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head"><span>C. Z-Slices &amp; Exposure Timing</span></div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="resinHeightMm"><span>Model Z-Height</span><span class="unit-tag">[mm]</span></label>
+              <input type="number" id="resinHeightMm" value="120" step="5" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinLayerHeightSelect"><span>Layer Height</span><span class="unit-tag">[mm]</span></label>
+              <select id="resinLayerHeightSelect">
+                <option value="0.025">0.025 mm (Ultra Fine)</option>
+                <option value="0.03">0.030 mm</option>
+                <option value="0.035">0.035 mm</option>
+                <option value="0.04">0.040 mm</option>
+                <option value="0.05" selected>0.050 mm (Standard)</option>
+                <option value="0.075">0.075 mm</option>
+                <option value="0.10">0.100 mm (Draft)</option>
+                <option value="custom">Custom layer height...</option>
+              </select>
+            </div>
+            <div id="resinCustomLayerWrap" class="hidden">
+              <label class="field-label" for="resinCustomLayerMm"><span>Custom Layer</span><span class="unit-tag">[mm]</span></label>
+              <input type="number" id="resinCustomLayerMm" value="0.05" step="0.005" min="0.005" />
+            </div>
+            <div>
+              <label class="field-label" for="resinExpSec"><span>Normal Exposure</span><span class="unit-tag">[s]</span></label>
+              <input type="number" id="resinExpSec" value="2.4" step="0.1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinLiftSec"><span>Lift + Retract</span><span class="unit-tag">[s]</span></label>
+              <input type="number" id="resinLiftSec" value="4.0" step="0.2" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinBottomLayers"><span>Bottom Layers</span><span class="unit-tag">[count]</span></label>
+              <input type="number" id="resinBottomLayers" value="0" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinBottomExpSec"><span>Bottom Exposure</span><span class="unit-tag">[s]</span></label>
+              <input type="number" id="resinBottomExpSec" value="30" step="1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="resinMarkup"><span>Quote Multiplier</span><span class="unit-tag">[x]</span></label>
+              <input type="number" id="resinMarkup" value="4.0" step="0.5" min="1" />
+            </div>
+          </div>
+          <div id="resinValidationBanner" class="validation-banner hidden" role="alert"></div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Total Resin Draw</div>
+            <div class="kpi-val" id="outResinMl">33.3 mL</div>
+            <div class="kpi-sub" id="outResinGramsSub">36.6 g @ 1.10 g/mL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Resin Cost</div>
+            <div class="kpi-val" id="outResinLiquidCost">$0.87</div>
+            <div class="kpi-sub">Photopolymer liquid</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Consumables + Film</div>
+            <div class="kpi-val" id="outResinConsumables">$1.13</div>
+            <div class="kpi-sub" id="outResinConsSub">IPA, gloves, FEP, LCD</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Exposure Time</div>
+            <div class="kpi-val" id="outResinTime">4h 16m</div>
+            <div class="kpi-sub" id="outResinLayers">2,400 Z-slices</div>
+          </div>
+        </div>
+        <div class="quote-bar">
+          <div>
+            <div class="mono" style="font-size:11px; color:var(--text-muted);" id="outResinQuoteLabel">RECOMMENDED COMMERCIAL QUOTE (4.0x MARKUP)</div>
+            <div class="mono" style="font-size:26px; font-weight:700; margin-top:2px;" id="outResinPrice">$7.96 (Unit Cost: $1.99)</div>
+          </div>
+          <button type="button" onclick="window.print()" class="btn-primary">PRINT / EXPORT QUOTE</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Formula // SLA Resin Volume, Consumables &amp; Exposure Time
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Resin Used (mL) = Solid Volume × Retained Fraction × (1 + Support %). Exposure Seconds = ⌈Z-Height ÷ Layer Height⌉ × (Normal Exposure + Lift/Retract) + Bottom Layers × (Bottom Exposure − Normal Exposure).
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; GET SOLID VOLUME FROM STL FILE</a>
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; AUDIT &amp; REPAIR NON-MANIFOLD STL MESH</a>
+          <a href="/" class="btn-secondary route-link">01 -&gt; FDM G-CODE TIME &amp; COST CALCULATOR</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

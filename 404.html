@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Not Found (404) — MeshKit 3D Printing Calculators</title>
+  <meta name="description" content="The requested page could not be found. Choose one of MeshKit's 3D printing calculators and CAD utilities below." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="404">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="spec-strip">
+      <h1 class="spec-title">404 — Page Not Found</h1>
+      <div class="spec-meta mono"><span>STATUS: ROUTE NOT FOUND</span></div>
+    </div>
+
+    <section style="background:var(--bg-panel); border:1px solid var(--border-strong); padding:24px;">
+      <p style="margin:0 0 16px;">The page you requested does not exist. Select one of the five MeshKit tools below:</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+        <a href="/" class="btn-secondary route-link">01 -&gt; G-Code Time Estimator &amp; Cost Calculator</a>
+        <a href="/3d-print-cost-calculator" class="btn-secondary route-link">01B -&gt; Manual 3D Print Cost Calculator</a>
+        <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; STL Repair Online &amp; Topology Audit</a>
+        <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; STL Volume &amp; Weight Calculator</a>
+        <a href="/step-to-stl-converter" class="btn-secondary route-link">03 -&gt; Convert STEP to STL Online</a>
+        <a href="/resin-3d-print-cost-calculator" class="btn-secondary route-link">04 -&gt; SLA Resin 3D Print Cost Calculator</a>
+        <a href="/filament-spool-weight-calculator" class="btn-secondary route-link">05 -&gt; Filament Spool Weight Calculator</a>
+        <a href="/empty-spool-weight-database" class="btn-secondary route-link">05B -&gt; Empty Spool Weight Database</a>
+        <a href="/filament-grams-to-meters" class="btn-secondary route-link">05C -&gt; Filament Grams to Meters Converter</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

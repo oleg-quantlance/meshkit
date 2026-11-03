@@ -1,0 +1,20 @@
+{
+  "lastVerified": "2026-11-01",
+  "disclaimer": "Typical empty spool weights; spools vary by production batch. Weigh an empty spool of the same brand once to confirm.",
+  "spools": [
+    { "id": "bambu-reusable", "brand": "Bambu Lab reusable spool", "material": "Plastic", "tareG": 250 },
+    { "id": "bambu-cardboard", "brand": "Bambu Lab cardboard spool", "material": "Cardboard", "tareG": 132 },
+    { "id": "polymaker-1kg", "brand": "Polymaker 1 kg", "material": "Cardboard", "tareG": 140 },
+    { "id": "elegoo-1kg", "brand": "Elegoo 1 kg", "material": "Cardboard", "tareG": 132 },
+    { "id": "overture-1kg", "brand": "Overture 1 kg", "material": "Cardboard", "tareG": 168 },
+    { "id": "sunlu-plastic-1kg", "brand": "Sunlu 1 kg (black)", "material": "Plastic", "tareG": 195 },
+    { "id": "sunlu-eco-1kg", "brand": "Sunlu 1 kg (eco)", "material": "Cardboard", "tareG": 140 },
+    { "id": "esun-plastic-1kg", "brand": "eSUN 1 kg", "material": "Plastic", "tareG": 225 },
+    { "id": "prusament-hex-1kg", "brand": "Prusament 1 kg (hex)", "material": "Plastic", "tareG": 202 },
+    { "id": "hatchbox-1kg", "brand": "Hatchbox 1 kg", "material": "Plastic", "tareG": 238 },
+    { "id": "jessie-1kg", "brand": "Jessie Premium 1 kg", "material": "Plastic", "tareG": 240 },
+    { "id": "inland-1kg", "brand": "Inland (Micro Center) 1 kg", "material": "Cardboard", "tareG": 130 },
+    { "id": "generic-cardboard", "brand": "Generic cardboard (fallback)", "material": "Cardboard", "tareG": 140 },
+    { "id": "generic-plastic", "brand": "Generic plastic (fallback)", "material": "Plastic", "tareG": 220 }
+  ]
+}
