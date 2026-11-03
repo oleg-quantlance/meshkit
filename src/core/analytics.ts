@@ -1,4 +1,4 @@
-export const GA_MEASUREMENT_ID = 'G-MESHKIT01';
+export const GA_MEASUREMENT_ID = 'G-5HR12TP216';
 const CONSENT_STORAGE_KEY = 'meshkit-consent-v2';
 
 export type ConsentChoice = 'granted' | 'denied';
@@ -30,25 +30,27 @@ export function initAnalyticsConsentMode(): void {
   if (typeof window === 'undefined') return;
 
   window.dataLayer = window.dataLayer || [];
-  function gtag(...args: unknown[]): void {
-    window.dataLayer!.push(args);
+  if (typeof window.gtag !== 'function') {
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer!.push(arguments);
+    };
+
+    // Consent Mode v2 default: strictly denied before any tag loads
+    window.gtag('consent', 'default', {
+      ad_storage: 'denied',
+      analytics_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+    });
+
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, {
+      anonymize_ip: true,
+      send_page_view: true,
+    });
   }
-  window.gtag = gtag;
-
-  // Consent Mode v2 default: strictly denied before any tag loads
-  gtag('consent', 'default', {
-    ad_storage: 'denied',
-    analytics_storage: 'denied',
-    ad_user_data: 'denied',
-    ad_personalization: 'denied',
-    wait_for_update: 500,
-  });
-
-  gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID, {
-    anonymize_ip: true,
-    send_page_view: true,
-  });
 
   let savedChoice: ConsentChoice | null = null;
   try {

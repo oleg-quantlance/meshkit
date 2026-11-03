@@ -58,6 +58,10 @@ describe('Section 7 & 10: Multi-page SEO, Accessibility & Schema Audit', () => {
     // Must not load render-blocking Google Fonts
     expect(html).not.toContain('fonts.googleapis.com');
 
+    // Includes GA4 tag G-5HR12TP216 with Consent Mode v2 default denied
+    expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216');
+    expect(html).toContain("gtag('config', 'G-5HR12TP216')");
+
     if (canonical) {
       expect(html).toContain(`<link rel="canonical" href="${canonical}" />`);
     }
