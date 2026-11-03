@@ -1,24 +1,36 @@
 import { defineConfig } from 'vite';
-
-const r = (file: string) => new URL(file, import.meta.url).pathname;
+import { resolve } from 'node:path';
 
 export default defineConfig({
+  worker: {
+    format: 'es',
+  },
   build: {
     rollupOptions: {
       input: {
-        main: r('./index.html'),
-        costCalculator: r('./3d-print-cost-calculator.html'),
-        stlRepair: r('./stl-repair-online.html'),
-        stlVolume: r('./stl-volume-weight-calculator.html'),
-        stepToStl: r('./step-to-stl-converter.html'),
-        resinCalculator: r('./resin-3d-print-cost-calculator.html'),
-        spoolCalculator: r('./filament-spool-weight-calculator.html'),
-        spoolDatabase: r('./empty-spool-weight-database.html'),
-        gramsToMeters: r('./filament-grams-to-meters.html'),
-        about: r('./about.html'),
-        methodology: r('./methodology.html'),
-        privacy: r('./privacy.html'),
-        notFound: r('./404.html'),
+        main: resolve(__dirname, 'index.html'),
+        costCalculator: resolve(__dirname, '3d-print-cost-calculator.html'),
+        stlRepair: resolve(__dirname, 'stl-repair-online.html'),
+        stlVolumeWeight: resolve(__dirname, 'stl-volume-weight-calculator.html'),
+        stepToStl: resolve(__dirname, 'step-to-stl-converter.html'),
+        resinCalculator: resolve(__dirname, 'resin-3d-print-cost-calculator.html'),
+        spoolCalculator: resolve(__dirname, 'filament-spool-weight-calculator.html'),
+        spoolDatabase: resolve(__dirname, 'empty-spool-weight-database.html'),
+        gramsToMeters: resolve(__dirname, 'filament-grams-to-meters.html'),
+        about: resolve(__dirname, 'about.html'),
+        methodology: resolve(__dirname, 'methodology.html'),
+        privacy: resolve(__dirname, 'privacy.html'),
+        notFound: resolve(__dirname, '404.html'),
+      },
+    },
+  },
+  test: {
+    include: ['tests/unit/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/core/**/*.ts'],
+      thresholds: {
+        lines: 90,
       },
     },
   },

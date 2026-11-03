@@ -198,3 +198,13 @@ export function validateTextBufferHead(
 
   return { ok: true, textHead };
 }
+
+export const WORKER_TIMEOUT_MS = 60_000;
+
+export function getLibraryFailureMessage(): string {
+  return 'The converter could not start. Check your connection and retry.';
+}
+
+export function getWorkerTimeoutMessage(): string {
+  return 'This file is taking too long. Cancel or keep waiting?';
+}

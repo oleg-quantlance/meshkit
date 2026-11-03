@@ -81,9 +81,11 @@ export function updateAnalyticsConsent(choice: ConsentChoice): void {
       ad_personalization: 'denied',
     });
   }
-  const existingBanner = document.getElementById('meshkitConsentBanner');
-  if (existingBanner) {
-    existingBanner.remove();
+  if (typeof document !== 'undefined') {
+    const existingBanner = document.getElementById('meshkitConsentBanner');
+    if (existingBanner) {
+      existingBanner.remove();
+    }
   }
 }
 

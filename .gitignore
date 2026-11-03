@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 .firebase/
+coverage/
+playwright-report/
+test-results/
 
 # Editor directories and files
 .vscode/*

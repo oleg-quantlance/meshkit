@@ -7,23 +7,37 @@ import {
 } from './core/format';
 import { calculatePrintCost } from './core/cost';
 import { parseGcode, ToolpathPoint } from './core/gcode';
-import { calculateResinCost, calculateResinTime } from './core/resin';
+import {
+  calculateResinCost,
+  calculateResinTime,
+  computeHollowShellVolumeMl,
+} from './core/resin';
 import {
   spoolRemaining,
   gramsToMeters,
   metersToGrams,
   willPrintFinish,
 } from './core/spool';
-import { validateFileMetadata, validateTextBufferHead, ToolFileKind } from './core/validate';
+import {
+  validateFileMetadata,
+  validateTextBufferHead,
+  ToolFileKind,
+  WORKER_TIMEOUT_MS,
+  getWorkerTimeoutMessage,
+} from './core/validate';
 import {
   auditStl,
-  repairStl,
+  repairStlWithManifoldWasm,
   exportBinaryStl,
   Triangle,
   Vec3,
   StlAuditMetrics,
 } from './core/stl';
-import { convertStepToStl, StepConvertResult } from './core/step';
+import {
+  convertStepToStlWithOcctWasm,
+  StepConvertResult,
+  StepConvertOptions,
+} from './core/step';
 import {
   initAnalyticsConsentMode,
   updateAnalyticsConsent,
@@ -41,6 +55,40 @@ function maybeEl<T extends HTMLElement = HTMLElement>(id: string): T | null {
 
 function getEl<T extends HTMLElement = HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
+}
+
+function debounce(fn: () => void, delayMs = 100): () => void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return () => {
+    if (timer !== null) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn();
+    }, delayMs);
+  };
+}
+
+/**
+ * Runs an async task (in Web Worker or WASM) with the Section 6 60-second timeout check.
+ */
+async function runWithTimeout<T>(
+  taskPromise: Promise<T>,
+  onTimeoutPrompt?: (msg: string) => void
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      const msg = getWorkerTimeoutMessage();
+      if (onTimeoutPrompt) onTimeoutPrompt(msg);
+      reject(new Error(msg));
+    }, WORKER_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([taskPromise, timeoutPromise]);
+  } finally {
+    if (timeoutId !== null) clearTimeout(timeoutId);
+  }
 }
 
 // =========================================================================
@@ -136,7 +184,7 @@ function wireDropzone(
   fileInputId: string,
   browseBtnId: string,
   kind: ToolFileKind,
-  onValidFile: (file: File) => void,
+  onValidFile: (file: File, notice?: string) => void,
   onValidationError: (message: string, code: string) => void
 ): void {
   const zone = maybeEl(dropzoneId);
@@ -153,7 +201,7 @@ function wireDropzone(
       onValidationError(metaCheck.error, metaCheck.errorCode);
       return;
     }
-    onValidFile(list[0]);
+    onValidFile(list[0], metaCheck.notice);
   }
 
   zone.addEventListener('click', (e: MouseEvent) => {
@@ -279,6 +327,9 @@ function initGcodeAndCostPage(): void {
   const targetMarginWrap = getEl('targetMarginWrap');
   const banner = getEl('gcodeValidationBanner');
 
+  let lastLoadedGcodeText = '';
+  let lastLoadedGcodeName = '';
+
   const verifiedEl = maybeEl('channelVerifiedNote');
   if (verifiedEl) {
     verifiedEl.textContent = `FEES VERIFIED: ${channelsData.lastVerified}`;
@@ -319,6 +370,13 @@ function initGcodeAndCostPage(): void {
 
   function getSelectedDiameter(): number {
     return parseStrictNumber(getEl<HTMLSelectElement>('gcodeDiameterSelect').value);
+  }
+
+  function getSelectedDefaultAccel(): number {
+    const accelEl = maybeEl<HTMLInputElement>('gcodeDefaultAccel');
+    if (!accelEl) return 1500;
+    const val = parseStrictNumber(accelEl.value);
+    return Number.isFinite(val) && val > 0 ? val : 1500;
   }
 
   function recalculateCost(): void {
@@ -414,11 +472,63 @@ function initGcodeAndCostPage(): void {
     }
   }
 
-  function loadGcodeText(text: string, labelName: string, byteSize = text.length): void {
+  async function parseGcodeViaWorker(
+    text: string,
+    density: number,
+    diameter: number,
+    defaultAccel: number
+  ) {
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<ReturnType<typeof parseGcode>>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/gcode.worker.ts', import.meta.url), {
+              type: 'module',
+            });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            worker.postMessage({
+              text,
+              options: {
+                densityGPerCm3: density,
+                diameterMm: diameter,
+                defaultAccelerationMmPerS2: defaultAccel,
+              },
+            });
+          }),
+          (timeoutMsg) => showGcodeError(timeoutMsg)
+        );
+      } catch {
+        // fallback to synchronous parse
+      }
+    }
+    return parseGcode(text, {
+      densityGPerCm3: density,
+      diameterMm: diameter,
+      defaultAccelerationMmPerS2: defaultAccel,
+    });
+  }
+
+  async function loadGcodeText(
+    text: string,
+    labelName: string,
+    byteSize = text.length,
+    notice?: string
+  ): Promise<void> {
     const t0 = performance.now();
+    lastLoadedGcodeText = text;
+    lastLoadedGcodeName = labelName;
     const density = getSelectedDensity() || 1.24;
     const diameter = getSelectedDiameter() || 1.75;
-    const parsed = parseGcode(text, { densityGPerCm3: density, diameterMm: diameter });
+    const defaultAccel = getSelectedDefaultAccel();
+
+    const parsed = await parseGcodeViaWorker(text, density, diameter, defaultAccel);
 
     const statusTitle = maybeEl('gcodeStatusTitle');
     const statusSub = maybeEl('gcodeStatusSub');
@@ -440,7 +550,9 @@ function initGcodeAndCostPage(): void {
     if (layerLabel) layerLabel.textContent = parsed.layerCount.toLocaleString();
     if (moveLabel) moveLabel.textContent = parsed.moveCount.toLocaleString();
 
-    if (statusTitle) statusTitle.textContent = `FILE LOADED: ${labelName}`;
+    if (statusTitle) {
+      statusTitle.textContent = notice ? `${notice} — LOADED: ${labelName}` : `FILE LOADED: ${labelName}`;
+    }
     if (statusSub) {
       statusSub.textContent = `Parsed ${parsed.moveCount.toLocaleString()} moves across ${parsed.layerCount.toLocaleString()} Z-layers (${parsed.filamentMm.toFixed(1)} mm E-axis).`;
     }
@@ -454,7 +566,7 @@ function initGcodeAndCostPage(): void {
       timeSub.textContent =
         parsed.timeSource === 'slicer_header'
           ? 'Slicer header time'
-          : 'Estimate (trapezoidal accel)';
+          : `Estimate (trapezoidal accel @ ${defaultAccel} mm/s²)`;
     }
 
     activeToolpathLayers = parsed.layers;
@@ -467,6 +579,7 @@ function initGcodeAndCostPage(): void {
     recalculateCost();
   }
 
+  const debouncedRecalc = debounce(recalculateCost, 100);
   const inputIds = [
     'filamentGrams',
     'printHours',
@@ -489,8 +602,16 @@ function initGcodeAndCostPage(): void {
   ];
 
   inputIds.forEach((id) => {
-    maybeEl(id)?.addEventListener('input', recalculateCost);
+    maybeEl(id)?.addEventListener('input', debouncedRecalc);
     maybeEl(id)?.addEventListener('change', recalculateCost);
+  });
+
+  maybeEl('gcodeDefaultAccel')?.addEventListener('change', () => {
+    if (lastLoadedGcodeText) {
+      void loadGcodeText(lastLoadedGcodeText, lastLoadedGcodeName);
+    } else {
+      recalculateCost();
+    }
   });
 
   wireDropzone(
@@ -498,7 +619,7 @@ function initGcodeAndCostPage(): void {
     'gcodeFileInput',
     'gcodeBrowseBtn',
     'gcode',
-    (file) => {
+    (file, notice) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer;
@@ -510,7 +631,7 @@ function initGcodeAndCostPage(): void {
           return;
         }
         const text = new TextDecoder('utf-8').decode(buffer);
-        loadGcodeText(text, file.name, file.size);
+        void loadGcodeText(text, file.name, file.size, notice);
       };
       reader.readAsArrayBuffer(file);
     },
@@ -533,7 +654,7 @@ function initGcodeAndCostPage(): void {
       const resp = await fetch('/samples/enclosure-bracket.gcode');
       if (resp.ok) {
         const text = await resp.text();
-        loadGcodeText(text, 'enclosure-bracket.gcode', text.length);
+        await loadGcodeText(text, 'enclosure-bracket.gcode', text.length);
       }
     } catch {
       // ignore fetch errors offline
@@ -565,6 +686,8 @@ function initGcodeAndCostPage(): void {
       .then((r) => (r.ok ? r.text() : ''))
       .then((text) => {
         if (text) {
+          lastLoadedGcodeText = text;
+          lastLoadedGcodeName = 'enclosure-bracket.gcode';
           const parsed = parseGcode(text);
           if (parsed.ok) {
             activeToolpathLayers = parsed.layers;
@@ -640,7 +763,7 @@ function initStlVolumePage(): void {
     'stlVolFileInput',
     'stlVolBrowseBtn',
     'stl',
-    (file) => {
+    (file, notice) => {
       const t0 = performance.now();
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -660,7 +783,8 @@ function initStlVolumePage(): void {
         }
         trackFileLoadSuccess('stl_volume', res.metrics.format, file.size, performance.now() - t0);
         if (statusTitle) {
-          statusTitle.textContent = `FILE LOADED: ${file.name} (${res.metrics.triangleCount.toLocaleString()} tris, ${res.metrics.volumeCm3.toFixed(3)} cm³)`;
+          const prefix = notice ? `${notice} — ` : '';
+          statusTitle.textContent = `${prefix}FILE LOADED: ${file.name} (${res.metrics.triangleCount.toLocaleString()} tris, ${res.metrics.volumeCm3.toFixed(3)} cm³)`;
         }
         if (parseState) {
           parseState.textContent = 'PARSED OK';
@@ -682,9 +806,10 @@ function initStlVolumePage(): void {
     }
   );
 
+  const debouncedCalc = debounce(calc, 100);
   ['stlVolInputCm3', 'stlVolInfillPct', 'stlVolMaterialSelect', 'stlVolCustomDensity', 'stlVolDiameterSelect'].forEach(
     (id) => {
-      maybeEl(id)?.addEventListener('input', calc);
+      maybeEl(id)?.addEventListener('input', debouncedCalc);
       maybeEl(id)?.addEventListener('change', calc);
     }
   );
@@ -707,7 +832,6 @@ function initStlPage(): void {
     if (!ctx) return;
     ctx.clearRect(0, 0, c.width, c.height);
 
-    // Background grid
     ctx.strokeStyle = '#262624';
     ctx.lineWidth = 1;
     for (let x = 40; x < c.width; x += 40) {
@@ -831,9 +955,63 @@ function initStlPage(): void {
     getEl('stlRepairLog').textContent = msg;
   }
 
-  function loadStlBuffer(buffer: ArrayBuffer, filename: string): void {
+  async function auditStlViaWorker(buffer: ArrayBuffer) {
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<ReturnType<typeof auditStl>>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/stl.worker.ts', import.meta.url), {
+              type: 'module',
+            });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data.result);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            worker.postMessage({ action: 'audit', buffer });
+          }),
+          (timeoutMsg) => showStlError(timeoutMsg)
+        );
+      } catch {
+        // fallback to synchronous
+      }
+    }
+    return auditStl(buffer);
+  }
+
+  async function repairStlViaWorker(triangles: Triangle[]) {
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<Awaited<ReturnType<typeof repairStlWithManifoldWasm>>>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/stl.worker.ts', import.meta.url), {
+              type: 'module',
+            });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data.result);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            worker.postMessage({ action: 'repair', triangles });
+          }),
+          (timeoutMsg) => showStlError(timeoutMsg)
+        );
+      } catch {
+        // fallback to direct WASM repair
+      }
+    }
+    return repairStlWithManifoldWasm(triangles);
+  }
+
+  async function loadStlBuffer(buffer: ArrayBuffer, filename: string, notice?: string): Promise<void> {
     const t0 = performance.now();
-    const res = auditStl(buffer);
+    const res = await auditStlViaWorker(buffer);
     if (!res.ok) {
       trackFileLoadError('stl', res.errorCode);
       showStlError(res.error);
@@ -847,7 +1025,8 @@ function initStlPage(): void {
     const parseState = getEl('stlParseState');
     parseState.textContent = `${res.metrics.format.toUpperCase()} STL`;
     parseState.style.color = 'var(--status-ok)';
-    getEl('stlFileName').textContent = `FILE LOADED: ${filename} (${(buffer.byteLength / 1024).toFixed(1)} KB)`;
+    const prefix = notice ? `${notice} — ` : '';
+    getEl('stlFileName').textContent = `${prefix}FILE LOADED: ${filename} (${(buffer.byteLength / 1024).toFixed(1)} KB)`;
 
     const summary = res.metrics.isWatertight
       ? `Audited ${res.metrics.triangleCount} facets (${res.metrics.weldedVertexCount} welded vertices): 0 open edges, watertight volume = ${res.metrics.volumeCm3.toFixed(3)} cm³.`
@@ -860,12 +1039,12 @@ function initStlPage(): void {
     'stlFileInput',
     'stlBrowseBtn',
     'stl',
-    (file) => {
+    (file, notice) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer;
         if (!buffer) return;
-        loadStlBuffer(buffer, file.name);
+        void loadStlBuffer(buffer, file.name, notice);
       };
       reader.readAsArrayBuffer(file);
     },
@@ -874,12 +1053,12 @@ function initStlPage(): void {
     }
   );
 
-  maybeEl('runStlRepairBtn')?.addEventListener('click', () => {
+  maybeEl('runStlRepairBtn')?.addEventListener('click', async () => {
     if (activeTriangles.length === 0) {
       showStlError('Please upload an .STL file or click LOAD DEFECTIVE SAMPLE first.');
       return;
     }
-    const rep = repairStl(activeTriangles);
+    const rep = await repairStlViaWorker(activeTriangles);
     if (!rep.ok) {
       showStlError(rep.error);
       return;
@@ -910,7 +1089,7 @@ function initStlPage(): void {
       const resp = await fetch('/samples/defective-cube.stl');
       if (resp.ok) {
         const buf = await resp.arrayBuffer();
-        loadStlBuffer(buf, 'defective-cube.stl');
+        await loadStlBuffer(buf, 'defective-cube.stl');
       }
     } catch {
       // ignore offline
@@ -935,7 +1114,7 @@ function initStlPage(): void {
     .then((r) => (r.ok ? r.arrayBuffer() : null))
     .then((buf) => {
       if (buf) {
-        loadStlBuffer(buf, 'defective-cube.stl');
+        void loadStlBuffer(buf, 'defective-cube.stl');
       } else {
         drawStlWireframe([], false);
       }
@@ -955,10 +1134,24 @@ function initStepPage(): void {
   const unitsSelect = getEl<HTMLSelectElement>('stepUnitsSelect');
   const formatSelect = getEl<HTMLSelectElement>('stepOutputFormatSelect');
   const logBox = getEl('stepLogBox');
+  const progressBarWrap = maybeEl('stepProgressBarWrap');
+  const progressBarFill = maybeEl('stepProgressBarFill');
+  const retryBtn = maybeEl('stepRetryBtn');
 
   let activeStepText = '';
   let activeStepName = 'planetary-gear-housing.step';
   let lastConversion: Extract<StepConvertResult, { ok: true }> | null = null;
+
+  function setProgress(pct: number | null): void {
+    if (!progressBarWrap || !progressBarFill) return;
+    if (pct === null) {
+      progressBarWrap.classList.add('hidden');
+      progressBarFill.style.width = '0%';
+    } else {
+      progressBarWrap.classList.remove('hidden');
+      progressBarFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    }
+  }
 
   function getSelectedTolerance(): number {
     return presetSelect.value === 'custom'
@@ -966,7 +1159,9 @@ function initStepPage(): void {
       : parseStrictNumber(presetSelect.value);
   }
 
-  function renderStepError(message: string): void {
+  function renderStepError(message: string, allowRetry = false): void {
+    setProgress(null);
+    retryBtn?.classList.toggle('hidden', !allowRetry);
     const parseState = getEl('stepParseState');
     parseState.textContent = 'ERROR';
     parseState.style.color = 'var(--status-warn)';
@@ -979,7 +1174,38 @@ function initStepPage(): void {
     lastConversion = null;
   }
 
-  function runTessellation(): void {
+  async function convertViaWorkerOrWasm(
+    text: string,
+    options: StepConvertOptions
+  ): Promise<StepConvertResult> {
+    const buffer = new TextEncoder().encode(text).buffer as ArrayBuffer;
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<StepConvertResult>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/step.worker.ts', import.meta.url), {
+              type: 'module',
+            });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            worker.postMessage({ buffer, options });
+          }),
+          (timeoutMsg) => renderStepError(timeoutMsg, true)
+        );
+      } catch {
+        // fallback to direct WASM call
+      }
+    }
+    return convertStepToStlWithOcctWasm(buffer, options);
+  }
+
+  async function runTessellation(): Promise<void> {
     const isCustom = presetSelect.value === 'custom';
     customWrap.classList.toggle('hidden', !isCustom);
     const tol = getSelectedTolerance();
@@ -1000,15 +1226,21 @@ function initStepPage(): void {
 
     if (!activeStepText) return;
 
-    const res = convertStepToStl(activeStepText, {
+    retryBtn?.classList.add('hidden');
+    setProgress(35);
+
+    const res = await convertViaWorkerOrWasm(activeStepText, {
       linearDeflectionMm: tol,
       units,
       outputFormat: format,
     });
 
+    setProgress(100);
+    setTimeout(() => setProgress(null), 250);
+
     if (!res.ok) {
       trackFileLoadError('step', res.errorCode);
-      renderStepError(res.error);
+      renderStepError(res.error, res.errorCode === 'lib_failed');
       return;
     }
 
@@ -1036,12 +1268,18 @@ function initStepPage(): void {
     ].join('');
   }
 
-  function loadStepString(text: string, filename: string, byteSize = text.length): void {
+  async function loadStepString(
+    text: string,
+    filename: string,
+    byteSize = text.length,
+    notice?: string
+  ): Promise<void> {
     const t0 = performance.now();
     activeStepText = text;
     activeStepName = filename;
-    getEl('stepFileName').textContent = `FILE LOADED: ${filename} (${(byteSize / 1024).toFixed(1)} KB)`;
-    runTessellation();
+    const prefix = notice ? `${notice} — ` : '';
+    getEl('stepFileName').textContent = `${prefix}FILE LOADED: ${filename} (${(byteSize / 1024).toFixed(1)} KB)`;
+    await runTessellation();
     if (lastConversion) {
       trackFileLoadSuccess('step_to_stl', 'step', byteSize, performance.now() - t0);
     }
@@ -1052,7 +1290,8 @@ function initStepPage(): void {
     'stepFileInput',
     'stepBrowseBtn',
     'step',
-    (file) => {
+    (file, notice) => {
+      setProgress(15);
       const reader = new FileReader();
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer;
@@ -1064,7 +1303,7 @@ function initStepPage(): void {
           return;
         }
         const text = new TextDecoder('utf-8').decode(buffer);
-        loadStepString(text, file.name, file.size);
+        void loadStepString(text, file.name, file.size, notice);
       };
       reader.readAsArrayBuffer(file);
     },
@@ -1073,9 +1312,22 @@ function initStepPage(): void {
     }
   );
 
+  retryBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (activeStepText) {
+      void runTessellation();
+    }
+  });
+
+  const debouncedTessellate = debounce(() => {
+    void runTessellation();
+  }, 100);
+
   ['stepTolPresetSelect', 'stepCustomTolInput', 'stepUnitsSelect', 'stepOutputFormatSelect'].forEach((id) => {
-    maybeEl(id)?.addEventListener('input', runTessellation);
-    maybeEl(id)?.addEventListener('change', runTessellation);
+    maybeEl(id)?.addEventListener('input', debouncedTessellate);
+    maybeEl(id)?.addEventListener('change', () => {
+      void runTessellation();
+    });
   });
 
   maybeEl('downloadConvertedStlBtn')?.addEventListener('click', () => {
@@ -1100,13 +1352,16 @@ function initStepPage(): void {
     e.stopPropagation();
     trackSampleLoad('step');
     try {
+      setProgress(15);
       const resp = await fetch('/samples/planetary-gear-housing.step');
       if (resp.ok) {
         const text = await resp.text();
-        loadStepString(text, 'planetary-gear-housing.step', text.length);
+        await loadStepString(text, 'planetary-gear-housing.step', text.length);
+      } else {
+        renderStepError('The converter could not start. Check your connection and retry.', true);
       }
     } catch {
-      // ignore
+      renderStepError('The converter could not start. Check your connection and retry.', true);
     }
   });
 
@@ -1127,9 +1382,11 @@ function initStepPage(): void {
   fetch('/samples/planetary-gear-housing.step')
     .then((r) => (r.ok ? r.text() : ''))
     .then((text) => {
-      if (text) loadStepString(text, 'planetary-gear-housing.step', text.length);
+      if (text) void loadStepString(text, 'planetary-gear-housing.step', text.length);
     })
-    .catch(() => runTessellation());
+    .catch(() => {
+      void runTessellation();
+    });
 }
 
 // =========================================================================
@@ -1145,6 +1402,16 @@ function initResinPage(): void {
   const priceBasisSelect = getEl<HTMLSelectElement>('resinPriceBasis');
   const banner = getEl('resinValidationBanner');
 
+  let uploadedStlSurfaceAreaCm2: number | null = null;
+
+  const WALL_THICKNESS_MAP: Record<string, number> = {
+    '0.22': 1.0,
+    '0.30': 1.5,
+    '0.42': 2.0,
+    '0.52': 2.5,
+    '0.60': 3.0,
+  };
+
   function calcResin(): void {
     customRetainedWrap.classList.toggle('hidden', hollowSelect.value !== 'custom');
     customLayerWrap.classList.toggle('hidden', layerSelect.value !== 'custom');
@@ -1154,10 +1421,23 @@ function initResinPage(): void {
 
     const solidVolumeMl = parseStrictNumber(getEl<HTMLInputElement>('resinVolMl').value);
     const supportPct = parseStrictNumber(getEl<HTMLInputElement>('resinSupportPct').value);
-    const retainedFraction =
-      hollowSelect.value === 'custom'
-        ? parseStrictNumber(getEl<HTMLInputElement>('resinCustomRetainedPct').value) / 100
-        : parseStrictNumber(hollowSelect.value);
+
+    let retainedFraction: number;
+    if (hollowSelect.value === 'custom') {
+      retainedFraction = parseStrictNumber(getEl<HTMLInputElement>('resinCustomRetainedPct').value) / 100;
+    } else if (
+      uploadedStlSurfaceAreaCm2 !== null &&
+      hollowSelect.value !== '1' &&
+      WALL_THICKNESS_MAP[hollowSelect.value] !== undefined &&
+      solidVolumeMl > 0
+    ) {
+      const wallMm = WALL_THICKNESS_MAP[hollowSelect.value];
+      const shellMl = computeHollowShellVolumeMl(solidVolumeMl, uploadedStlSurfaceAreaCm2, wallMm);
+      retainedFraction = Number.isFinite(shellMl) ? shellMl / solidVolumeMl : parseStrictNumber(hollowSelect.value);
+    } else {
+      retainedFraction = parseStrictNumber(hollowSelect.value);
+    }
+
     const pricePerUnit = parseStrictNumber(getEl<HTMLInputElement>('resinBottleCost').value);
     const densityGPerMl = parseStrictNumber(getEl<HTMLInputElement>('resinDensity').value);
 
@@ -1228,6 +1508,42 @@ function initResinPage(): void {
     trackCalculate('resin_cost');
   }
 
+  wireDropzone(
+    'resinStlDropzone',
+    'resinStlFileInput',
+    'resinStlBrowseBtn',
+    'stl',
+    (file) => {
+      const t0 = performance.now();
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (!buffer) return;
+        const res = auditStl(buffer);
+        const statusEl = maybeEl('resinStlStatus');
+        if (!res.ok) {
+          trackFileLoadError('resin_stl', res.errorCode);
+          if (statusEl) statusEl.textContent = res.error;
+          return;
+        }
+        trackFileLoadSuccess('resin_stl', res.metrics.format, file.size, performance.now() - t0);
+        uploadedStlSurfaceAreaCm2 = res.metrics.surfaceAreaCm2;
+        getEl<HTMLInputElement>('resinVolMl').value = res.metrics.volumeCm3.toFixed(2);
+        getEl<HTMLInputElement>('resinHeightMm').value = res.metrics.bboxMm.sizeZ.toFixed(1);
+        if (statusEl) {
+          statusEl.textContent = `STL LOADED: ${file.name} (${res.metrics.volumeCm3.toFixed(2)} mL, area ${res.metrics.surfaceAreaCm2.toFixed(1)} cm², Z=${res.metrics.bboxMm.sizeZ.toFixed(1)} mm)`;
+        }
+        calcResin();
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => {
+      const statusEl = maybeEl('resinStlStatus');
+      if (statusEl) statusEl.textContent = message;
+    }
+  );
+
+  const debouncedCalcResin = debounce(calcResin, 100);
   const ids = [
     'resinVolMl',
     'resinSupportPct',
@@ -1253,7 +1569,7 @@ function initResinPage(): void {
   ];
 
   ids.forEach((id) => {
-    maybeEl(id)?.addEventListener('input', calcResin);
+    maybeEl(id)?.addEventListener('input', debouncedCalcResin);
     maybeEl(id)?.addEventListener('change', calcResin);
   });
 
@@ -1280,6 +1596,18 @@ function initSpoolPage(): void {
   const densitySelect = getEl<HTMLSelectElement>('spoolMaterialDensity');
   const customDensityWrap = getEl('customSpoolDensityWrap');
 
+  function getDensity(): number {
+    return densitySelect.value === 'custom'
+      ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDensityVal').value)
+      : parseStrictNumber(densitySelect.value);
+  }
+
+  function getDiameter(): number {
+    return diaSelect.value === 'custom'
+      ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDiameterMm').value)
+      : parseStrictNumber(diaSelect.value);
+  }
+
   function calcSpool(): void {
     customTareWrap.classList.toggle('hidden', brandSelect.value !== 'custom');
     customSizeWrap.classList.toggle('hidden', sizeSelect.value !== 'custom');
@@ -1295,14 +1623,8 @@ function initSpoolPage(): void {
       sizeSelect.value === 'custom'
         ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolSizeGrams').value)
         : parseStrictNumber(sizeSelect.value);
-    const diameter =
-      diaSelect.value === 'custom'
-        ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDiameterMm').value)
-        : parseStrictNumber(diaSelect.value);
-    const density =
-      densitySelect.value === 'custom'
-        ? parseStrictNumber(getEl<HTMLInputElement>('customSpoolDensityVal').value)
-        : parseStrictNumber(densitySelect.value);
+    const diameter = getDiameter();
+    const density = getDensity();
 
     const noteEl = getEl('spoolStatusNote');
     const finishBadge = getEl('willItFinishBadge');
@@ -1354,6 +1676,51 @@ function initSpoolPage(): void {
     trackCalculate('spool_weight');
   }
 
+  const gcodeBtn = maybeEl<HTMLButtonElement>('spoolGcodeBrowseBtn');
+  const gcodeInput = maybeEl<HTMLInputElement>('spoolGcodeFileInput');
+  const gcodeStatus = maybeEl('spoolGcodeStatus');
+  if (gcodeBtn && gcodeInput) {
+    gcodeBtn.addEventListener('click', () => {
+      gcodeInput.value = '';
+      gcodeInput.click();
+    });
+    gcodeInput.addEventListener('change', () => {
+      const files = gcodeInput.files;
+      if (!files || files.length === 0) return;
+      const meta = validateFileMetadata([{ name: files[0].name, size: files[0].size }], 'gcode');
+      if (!meta.ok) {
+        if (gcodeStatus) gcodeStatus.textContent = meta.error;
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buf = ev.target?.result as ArrayBuffer;
+        if (!buf) return;
+        const head = validateTextBufferHead(buf, 'gcode');
+        if (!head.ok) {
+          if (gcodeStatus) gcodeStatus.textContent = head.error;
+          return;
+        }
+        const text = new TextDecoder('utf-8').decode(buf);
+        const parsed = parseGcode(text, {
+          densityGPerCm3: getDensity() || 1.24,
+          diameterMm: getDiameter() || 1.75,
+        });
+        if (!parsed.ok) {
+          if (gcodeStatus) gcodeStatus.textContent = parsed.error;
+          return;
+        }
+        getEl<HTMLInputElement>('nextPrintGrams').value = parsed.filamentGrams.toFixed(1);
+        if (gcodeStatus) {
+          gcodeStatus.textContent = `From ${files[0].name}: ${parsed.filamentGrams.toFixed(1)} g`;
+        }
+        calcSpool();
+      };
+      reader.readAsArrayBuffer(files[0]);
+    });
+  }
+
+  const debouncedCalcSpool = debounce(calcSpool, 100);
   const ids = [
     'spoolBrandSelect',
     'customTareGrams',
@@ -1368,7 +1735,7 @@ function initSpoolPage(): void {
   ];
 
   ids.forEach((id) => {
-    maybeEl(id)?.addEventListener('input', calcSpool);
+    maybeEl(id)?.addEventListener('input', debouncedCalcSpool);
     maybeEl(id)?.addEventListener('change', calcSpool);
   });
 
@@ -1434,8 +1801,9 @@ function initGramsMetersPage(): void {
     trackCalculate('grams_to_meters');
   }
 
+  const debouncedCalc = debounce(calc, 100);
   ['gmDirectionSelect', 'gmInputVal', 'gmMaterialSelect', 'gmCustomDensity', 'gmDiameterSelect'].forEach((id) => {
-    maybeEl(id)?.addEventListener('input', calc);
+    maybeEl(id)?.addEventListener('input', debouncedCalc);
     maybeEl(id)?.addEventListener('change', calc);
   });
 

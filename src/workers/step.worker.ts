@@ -1,12 +1,12 @@
-import { convertStepToStl, StepConvertOptions } from '../core/step';
+import { convertStepToStlWithOcctWasm, StepConvertOptions } from '../core/step';
 
 export interface StepWorkerRequest {
   buffer: ArrayBuffer;
   options?: StepConvertOptions;
 }
 
-self.onmessage = (event: MessageEvent<StepWorkerRequest>) => {
+self.onmessage = async (event: MessageEvent<StepWorkerRequest>) => {
   const { buffer, options } = event.data;
-  const result = convertStepToStl(buffer, options);
+  const result = await convertStepToStlWithOcctWasm(buffer, options);
   self.postMessage(result);
 };

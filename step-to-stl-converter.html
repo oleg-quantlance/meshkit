@@ -6,16 +6,18 @@
   <title>Convert STEP to STL Online — ISO-10303 CAD Tessellator</title>
   <meta name="description" content="Convert STEP (.step, .stp) files to binary or ASCII STL meshes online in your browser. Control chordal deflection tolerance and mm/inch units." />
   <link rel="canonical" href="https://meshkit.pro/step-to-stl-converter" />
+    <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta property="og:title" content="Convert STEP to STL Online — ISO-10303 CAD Tessellator" />
   <meta property="og:description" content="Convert STEP (.step, .stp) files to binary or ASCII STL meshes online in your browser with adjustable chordal deflection." />
   <meta property="og:url" content="https://meshkit.pro/step-to-stl-converter" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/step-to-stl-converter.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Convert STEP to STL Online — ISO-10303 CAD Tessellator" />
   <meta name="twitter:description" content="Convert STEP (.step, .stp) files to binary or ASCII STL meshes online in your browser." />
-  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/step-to-stl-converter.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -101,6 +103,10 @@
               <button type="button" id="stepBrowseBtn" class="btn-primary">BROWSE .STEP...</button>
               <button type="button" id="stepSampleBtn" class="btn-secondary">LOAD SAMPLE .STEP</button>
               <button type="button" id="downloadTestStepBtn" class="btn-ghost" title="Download a real ISO-10303 .step file to test uploading">⬇ GET TEST .STEP</button>
+              <button type="button" id="stepRetryBtn" class="btn-secondary hidden">RETRY CONVERSION</button>
+            </div>
+            <div id="stepProgressBarWrap" class="progress-bar-wrap hidden" aria-label="STEP conversion progress">
+              <div id="stepProgressBarFill" class="progress-bar-fill"></div>
             </div>
           </div>
         </div>

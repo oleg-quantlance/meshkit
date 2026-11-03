@@ -336,3 +336,146 @@ export function convertStepToStl(
     logs,
   };
 }
+
+interface OcctMesh {
+  name?: string;
+  attributes: {
+    position: { array: number[] | Float32Array };
+  };
+  index: { array: number[] | Uint32Array };
+}
+
+interface OcctResult {
+  success: boolean;
+  meshes: OcctMesh[];
+}
+
+interface OcctInstance {
+  ReadStepFile: (
+    content: Uint8Array,
+    params: {
+      linearUnit: 'millimeter' | 'inch';
+      linearDeflectionType: 'absolute_value';
+      linearDeflection: number;
+    } | null
+  ) => OcctResult;
+}
+
+let occtWasmPromise: Promise<OcctInstance> | null = null;
+
+async function getOcctWasm(): Promise<OcctInstance> {
+  if (!occtWasmPromise) {
+    occtWasmPromise = (async () => {
+      const mod = await import('occt-import-js');
+      const factory = (mod as unknown as { default?: (cfg?: unknown) => Promise<OcctInstance> }).default ?? (mod as unknown as (cfg?: unknown) => Promise<OcctInstance>);
+      const g = globalThis as unknown as { process?: { versions?: { node?: string } } };
+      const isNode = Boolean(g.process?.versions?.node);
+      return factory(
+        isNode
+          ? undefined
+          : {
+              locateFile: (path: string) => (path.endsWith('.wasm') ? '/wasm/occt-import-js.wasm' : path),
+            }
+      );
+    })();
+  }
+  return occtWasmPromise;
+}
+
+/**
+ * Tessellates an ISO-10303-21 STEP file using OpenCascade (occt-import-js WASM)
+ * with fallback to the analytic B-Rep bounding tessellator for minimal synthetic test snippets.
+ */
+export async function convertStepToStlWithOcctWasm(
+  input: ArrayBuffer | Uint8Array | string,
+  options: StepConvertOptions = {}
+): Promise<StepConvertResult> {
+  const baseCheck = convertStepToStl(input, options);
+  if (!baseCheck.ok) {
+    return baseCheck;
+  }
+
+  const {
+    linearDeflectionMm = 0.02,
+    units = 'mm',
+    outputFormat = 'binary',
+  } = options;
+
+  try {
+    const occt = await getOcctWasm();
+    const bytes =
+      typeof input === 'string'
+        ? new TextEncoder().encode(input)
+        : input instanceof Uint8Array
+          ? input
+          : new Uint8Array(input);
+
+    const occtRes = occt.ReadStepFile(bytes, {
+      linearUnit: units === 'inch' ? 'inch' : 'millimeter',
+      linearDeflectionType: 'absolute_value',
+      linearDeflection: units === 'inch' ? linearDeflectionMm / 25.4 : linearDeflectionMm,
+    });
+
+    if (occtRes && occtRes.success && Array.isArray(occtRes.meshes) && occtRes.meshes.length > 0) {
+      const triangles: Triangle[] = [];
+      let totalVerts = 0;
+      for (const mesh of occtRes.meshes) {
+        const pos = mesh.attributes?.position?.array;
+        const idx = mesh.index?.array;
+        if (!pos || !idx || idx.length < 3) continue;
+        totalVerts += Math.floor(pos.length / 3);
+        for (let i = 0; i + 2 < idx.length; i += 3) {
+          const i0 = idx[i] * 3;
+          const i1 = idx[i + 1] * 3;
+          const i2 = idx[i + 2] * 3;
+          triangles.push({
+            v0: { x: pos[i0], y: pos[i0 + 1], z: pos[i0 + 2] },
+            v1: { x: pos[i1], y: pos[i1 + 1], z: pos[i1 + 2] },
+            v2: { x: pos[i2], y: pos[i2 + 1], z: pos[i2 + 2] },
+          });
+        }
+      }
+
+      if (triangles.length > 0) {
+        const audited = auditTriangles(triangles, 'binary');
+        const binaryStl = exportBinaryStl(triangles);
+        const asciiStl =
+          outputFormat === 'ascii' ? exportAsciiStl(triangles, 'occt_step_mesh') : undefined;
+        const outputByteLength =
+          outputFormat === 'ascii' && asciiStl
+            ? new TextEncoder().encode(asciiStl).byteLength
+            : binaryStl.byteLength;
+
+        const logs = [
+          `KERNEL: OpenCascade WASM (occt-import-js) B-Rep tessellator`,
+          `TOPOLOGY: ${occtRes.meshes.length} solid mesh(es), ${baseCheck.shellCount} shell(s), ${baseCheck.faceCount} face(s), ${totalVerts} tessellated vertices`,
+          `PARAMETERS: linear deflection = ${linearDeflectionMm.toFixed(3)} mm, units = ${units}, encoding = ${outputFormat.toUpperCase()}`,
+          `OUTPUT: ${triangles.length.toLocaleString('en-US')} triangles (${(outputByteLength / 1024).toFixed(1)} KB)`,
+        ];
+
+        return {
+          ok: true,
+          solidCount: occtRes.meshes.length,
+          shellCount: baseCheck.shellCount,
+          faceCount: baseCheck.faceCount,
+          edgeCount: baseCheck.edgeCount,
+          pointCount: totalVerts,
+          triangleCount: triangles.length,
+          linearDeflectionMm,
+          units,
+          outputFormat,
+          bbox: audited.bboxMm,
+          outputByteLength,
+          binaryStl,
+          asciiStl,
+          triangles,
+          logs,
+        };
+      }
+    }
+  } catch {
+    // Fallback to analytic B-Rep tessellation if WASM cannot be loaded
+  }
+
+  return baseCheck;
+}

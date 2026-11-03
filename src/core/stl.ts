@@ -914,3 +914,106 @@ export function repairStl(input: ArrayBuffer | Uint8Array | string | Triangle[])
     binaryStl,
   };
 }
+
+let manifoldWasmPromise: Promise<import('manifold-3d').ManifoldToplevel> | null = null;
+
+async function getManifoldWasm(): Promise<import('manifold-3d').ManifoldToplevel> {
+  if (!manifoldWasmPromise) {
+    manifoldWasmPromise = (async () => {
+      const mod = await import('manifold-3d');
+      const g = globalThis as unknown as { process?: { versions?: { node?: string } } };
+      const isNode = Boolean(g.process?.versions?.node);
+      const instance = await mod.default(
+        isNode ? undefined : { locateFile: () => '/wasm/manifold.wasm' }
+      );
+      instance.setup();
+      return instance;
+    })();
+  }
+  return manifoldWasmPromise;
+}
+
+/**
+ * Repairs an STL mesh using the topological solver + manifold-3d WASM kernel verification/merging.
+ */
+export async function repairStlWithManifoldWasm(
+  input: ArrayBuffer | Uint8Array | string | Triangle[]
+): Promise<StlRepairResult> {
+  const baseRepair = repairStl(input);
+  if (!baseRepair.ok) return baseRepair;
+
+  try {
+    const wasm = await getManifoldWasm();
+    const tris = baseRepair.triangles;
+    const vertProperties = new Float32Array(tris.length * 9);
+    const triVerts = new Uint32Array(tris.length * 3);
+
+    for (let i = 0; i < tris.length; i++) {
+      const t = tris[i];
+      const baseV = i * 9;
+      vertProperties[baseV] = t.v0.x;
+      vertProperties[baseV + 1] = t.v0.y;
+      vertProperties[baseV + 2] = t.v0.z;
+      vertProperties[baseV + 3] = t.v1.x;
+      vertProperties[baseV + 4] = t.v1.y;
+      vertProperties[baseV + 5] = t.v1.z;
+      vertProperties[baseV + 6] = t.v2.x;
+      vertProperties[baseV + 7] = t.v2.y;
+      vertProperties[baseV + 8] = t.v2.z;
+
+      const baseT = i * 3;
+      triVerts[baseT] = i * 3;
+      triVerts[baseT + 1] = i * 3 + 1;
+      triVerts[baseT + 2] = i * 3 + 2;
+    }
+
+    const mesh = new wasm.Mesh({
+      numProp: 3,
+      vertProperties,
+      triVerts,
+    });
+    mesh.merge();
+
+    const manifold = new wasm.Manifold(mesh);
+    const statusVal = manifold.status() as unknown;
+    if ((statusVal === 0 || statusVal === 'NoError') && manifold.numTri() > 0) {
+      const outMesh = manifold.getMesh();
+      const outTris: Triangle[] = [];
+      const numTri = outMesh.numTri;
+      for (let i = 0; i < numTri; i++) {
+        const iv = outMesh.verts(i);
+        const p0 = outMesh.position(iv[0]);
+        const p1 = outMesh.position(iv[1]);
+        const p2 = outMesh.position(iv[2]);
+        const v0 = { x: p0[0], y: p0[1], z: p0[2] };
+        const v1 = { x: p1[0], y: p1[1], z: p1[2] };
+        const v2 = { x: p2[0], y: p2[1], z: p2[2] };
+        const { normal } = computeNormal(v0, v1, v2);
+        outTris.push({ v0, v1, v2, normal });
+      }
+      manifold.delete();
+      const afterMetrics = auditTriangles(outTris, 'binary');
+      const binaryStl = exportBinaryStl(outTris);
+      const repaired =
+        afterMetrics.boundaryEdges === 0 &&
+        afterMetrics.nonManifoldEdges === 0 &&
+        afterMetrics.flippedFaces === 0;
+      return {
+        ok: true,
+        repaired,
+        statusMessage: repaired
+          ? `Repaired via manifold-3d WASM: 0 boundary edges, 0 non-manifold edges (${afterMetrics.triangleCount.toLocaleString('en-US')} facets, ${afterMetrics.volumeCm3.toFixed(3)} cm³).`
+          : baseRepair.statusMessage,
+        before: baseRepair.before,
+        after: afterMetrics,
+        triangles: outTris,
+        binaryStl,
+      };
+    }
+    manifold.delete();
+  } catch {
+    // Fall back to baseRepair if WASM fails to initialize in restricted environment
+  }
+
+  return baseRepair;
+}

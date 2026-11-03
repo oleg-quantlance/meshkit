@@ -6,16 +6,18 @@
   <title>How Much Filament Is Left on Spool — Weight Calculator</title>
   <meta name="description" content="Calculate how much 3D printer filament is left on a spool in grams and meters by subtracting empty spool tare weight for Bambu Lab, Polymaker, Elegoo, Prusament, Sunlu, eSUN, and Overture." />
   <link rel="canonical" href="https://meshkit.pro/filament-spool-weight-calculator" />
+    <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta property="og:title" content="How Much Filament Is Left on Spool — Weight Calculator" />
   <meta property="og:description" content="Calculate remaining 3D printer filament in grams and meters by subtracting empty spool tare weight." />
   <meta property="og:url" content="https://meshkit.pro/filament-spool-weight-calculator" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/filament-spool-weight-calculator.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="How Much Filament Is Left on Spool — Weight Calculator" />
   <meta name="twitter:description" content="Calculate remaining 3D printer filament in grams and meters by subtracting empty spool tare weight." />
-  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/filament-spool-weight-calculator.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -188,6 +190,12 @@
                 YES (+113.5 g margin)
               </div>
             </div>
+          </div>
+          <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <label for="spoolGcodeFileInput" class="hidden">Load G-code for next print grams</label>
+            <input type="file" id="spoolGcodeFileInput" accept=".gcode,.gco,.g" class="hidden" />
+            <button type="button" id="spoolGcodeBrowseBtn" class="btn-secondary">LOAD .GCODE FOR PRINT GRAMS...</button>
+            <span class="mono" id="spoolGcodeStatus" style="font-size:11px; color:var(--text-muted);">Or enter grams manually above</span>
           </div>
         </div>
       </div>

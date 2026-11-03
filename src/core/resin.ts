@@ -58,6 +58,24 @@ export type ResinTimeResult =
       error: string;
     };
 
+export function computeHollowShellVolumeMl(
+  solidVolumeMl: number,
+  surfaceAreaCm2: number,
+  wallThicknessMm: number
+): number {
+  if (
+    !Number.isFinite(solidVolumeMl) ||
+    !Number.isFinite(surfaceAreaCm2) ||
+    !Number.isFinite(wallThicknessMm) ||
+    solidVolumeMl <= 0 ||
+    surfaceAreaCm2 <= 0 ||
+    wallThicknessMm <= 0
+  ) {
+    return NaN;
+  }
+  return Math.min(solidVolumeMl, surfaceAreaCm2 * (wallThicknessMm / 10));
+}
+
 export function calculateResinCost(input: ResinCostInput): ResinCostResult {
   const {
     solidVolumeMl,

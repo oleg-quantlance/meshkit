@@ -6,16 +6,18 @@
   <title>Resin Print Cost Calculator — SLA / MSLA Volume &amp; Time</title>
   <meta name="description" content="Calculate SLA and MSLA resin 3D printing cost, hollow shell volume, support overhead, FEP/LCD screen amortization, and layer exposure time." />
   <link rel="canonical" href="https://meshkit.pro/resin-3d-print-cost-calculator" />
+    <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta property="og:title" content="Resin Print Cost Calculator — SLA / MSLA Volume &amp; Time" />
   <meta property="og:description" content="Calculate SLA and MSLA resin 3D printing cost, hollow shell volume, support overhead, FEP/LCD screen amortization, and layer exposure time." />
   <meta property="og:url" content="https://meshkit.pro/resin-3d-print-cost-calculator" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/resin-3d-print-cost-calculator.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Resin Print Cost Calculator — SLA / MSLA Volume &amp; Time" />
   <meta name="twitter:description" content="Calculate SLA and MSLA resin 3D printing cost, consumables, and exposure duration." />
-  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/resin-3d-print-cost-calculator.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -89,6 +91,14 @@
       <div class="wb-left">
         <div class="wb-section">
           <div class="section-head"><span>A. Photopolymer Volume &amp; Pricing</span></div>
+          <div class="drop-area" id="resinStlDropzone" tabindex="0" role="button" aria-label="Optional STL upload for exact surface area and volume" style="margin-bottom:12px; padding:12px;">
+            <label for="resinStlFileInput" class="hidden">Upload optional STL file</label>
+            <input type="file" id="resinStlFileInput" accept=".stl" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:11px;" id="resinStlStatus">OPTIONAL: DROP .STL TO EXTRACT SOLID VOLUME, SURFACE AREA &amp; Z-HEIGHT</div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" id="resinStlBrowseBtn" class="btn-secondary">LOAD .STL FOR SHELL CALC...</button>
+            </div>
+          </div>
           <div class="field-grid">
             <div>
               <label class="field-label" for="resinVolMl"><span>Solid Volume</span><span class="unit-tag">[mL]</span></label>
