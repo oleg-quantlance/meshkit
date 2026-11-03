@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About MeshKit — Local-First 3D Printing Calculators</title>
+  <meta name="description" content="Learn who built MeshKit and why: a client-side 3D printing utility suite for G-code costing, STL topology audit, STEP tessellation, SLA resin math, and empty spool tare weights." />
+  <link rel="canonical" href="https://meshkit.pro/about" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="About MeshKit — Local-First 3D Printing Calculators" />
+  <meta property="og:description" content="Client-side 3D printing utility suite built for accurate engineering calculations with zero file uploads." />
+  <meta property="og:url" content="https://meshkit.pro/about" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+      { "@type": "ListItem", "position": 2, "name": "About", "item": "https://meshkit.pro/about" }
+    ]
+  }
+  </script>
+</head>
+<body data-page="about">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="spec-strip">
+      <h1 class="spec-title">About MeshKit</h1>
+      <div class="spec-meta mono">
+        <span>OWNER: OLEG PONOMARYOV</span>
+        <span>UPDATED: 2026-11-01</span>
+      </div>
+    </div>
+
+    <section style="background:var(--bg-panel); border:1px solid var(--border-strong); padding:24px; line-height:1.65;">
+      <h2 class="mono" style="font-size:16px; margin-top:0;">Why MeshKit Was Built</h2>
+      <p>
+        MeshKit was created by <strong>Oleg Ponomaryov</strong> to give 3D print farms, mechanical engineers, and independent makers a fast, transparent set of browser-native utilities without requiring cloud file uploads, user accounts, or opaque formulas.
+      </p>
+      <p>
+        Many online 3D printing calculators hide critical cost drivers—such as marketplace payment processing fees, machine hourly depreciation, print failure buffers, and FEP/LCD consumables on MSLA printers—or require uploading proprietary customer CAD and G-code files to a remote server. Every tool on MeshKit runs 100% inside your browser's local memory buffer using Web Workers. Your `.gcode`, `.stl`, and `.step` files never leave your device.
+      </p>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">Core Principles</h2>
+      <ul>
+        <li><strong>Zero Server Uploads:</strong> All file parsing, mesh topology inspection, and CAD tessellation execute locally in your browser.</li>
+        <li><strong>Auditable Engineering Formulas:</strong> Every equation, polymer density, empty spool tare weight, and marketplace fee schedule is documented on our <a href="/methodology">Methodology</a> page with worked examples.</li>
+        <li><strong>Strict Input Guarding:</strong> MeshKit never silently substitutes invalid inputs with hidden defaults. Invalid or out-of-range parameters are flagged immediately next to the input.</li>
+      </ul>
+
+      <div style="margin-top:24px; display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="/methodology" class="btn-primary" style="text-decoration:none;">READ METHODOLOGY &amp; FORMULAS -&gt;</a>
+        <a href="/privacy" class="btn-secondary" style="text-decoration:none;">PRIVACY &amp; CONSENT SETTINGS</a>
+        <a href="/" class="btn-secondary" style="text-decoration:none;">BACK TO G-CODE COST CALCULATOR</a>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

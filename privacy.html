@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy &amp; Analytics Consent — MeshKit</title>
+  <meta name="description" content="MeshKit Privacy Policy: 100% local in-browser file processing (0 bytes uploaded) and Google Analytics 4 Consent Mode v2 controls." />
+  <link rel="canonical" href="https://meshkit.pro/privacy" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Privacy Policy &amp; Analytics Consent — MeshKit" />
+  <meta property="og:description" content="100% local in-browser file processing (0 bytes uploaded) and Google Analytics 4 Consent Mode v2 controls." />
+  <meta property="og:url" content="https://meshkit.pro/privacy" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+      { "@type": "ListItem", "position": 2, "name": "Privacy Policy", "item": "https://meshkit.pro/privacy" }
+    ]
+  }
+  </script>
+</head>
+<body data-page="privacy">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="spec-strip">
+      <h1 class="spec-title">Privacy Policy &amp; Consent Mode v2 Settings</h1>
+      <div class="spec-meta mono">
+        <span>EFFECTIVE DATE: 2026-11-01</span>
+        <span>FILE UPLOADS: 0 BYTES (LOCAL ONLY)</span>
+      </div>
+    </div>
+
+    <section style="background:var(--bg-panel); border:1px solid var(--border-strong); padding:24px; line-height:1.65;">
+      <h2 class="mono" style="font-size:16px; margin-top:0;">1. Local Browser File Processing (Zero Uploads)</h2>
+      <p>
+        When you select or drag a `.gcode`, `.stl`, or `.step` file into any MeshKit tool, the file is read exclusively inside your web browser's local memory (`ArrayBuffer` / Web Worker). <strong>No file contents, 3D geometry, or file names are ever transmitted to any server.</strong>
+      </p>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">2. Google Analytics 4 &amp; Consent Mode v2</h2>
+      <p>
+        MeshKit uses Google Analytics 4 (GA4) configured with <strong>Consent Mode v2</strong>. By default, before any tag runs, `ad_storage`, `analytics_storage`, `ad_user_data`, and `ad_personalization` are set to <code>denied</code>. No analytics cookies (`_ga`) are stored unless you explicitly grant consent.
+      </p>
+      <p>
+        When analytics consent is granted, MeshKit sends only aggregate interaction events (`file_load_success` with coarse size bucket `&lt;1 MB`, `1–10 MB`, `10–50 MB`, `&gt;50 MB` and parse duration in milliseconds; `file_load_error` with error code; `calculate`; `export_download`; `sample_load`; and `internal_tool_link`). File names and file contents are never included in analytics parameters.
+      </p>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">3. Manage Your Analytics Consent</h2>
+      <p>You can update your analytics preference for this browser at any time:</p>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
+        <button type="button" id="privacyGrantBtn" class="btn-primary">GRANT ANALYTICS CONSENT</button>
+        <button type="button" id="privacyDenyBtn" class="btn-secondary">REVOKE / DENY CONSENT</button>
+        <span class="mono" id="privacyCurrentState" style="font-size:12px; color:var(--text-muted);"></span>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

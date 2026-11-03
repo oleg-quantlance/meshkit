@@ -6,9 +6,38 @@
   <title>3D Print Cost Calculator — Filament, Power &amp; Etsy Fees</title>
   <meta name="description" content="Calculate 3D printing unit cost, electricity, machine wear, failure buffer, and marketplace selling price for Etsy, eBay, Whatnot, Shopify, and Direct orders." />
   <link rel="canonical" href="https://meshkit.pro/3d-print-cost-calculator" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="3D Print Cost Calculator — Filament, Power &amp; Etsy Fees" />
+  <meta property="og:description" content="Calculate 3D printing unit cost, electricity, machine wear, failure buffer, and marketplace selling price." />
+  <meta property="og:url" content="https://meshkit.pro/3d-print-cost-calculator" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="3D Print Cost Calculator — Filament, Power &amp; Etsy Fees" />
+  <meta name="twitter:description" content="Calculate 3D printing unit cost, electricity, machine wear, failure buffer, and marketplace selling price." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit 3D Print Cost Calculator",
+        "url": "https://meshkit.pro/3d-print-cost-calculator",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "3D Print Cost Calculator", "item": "https://meshkit.pro/3d-print-cost-calculator" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="cost-manual">
 
@@ -221,11 +250,64 @@
             </div>
           </div>
           <div style="display:flex; gap:8px;">
-            <button type="button" onclick="window.print()" class="btn-primary">PRINT / EXPORT SPEC SHEET</button>
+            <button type="button" id="printSpecSheetBtn" class="btn-primary">PRINT / EXPORT SPEC SHEET</button>
           </div>
         </div>
       </div>
     </section>
+
+    <article class="seo-content">
+      <h2>What the Manual 3D Print Cost Calculator Does</h2>
+      <p>
+        The Manual 3D Print Cost Calculator lets print shops, Etsy sellers, and rapid-prototyping service bureaus compute unit production cost and profitable selling prices directly from slicer mass (grams) and print duration (hours) without uploading a file. It accounts for filament price per kilogram, printer electrical power consumption, hourly machine maintenance and depreciation, print failure scrap buffer, and marketplace fee schedules.
+      </p>
+
+      <h2>How to Price a 3D Printed Part in 4 Steps</h2>
+      <ol>
+        <li><strong>Enter Slicer Grams &amp; Hours:</strong> Read the estimated filament weight (g) and print time (hours) from Bambu Studio, PrusaSlicer, OrcaSlicer, or Cura and enter them in Section A.</li>
+        <li><strong>Configure Material &amp; Energy Rates:</strong> Set your spool cost (`$/kg`), printer average watts (e.g., `135–150 W` for PLA on an enclosed CoreXY printer), and your local utility rate (`$/kWh`).</li>
+        <li><strong>Set Machine Wear &amp; Scrap Buffer:</strong> Include an hourly reserve (`$0.15/h` typical) for nozzles, belts, build plates, and fans, plus a failure percentage (`5–10%`) for adhesion or power-loss reprints.</li>
+        <li><strong>Select Marketplace &amp; Pricing Mode:</strong> Choose your sales channel (Etsy, eBay, Whatnot, Shopify, Amazon Handmade, TikTok Shop, or Direct Invoice) and either a cost multiplier (`1.5×` to `5.0×`) or a target net margin percentage.</li>
+      </ol>
+
+      <h2>Worked Example: Marketplace vs. Direct Pricing (Golden Vectors C1 &amp; C2)</h2>
+      <p>
+        Using the same part (`48.5 g` PLA at `$22/kg`, `3.7 hours` at `150 W`, `$0.16/kWh`, `$0.15/h` wear, `7%` failure buffer, `3.5×` markup):
+      </p>
+      <div class="formula-box">
+        Unit Cost Floor = ($1.0670 + $0.0888 + $0.5550) × 1.07 = $1.83<br/>
+        Direct Invoice (0% fee): Price = $1.8306 × 3.5 = $6.41 | Profit = $4.58 | Margin = 71%<br/>
+        Etsy (9.5% + $0.45 fee): Price = ($6.4069 + $0.45) ÷ (1 − 0.095) = $7.58 | Profit = $4.58 | Margin = 60%
+      </div>
+      <p>
+        Notice that by grossing up the denominator by `(1 − channel_fee_rate)`, your net dollar profit remains `$4.58` on both Direct and Etsy orders instead of being eroded by platform fees.
+      </p>
+
+      <h2>Limitations &amp; Fee Verification Notes</h2>
+      <p>
+        Platform fee presets (last verified `2026-11-01`) reflect standard US listing, transaction, and payment processing tiers. Offsite ads, promoted listings, currency conversion, and shipping label fees vary by seller account status; use the <strong>Custom (% + fixed $)</strong> channel option if your shop pays mandatory offsite ad fees.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How much electricity does a 3D printer actually use per hour?</summary>
+          <p>Peak heater wattage (often 350–500 W during initial bed heat-up) only lasts a few minutes. Once at steady state with a 60°C bed, most modern FDM printers draw 110–150 W on average for PLA/PETG, or 200–260 W with a 100°C bed for ABS/ASA. At `$0.16/kWh`, 150 W costs `$0.024` per hour.</p>
+        </details>
+        <details>
+          <summary>What markup multiplier should I use for commercial 3D printing?</summary>
+          <p>Wholesale batch production typically uses `2.0×–2.5×`, standard retail marketplace listings use `3.0×–3.5×`, and rush engineering prototypes or multi-material prints use `4.0×–5.0×` to cover setup and post-processing labor.</p>
+        </details>
+        <details>
+          <summary>How is machine hourly wear calculated?</summary>
+          <p>Divide the purchase price of your printer plus annual replacement parts (nozzles, PEI sheets, PTFE tubes, extruder gears) by its expected productive service life (typically 4,000–6,000 printing hours). A `$750` printer over `5,000` hours equals `$0.15/hr`.</p>
+        </details>
+        <details>
+          <summary>What happens if I enter 0 for all inputs?</summary>
+          <p>MeshKit calculates a `$0.00` unit cost and displays an em dash (`—`) for net margin percentage rather than dividing by zero or substituting hidden fallback numbers.</p>
+        </details>
+      </div>
+    </article>
 
     <section class="doc-grid">
       <div>
@@ -247,6 +329,24 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

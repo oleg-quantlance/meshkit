@@ -6,9 +6,38 @@
   <title>Filament Grams to Meters Converter — 1.75mm &amp; 2.85mm</title>
   <meta name="description" content="Convert 3D printer filament weight in grams to length in meters (and meters to grams) for 1.75 mm, 2.85 mm, and 3.00 mm PLA, PETG, ABS, ASA, TPU, PC, and Nylon." />
   <link rel="canonical" href="https://meshkit.pro/filament-grams-to-meters" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Filament Grams to Meters Converter — 1.75mm &amp; 2.85mm" />
+  <meta property="og:description" content="Convert 3D printer filament weight in grams to length in meters (and meters to grams) across 10 polymers." />
+  <meta property="og:url" content="https://meshkit.pro/filament-grams-to-meters" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Filament Grams to Meters Converter — 1.75mm &amp; 2.85mm" />
+  <meta name="twitter:description" content="Convert 3D printer filament weight in grams to length in meters (and meters to grams)." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit Filament Grams to Meters Converter",
+        "url": "https://meshkit.pro/filament-grams-to-meters",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "Filament Grams to Meters", "item": "https://meshkit.pro/filament-grams-to-meters" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="grams-meters">
 
@@ -133,6 +162,81 @@
         </div>
       </div>
     </section>
+
+    <article class="seo-content">
+      <h2>What the Filament Grams to Meters Converter Does</h2>
+      <p>
+        3D printing slicers report filament consumption either in weight (`grams`), length (`meters` or `millimeters`), or volume (`cm³`), while filament spools are sold by net weight (`250 g`, `500 g`, `1 kg`, `2 kg`, `5 kg`). Converting accurately between grams and meters requires knowing two physical parameters: the filament's cross-sectional diameter (`1.75 mm`, `2.85 mm`, or `3.00 mm`) and the specific gravity (density in `g/cm³`) of the polymer.
+      </p>
+      <p>
+        MeshKit's bidirectional Filament Grams to Meters Converter calculates exact linear mass density (`g/m`), cross-sectional area (`mm²`), and total length or weight across PLA, PETG, ABS, ASA, TPU, Polycarbonate, Nylon/PA, HIPS, PVA, carbon-fiber composites, or any custom datasheet density.
+      </p>
+
+      <h2>How to Convert Grams to Meters (or Meters to Grams) in 3 Steps</h2>
+      <ol>
+        <li><strong>Select Conversion Direction:</strong> Choose <strong>Grams (g) → Meters (m)</strong> to find how much length a given weight of filament provides, or <strong>Meters (m) → Grams (g)</strong> to convert a slicer's meter estimate into weight.</li>
+        <li><strong>Enter Weight or Length:</strong> Type your net filament grams (for example, `500 g` or `1,000 g`) or meters into the input field.</li>
+        <li><strong>Pick Polymer Density &amp; Diameter:</strong> Select your polymer preset (such as `PLA 1.24 g/cm³` or `PETG 1.27 g/cm³`) and filament diameter (`1.75 mm`, `2.85 mm`, or `3.00 mm`).</li>
+      </ol>
+
+      <h2>Worked Example: 1.75 mm PLA vs. 2.85 mm PETG (Golden Vector C9)</h2>
+      <p>
+         treating the filament as a cylinder of diameter `d_mm` (`d_cm = d_mm / 10`), 1 meter (`100 cm`) of filament has volume `V_cm3 = π × (d_cm / 2)² × 100`:
+      </p>
+      <div class="formula-box">
+        1.75 mm PLA (ρ = 1.24 g/cm³):<br/>
+        Area = π × (0.175 cm ÷ 2)² = 0.024053 cm² (2.41 mm²)<br/>
+        Grams per Meter = 0.024053 cm² × 100 cm × 1.24 g/cm³ = 2.9825 g/m<br/>
+        500 g of 1.75 mm PLA = 500 ÷ 2.9825 = 167.6 m (1,000 g = 335.3 m)<br/><br/>
+        2.85 mm PETG (ρ = 1.27 g/cm³, Golden Vector C9):<br/>
+        Area = π × (0.285 cm ÷ 2)² = 0.063794 cm² (6.38 mm²)<br/>
+        Grams per Meter = 0.063794 cm² × 100 cm × 1.27 g/cm³ = 8.1018 g/m<br/>
+        500 g of 2.85 mm PETG = 500 ÷ 8.1018 = 61.7 m
+      </div>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Industrial filament manufacturing tolerances are typically `±0.02 mm` to `±0.03 mm` on a `1.75 mm` nominal diameter. A shift from `1.75 mm` to `1.77 mm` increases cross-sectional area (and weight per meter) by `2.3%`. Foaming filaments (LW-PLA) and heavily filled metal or ceramic filaments have densities that differ significantly from standard polymers—always check your manufacturer's technical datasheet and use the Custom Density option when working with specialty filaments.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How many grams is 1 meter of 1.75 mm PLA filament?</summary>
+          <p>One meter of `1.75 mm` PLA (`1.24 g/cm³`) weighs `2.98 grams` (`0.024053 cm³` per cm × `100 cm` × `1.24 g/cm³`).</p>
+        </details>
+        <details>
+          <summary>Why does 1 kg of ABS have more meters than 1 kg of PLA?</summary>
+          <p>Because ABS is less dense (`1.04 g/cm³`) than PLA (`1.24 g/cm³`), 1 meter of `1.75 mm` ABS weighs only `2.50 g/m`. Therefore, a 1,000 g spool of ABS contains about `399.8 meters` of filament compared to `335.3 meters` for PLA.</p>
+        </details>
+        <details>
+          <summary>How do I account for the weight of the plastic or cardboard spool itself?</summary>
+          <p>If you are weighing a spool on a scale, use our <a href="/filament-spool-weight-calculator">Filament Spool Weight Calculator</a> first to subtract the empty spool tare weight before converting grams to meters.</p>
+        </details>
+        <details>
+          <summary>Why is 2.85 mm filament sometimes called 3 mm filament?</summary>
+          <p>Legacy Bowden extruders (such as UltiMaker) standardized on `2.85 mm` within a 3 mm nominal class so the filament would not bind inside 3.0–3.2 mm ID PTFE Bowden tubes. Always select `2.85 mm` vs `3.00 mm` according to your caliper measurement or box label, as their areas differ by `10.8%`.</p>
+        </details>
+      </div>
+    </article>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

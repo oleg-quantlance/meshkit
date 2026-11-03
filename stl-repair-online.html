@@ -6,9 +6,38 @@
   <title>STL Repair Online Free — Audit &amp; Fix Non-Manifold Mesh</title>
   <meta name="description" content="Free online STL repair and topology audit tool. Inspect open boundary loops, non-manifold edges, inverted normals, and signed watertight volume locally." />
   <link rel="canonical" href="https://meshkit.pro/stl-repair-online" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="STL Repair Online Free — Audit &amp; Fix Non-Manifold Mesh" />
+  <meta property="og:description" content="Inspect open boundary loops, non-manifold edges, inverted normals, and signed watertight volume locally in your browser." />
+  <meta property="og:url" content="https://meshkit.pro/stl-repair-online" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="STL Repair Online Free — Audit &amp; Fix Non-Manifold Mesh" />
+  <meta name="twitter:description" content="Inspect open boundary loops, non-manifold edges, inverted normals, and signed watertight volume locally." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit STL Repair Online & Topology Auditor",
+        "url": "https://meshkit.pro/stl-repair-online",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "STL Repair Online", "item": "https://meshkit.pro/stl-repair-online" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="stl">
 
@@ -65,12 +94,13 @@
             <span id="stlParseState" style="color:var(--status-ok);">READY</span>
           </div>
           <div class="drop-area" id="stlDropzone" tabindex="0" role="button" aria-label="Upload STL file">
+            <label for="stlFileInput" class="hidden">Upload STL file</label>
             <input type="file" id="stlFileInput" accept=".stl" class="hidden" />
             <div class="mono" style="font-weight:600; font-size:12px;" id="stlFileName">[CLICK TO SELECT .STL] OR DRAG MESH HERE</div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="stlFileSub">Reads ASCII facets or 80-byte binary triangle buffers locally.</div>
             <div class="btn-row">
               <button type="button" id="stlBrowseBtn" class="btn-primary">BROWSE .STL...</button>
-              <button type="button" id="stlSampleBtn" class="btn-secondary">LOAD DEMO</button>
+              <button type="button" id="stlSampleBtn" class="btn-secondary">LOAD DEFECTIVE SAMPLE</button>
               <button type="button" id="downloadTestStlBtn" class="btn-ghost" title="Download a real defective ASCII .stl file to test uploading">⬇ GET DEFECTIVE .STL</button>
             </div>
           </div>
@@ -79,13 +109,34 @@
         <div class="wb-section">
           <div class="section-head"><span>B. Repair Solver Directives</span></div>
           <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
-            <label><input type="checkbox" checked /> Close open boundary loops (planar ear-clipping)</label>
-            <label><input type="checkbox" checked /> Unify face normal orientation outward</label>
-            <label><input type="checkbox" checked /> Cull zero-area degenerate facets</label>
-            <label><input type="checkbox" checked /> Weld coincident vertices (epsilon = 1e-6 × bbox)</label>
+            <div>
+              <input type="checkbox" id="dirCloseLoops" checked />
+              <label for="dirCloseLoops">Close open boundary loops (planar ear-clipping)</label>
+            </div>
+            <div>
+              <input type="checkbox" id="dirUnifyNormals" checked />
+              <label for="dirUnifyNormals">Unify face normal orientation outward</label>
+            </div>
+            <div>
+              <input type="checkbox" id="dirCullDegenerate" checked />
+              <label for="dirCullDegenerate">Cull zero-area degenerate facets (&lt; 1e-12 mm²)</label>
+            </div>
+            <div>
+              <input type="checkbox" id="dirWeldVertices" checked />
+              <label for="dirWeldVertices">Weld coincident vertices (epsilon = 1e-6 × bbox)</label>
+            </div>
           </div>
           <div style="margin-top:16px;">
             <button type="button" id="runStlRepairBtn" class="btn-primary" style="width:100%; justify-content:center;">EXECUTE MANIFOLD REPAIR</button>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head"><span>C. Geometry &amp; Bounding Box Audit</span></div>
+          <div class="mono" style="font-size:12px; display:flex; flex-direction:column; gap:6px;">
+            <div>BOUNDING BOX: <strong id="stlBboxOut">—</strong></div>
+            <div>SURFACE AREA: <strong id="stlAreaOut">—</strong></div>
+            <div>NON-MANIFOLD EDGES: <strong id="stlNonManifoldOut">—</strong> &nbsp;|&nbsp; DEGENERATE: <strong id="stlDegenerateOut">—</strong></div>
           </div>
         </div>
       </div>
@@ -108,7 +159,7 @@
           <div class="kpi-cell">
             <div class="kpi-label">Open Loops</div>
             <div class="kpi-val" id="stlHoles" style="color:var(--accent);">—</div>
-            <div class="kpi-sub">Boundary holes</div>
+            <div class="kpi-sub" id="stlBoundaryEdgesSub">Boundary holes</div>
           </div>
           <div class="kpi-cell">
             <div class="kpi-label">Flipped Normals</div>
@@ -118,16 +169,71 @@
           <div class="kpi-cell">
             <div class="kpi-label">Signed Volume</div>
             <div class="kpi-val" id="stlVolume">—</div>
-            <div class="kpi-sub">Watertight calc</div>
+            <div class="kpi-sub" id="stlVolumeSub">Watertight calc</div>
           </div>
         </div>
 
         <div class="quote-bar">
-          <div class="mono" style="font-size:12px;" id="stlRepairLog">Awaiting solver execution on active mesh buffer.</div>
+          <div class="mono" style="font-size:12px;" id="stlRepairLog">Upload an .STL file or load the defective sample to audit topology.</div>
           <button type="button" id="downloadRepairedStlBtn" class="btn-primary">DOWNLOAD WATERTIGHT .STL</button>
         </div>
       </div>
     </section>
+
+    <article class="seo-content">
+      <h2>What the Online STL Repair &amp; Topology Auditor Does</h2>
+      <p>
+        Before a 3D slicer (such as PrusaSlicer, OrcaSlicer, Bambu Studio, Cura, or Lychee) can generate clean 2D contour slices, the input `.stl` triangle soup must form a closed, watertight 2-manifold volume. Because standard STL files only store an unordered list of triangle vertex coordinates without shared connectivity, exported CAD or photogrammetry meshes frequently contain gaps, unmerged vertices, zero-area slivers, or inverted face normals that cause missing layers or slicer crashes.
+      </p>
+      <p>
+        MeshKit's STL Repair Online tool reads both binary and ASCII `.stl` files up to 100 MB directly in your browser, welds coincident vertices within `1e-6 × bounding_box_diagonal`, builds a complete half-edge topology graph, counts open boundary edges, holes, non-manifold edges, and flipped normals, computes exact surface area and signed tetrahedral volume, and exports a repaired binary `.stl` file.
+      </p>
+
+      <h2>How to Audit &amp; Repair an STL File in 4 Steps</h2>
+      <ol>
+        <li><strong>Select or Drop Your `.STL` File:</strong> Click the upload box or drag any binary or ASCII `.stl` file up to 100 MB. MeshKit verifies the exact binary byte formula (`84 + 50 × N`) rather than trusting the `solid` header prefix.</li>
+        <li><strong>Review the Topology Metrics:</strong> Check the KPI strip for open boundary loops (holes), boundary edge count, non-manifold edges, flipped normals, degenerate zero-area triangles, bounding box dimensions, surface area (`cm²`), and signed volume (`cm³`).</li>
+        <li><strong>Run the Manifold Repair Solver:</strong> Click <strong>Execute Manifold Repair</strong>. MeshKit welds coincident vertices, culls degenerate faces, unifies inverted face normals via dual-graph breadth-first search, closes planar boundary loops, and re-audits the resulting mesh.</li>
+        <li><strong>Download the Watertight Binary `.STL`:</strong> Click <strong>Download Watertight .STL</strong> to save the compact binary STL (`84 + 50 × triangles` bytes) ready for your slicer.</li>
+      </ol>
+
+      <h2>Worked Example: Cube Topology &amp; Signed Volume (Golden Vectors C13 &amp; C14)</h2>
+      <p>
+        Consider a closed `10 × 10 × 10 mm` cube composed of `12` triangles (2 per square face):
+      </p>
+      <div class="formula-box">
+        Welded Vertices = 8 | Directed Half-Edges = 36 | Undirected Edges = 18<br/>
+        Boundary Edges (used 1×) = 0 | Holes = 0 | Non-Manifold Edges (used &gt;2×) = 0<br/>
+        Surface Area = 6 × (10 mm × 10 mm) = 600 mm² = 6.00 cm²<br/>
+        Signed Volume = Σ [ v0 · (v1 × v2) ] ÷ 6 = 1,000 mm³ = 1.000 cm³<br/>
+        If top 2 facets are removed (10 facets): 4 boundary edges forming 1 open hole loop.
+      </div>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Planar loop patching and vertex welding reliably seal flat or mildly curved holes and unify flipped face normals. Self-intersecting shells, boolean overlaps of multiple disjoint solids, or complex non-planar saddle holes may require full voxel remeshing or CAD re-export. MeshKit re-runs the topology audit after every repair pass and only displays <em>Repaired (0 defects)</em> when zero boundary and non-manifold edges remain.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How does MeshKit distinguish binary STL files that start with the word "solid"?</summary>
+          <p>Many CAD exporters write the word `solid` in the 80-byte binary header. MeshKit checks whether the exact file size in bytes equals `84 + 50 × N` (where `N` is the 32-bit unsigned triangle count at byte offset 80). If it matches, the file is parsed as binary regardless of header text.</p>
+        </details>
+        <details>
+          <summary>What does a negative signed volume mean?</summary>
+          <p>A negative signed volume means the mesh's triangle vertex windings are oriented clockwise (pointing inward) instead of counter-clockwise (pointing outward). MeshKit warns you when a mesh is inside-out, reports the absolute volume, and flips all normals outward during repair.</p>
+        </details>
+        <details>
+          <summary>What is the difference between a boundary edge and a non-manifold edge?</summary>
+          <p>In a watertight mesh, every undirected edge is shared by exactly 2 triangles. An edge used by only 1 triangle is a boundary edge (part of a hole). An edge shared by 3 or more triangles is a non-manifold edge (such as an internal baffle or T-junction).</p>
+        </details>
+        <details>
+          <summary>Does repairing an STL change its dimensions?</summary>
+          <p>No. Vertex welding uses an adaptive tolerance of `1e-6` times the bounding box diagonal (for example, `0.0001 mm` on a `100 mm` part), preserving exact part dimensions while merging floating-point seams.</p>
+        </details>
+      </div>
+    </article>
 
     <section class="doc-grid">
       <div>
@@ -149,6 +255,24 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

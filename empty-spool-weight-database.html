@@ -6,9 +6,38 @@
   <title>Empty Filament Spool Weight Database — Tare Chart (g)</title>
   <meta name="description" content="Reference table of empty filament spool weights (tare in grams) for Bambu Lab, Polymaker, Elegoo, Overture, Sunlu, eSUN, Prusament, Hatchbox, Jessie, and Inland." />
   <link rel="canonical" href="https://meshkit.pro/empty-spool-weight-database" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Empty Filament Spool Weight Database — Tare Chart (g)" />
+  <meta property="og:description" content="Reference table of empty filament spool weights (tare in grams) for 14 3D printing filament brands." />
+  <meta property="og:url" content="https://meshkit.pro/empty-spool-weight-database" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Empty Filament Spool Weight Database — Tare Chart (g)" />
+  <meta name="twitter:description" content="Reference table of empty filament spool weights (tare in grams) for 14 3D printing filament brands." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit Empty Filament Spool Weight Database",
+        "url": "https://meshkit.pro/empty-spool-weight-database",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "Empty Spool Weight Database", "item": "https://meshkit.pro/empty-spool-weight-database" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="spool-db">
 
@@ -93,6 +122,80 @@
         Disclaimer: Typical empty spool weights; spools vary by production batch and ambient humidity (cardboard spools can shift by 3–6 g). Weigh an empty spool of the same brand once for highest accuracy.
       </p>
     </section>
+
+    <article class="seo-content">
+      <h2>What the Empty Filament Spool Weight Database Provides</h2>
+      <p>
+        When managing a 3D printing filament inventory or checking whether a partially used spool has enough polymer left for a print job, you need the empty weight (<em>tare weight</em>) of the plastic or cardboard spool core. Subtracting the empty spool tare weight from your scale's gross reading reveals the exact grams of remaining filament.
+      </p>
+      <p>
+        This reference table compiles typical empty spool weights in grams (`g`) across major 1 kg 3D printing filament brands—including Bambu Lab reusable and cardboard spools, Polymaker, Elegoo, Overture, Sunlu, eSUN, Prusament, Hatchbox, Printed Solid Jessie, and Micro Center Inland—alongside generic cardboard (`140 g`) and generic injection-molded plastic (`220 g`) fallbacks.
+      </p>
+
+      <h2>How to Use Empty Spool Tare Weights in 3 Steps</h2>
+      <ol>
+        <li><strong>Identify Your Spool Core Material:</strong> Check whether your filament is wound on a pressed cardboard core (`130–168 g`), a hexagonal polycarbonate/ABS sidesaddle reel like Prusament (`202 g`), or a two-piece twist-lock reusable spool like Bambu Lab (`250 g`).</li>
+        <li><strong>Subtract Tare from Gross Scale Weight:</strong> Weigh the spool on a digital gram scale and subtract the table value: <code>Net_Filament_g = Gross_Scale_g − Tare_g</code>.</li>
+        <li><strong>Convert Grams to Meters or Check Print Feasibility:</strong> Open the interactive <a href="/filament-spool-weight-calculator">Filament Spool Weight Calculator</a> to convert remaining grams into meters (`m`) and check whether your next sliced G-code will finish.</li>
+      </ol>
+
+      <h2>Worked Example: Bambu Lab Reusable vs. Cardboard Spool</h2>
+      <p>
+        Suppose a partial spool of Bambu Lab Basic PLA weighs `412 g` on your scale:
+      </p>
+      <div class="formula-box">
+        On Bambu Lab Reusable ABS Spool (250 g tare):<br/>
+        Net Filament = 412 g − 250 g = 162 g (54.3 m @ 1.75 mm PLA)<br/><br/>
+        On Bambu Lab Cardboard Spool (132 g tare):<br/>
+        Net Filament = 412 g − 132 g = 280 g (93.9 m @ 1.75 mm PLA)
+      </div>
+      <p>
+        Because the reusable plastic spool weighs `118 g` more than the inner cardboard refill core, selecting the right spool type prevents a `118 g` (`39.6 m`) estimation error.
+      </p>
+
+      <h2>Limitations &amp; Why Spool Weights Vary by Batch</h2>
+      <p>
+        All weights in this database are typical empty spool weights (`last updated 2026-11-01`). Manufacturers occasionally change spool suppliers, rim cutouts, or cardboard adhesive density between production runs. Furthermore, cardboard spools are hygroscopic and can gain `3–6 g` of moisture in humid rooms or lose `3–6 g` after 8 hours in a 55°C filament dryer. Whenever you finish a spool, weigh the empty reel once on your scale and write its exact tare in marker on the flange of new spools from the same batch.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Why do cardboard spools weigh less than plastic spools?</summary>
+          <p>Pressed kraft-paper cardboard spools (such as Elegoo at `132 g`, Inland at `130 g`, and Polymaker at `140 g`) have lower material density than injection-molded ABS or polycarbonate spools (`195–250 g`).</p>
+        </details>
+        <details>
+          <summary>Does the RFID tag on a Bambu Lab spool change its weight?</summary>
+          <p>No. The dual RFID sticker and paper ring inside a Bambu Lab spool weigh less than `1.5 g`, which is already included in the `132 g` cardboard core and `250 g` reusable spool tare weights.</p>
+        </details>
+        <details>
+          <summary>What fallback tare weight should I use for an unlisted brand?</summary>
+          <p>Use `140 g` for a standard 200 mm diameter cardboard 1 kg spool, or `220 g` for a standard solid-flange black plastic 1 kg spool.</p>
+        </details>
+        <details>
+          <summary>How can I convert my net filament grams into meters?</summary>
+          <p>Use our <a href="/filament-grams-to-meters">Filament Grams to Meters Converter</a> or the full <a href="/filament-spool-weight-calculator">Spool Weight Calculator</a>.</p>
+        </details>
+      </div>
+    </article>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

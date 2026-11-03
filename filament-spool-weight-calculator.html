@@ -6,9 +6,38 @@
   <title>How Much Filament Is Left on Spool — Weight Calculator</title>
   <meta name="description" content="Calculate how much 3D printer filament is left on a spool in grams and meters by subtracting empty spool tare weight for Bambu Lab, Polymaker, Elegoo, Prusament, Sunlu, eSUN, and Overture." />
   <link rel="canonical" href="https://meshkit.pro/filament-spool-weight-calculator" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="How Much Filament Is Left on Spool — Weight Calculator" />
+  <meta property="og:description" content="Calculate remaining 3D printer filament in grams and meters by subtracting empty spool tare weight." />
+  <meta property="og:url" content="https://meshkit.pro/filament-spool-weight-calculator" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="How Much Filament Is Left on Spool — Weight Calculator" />
+  <meta name="twitter:description" content="Calculate remaining 3D printer filament in grams and meters by subtracting empty spool tare weight." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit Filament Spool Weight Calculator",
+        "url": "https://meshkit.pro/filament-spool-weight-calculator",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "Filament Spool Weight Calculator", "item": "https://meshkit.pro/filament-spool-weight-calculator" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="spool">
 
@@ -193,6 +222,60 @@
       </div>
     </section>
 
+    <article class="seo-content">
+      <h2>What the Filament Spool Weight Calculator Does</h2>
+      <p>
+        Before starting a multi-hour 3D print on a partially used spool, you need to know how many grams and meters of filament remain on the reel. Because the plastic or cardboard spool hub itself weighs between 130 g and 250 g, weighing a partial spool on a digital kitchen scale gives you the <em>gross weight</em> (`filament + empty spool`).
+      </p>
+      <p>
+        MeshKit's Filament Spool Weight Calculator subtracts the empty spool tare weight for 14 popular filament brands (or a custom tare weight you measured), calculates net remaining filament in grams, converts that weight into remaining length in meters (`m`) for `1.75 mm`, `2.85 mm`, or `3.00 mm` diameter across 10 polymers, reports percentage remaining for spools from `250 g` to `5 kg`, and checks whether your next print job has enough filament to finish safely.
+      </p>
+
+      <h2>How to Check How Much Filament Is Left on a Spool in 4 Steps</h2>
+      <ol>
+        <li><strong>Weigh Your Spool on a Digital Scale:</strong> Place the partial spool on a kitchen or postal scale set to grams (`g`) and enter that number into <strong>Gross Scale Weight</strong>.</li>
+        <li><strong>Select Your Spool Brand &amp; Type:</strong> Choose your manufacturer and spool material (for example, Bambu Lab reusable plastic `250 g`, Bambu Lab cardboard `132 g`, Polymaker cardboard `140 g`, Prusament hex `202 g`, or Custom Tare).</li>
+        <li><strong>Pick Spool Capacity, Diameter &amp; Polymer:</strong> Select the nominal spool size (`250 g`, `500 g`, `1 kg`, `2 kg`, `3 kg`, `5 kg`), filament diameter (`1.75 mm` or `2.85 mm`), and material density (`PLA 1.24`, `PETG 1.27`, `ABS 1.04`, etc.).</li>
+        <li><strong>Verify "Will My Next Print Finish?":</strong> Enter the grams required by your slicer in Section B to see whether the spool has sufficient margin.</li>
+      </ol>
+
+      <h2>Worked Examples (Golden Vectors C7, C8 &amp; C9)</h2>
+      <div class="formula-box">
+        Example C7 (Bambu Reusable Spool, 1.75 mm PLA):<br/>
+        Gross Scale = 412 g | Empty Tare = 250 g &nbsp;⇒&nbsp; Net Filament = 412 − 250 = 162 g (16.2% of 1 kg)<br/>
+        Grams per Meter = π × (0.175 cm ÷ 2)² × 100 × 1.24 = 2.9825 g/m<br/>
+        Remaining Length = 162 g ÷ 2.9825 g/m = 54.3 m<br/><br/>
+        Example C9 (500 g Net PETG at 2.85 mm Diameter):<br/>
+        Grams per Meter = π × (0.285 cm ÷ 2)² × 100 × 1.27 = 8.1018 g/m<br/>
+        Remaining Length = 500 g ÷ 8.1018 g/m = 61.7 m
+      </div>
+
+      <h2>Technical Limitations &amp; Batch Variance</h2>
+      <p>
+        Empty spool tare weights listed in our presets are typical values (`last updated 2026-11-01`). Filament manufacturers periodically revise injection molds or cardboard core wall thickness, which can shift empty spool weight by `±5–15 g` between production batches. Additionally, cardboard spools absorb `3–6 g` of ambient moisture before filament drying. For critical end-of-spool prints, keep at least a `15 g` safety margin or weigh an empty spool from the same batch once and enter it via <strong>Custom empty spool tare (g)</strong>.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How much does a full 1 kg spool of PLA weigh with the spool included?</summary>
+          <p>A fresh 1 kg (`1,000 g`) spool weighs `1,000 g + empty_spool_tare`. On a `132 g` cardboard spool (Bambu/Elegoo), a full spool weighs roughly `1,132–1,145 g`. On a `250 g` reusable ABS spool, a full spool weighs roughly `1,250 g`.</p>
+        </details>
+        <details>
+          <summary>What happens if my scale weight is lower than the selected empty spool tare?</summary>
+          <p>If gross scale weight is less than the tare weight (for example, `200 g` on a `250 g` reusable spool preset), MeshKit reports `0 g` net filament and displays a warning reminding you to verify whether the filament is wound on a lighter cardboard core (`~132–140 g`).</p>
+        </details>
+        <details>
+          <summary>How many meters of filament are on a 1 kg 1.75 mm PLA spool?</summary>
+          <p>At `1.24 g/cm³` density and `1.75 mm` diameter, PLA weighs `2.9825 g/m`, so `1,000 g` equals approximately `335.3 meters`.</p>
+        </details>
+        <details>
+          <summary>Where can I see the full table of all empty spool weights at once?</summary>
+          <p>Visit our crawlable <a href="/empty-spool-weight-database">Empty Filament Spool Weight Database</a> for the complete brand comparison chart.</p>
+        </details>
+      </div>
+    </article>
+
     <section class="doc-grid">
       <div>
         <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
@@ -213,6 +296,24 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

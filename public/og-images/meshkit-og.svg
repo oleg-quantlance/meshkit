@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#141413"/>
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#E04F16" stroke-width="4"/>
+  <rect x="80" y="80" width="76" height="76" fill="#E04F16"/>
+  <text x="118" y="132" text-anchor="middle" fill="#FFFFFF" font-family="monospace" font-weight="700" font-size="38">MK</text>
+  <text x="80" y="250" fill="#FAF9F5" font-family="monospace" font-weight="700" font-size="56">MESHKIT // 3D PRINT LEDGER</text>
+  <text x="80" y="330" fill="#9E9D97" font-family="sans-serif" font-size="32">G-Code Cost · STL Repair · STEP to STL · SLA Resin · Spool Tare DB</text>
+  <text x="80" y="510" fill="#E04F16" font-family="monospace" font-weight="600" font-size="24">100% CLIENT-SIDE BROWSER EXECUTION · 0 BYTES UPLOADED</text>
+</svg>

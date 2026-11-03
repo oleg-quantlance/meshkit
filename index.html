@@ -6,9 +6,37 @@
   <title>G-Code Time Estimator Online &amp; 3D Print Cost Calculator</title>
   <meta name="description" content="Free online G-code time estimator and 3D print cost calculator. Compute exact E-axis filament mass, print duration, electricity, wear, and marketplace fees." />
   <link rel="canonical" href="https://meshkit.pro/" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="G-Code Time Estimator Online &amp; 3D Print Cost Calculator" />
+  <meta property="og:description" content="Free online G-code time estimator and 3D print cost calculator. Compute exact E-axis filament mass, print duration, electricity, wear, and marketplace fees." />
+  <meta property="og:url" content="https://meshkit.pro/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="G-Code Time Estimator Online &amp; 3D Print Cost Calculator" />
+  <meta name="twitter:description" content="Compute exact E-axis filament mass, print time, electricity, wear, and commercial quote price locally in your browser." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit G-Code Time Estimator & 3D Print Cost Calculator",
+        "url": "https://meshkit.pro/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="gcode">
 
@@ -64,6 +92,7 @@
             <span id="gcodeParseState" style="color:var(--status-ok);">READY</span>
           </div>
           <div id="gcodeDropzone" class="drop-area" tabindex="0" role="button" aria-label="Upload G-code file">
+            <label for="gcodeFileInput" class="hidden">Upload G-code file</label>
             <input type="file" id="gcodeFileInput" accept=".gcode,.gco,.g" class="hidden" />
             <div class="mono" style="font-weight:600; font-size:12px;" id="gcodeStatusTitle">[CLICK TO SELECT .GCODE] OR DRAG FILE HERE</div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="gcodeStatusSub">Parses E-axis extrusion, G0/G1 moves, Z-layers, and slicer header metadata locally.</div>
@@ -251,20 +280,77 @@
             </div>
           </div>
           <div style="display:flex; gap:8px;">
-            <button type="button" onclick="window.print()" class="btn-primary">PRINT / EXPORT SPEC SHEET</button>
+            <button type="button" id="printSpecSheetBtn" class="btn-primary">PRINT / EXPORT SPEC SHEET</button>
           </div>
         </div>
       </div>
     </section>
+
+    <article class="seo-content">
+      <h2>What the Online G-Code Time Estimator &amp; Cost Calculator Does</h2>
+      <p>
+        The MeshKit G-Code Time Estimator and Unit Costing Ledger parses `.gcode`, `.gco`, and `.g` toolpath files directly inside your browser to calculate exact filament usage in millimeters, meters, and grams, estimate print duration, render a layer-by-layer 2D XY toolpath preview, and generate a commercial quote that accounts for polymer cost, electrical energy, machine maintenance depreciation, failed print scrap rate, and marketplace transaction fees.
+      </p>
+      <p>
+        Unlike basic calculators that guess filament weight from line counts or rely solely on slicer comments, MeshKit tracks actual extruder axis (`E`) movements across both absolute (`M82`) and relative (`M83`) extrusion modes, handles coordinate system resets (`G92 E0`), and converts imperial (`G20`) and metric (`G21`) units automatically.
+      </p>
+
+      <h2>How to Use the G-Code Calculator in 4 Steps</h2>
+      <ol>
+        <li><strong>Upload or Drag a `.gcode` File:</strong> Click the dropzone above or drag a sliced `.gcode` file from OrcaSlicer, PrusaSlicer, Bambu Studio, or UltiMaker Cura. All parsing runs in a local Web Worker—zero bytes are uploaded.</li>
+        <li><strong>Select Material Density &amp; Filament Diameter:</strong> Pick your polymer (PLA `1.24 g/cm³`, PETG `1.27 g/cm³`, ABS `1.04 g/cm³`, ASA `1.07 g/cm³`, TPU `1.21 g/cm³`, PC, Nylon, or Custom) and diameter (`1.75 mm`, `2.85 mm`, or `3.00 mm`).</li>
+        <li><strong>Verify Machine Power &amp; Overhead Rates:</strong> Enter your spool price per kilogram, average printer wattage during printing, local residential electricity rate (`$/kWh`), hourly machine wear reserve, and print failure buffer percentage.</li>
+        <li><strong>Choose Your Selling Channel &amp; Markup:</strong> Select Etsy, eBay, Whatnot, Shopify, Amazon Handmade, TikTok Shop, Direct Invoice, or a custom fee schedule, then choose a cost multiplier or target net margin percentage.</li>
+      </ol>
+
+      <h2>Worked Calculation Example (Golden Vector C1)</h2>
+      <p>
+        Suppose a sliced bracket uses <strong>48.5 g</strong> of 1.75 mm PLA (`$22.00/kg`) and takes <strong>3.7 hours</strong> on a <strong>150 W</strong> printer with `$0.16/kWh` electricity, `$0.15/hr` machine wear, a `7%` failure buffer, sold on <strong>Etsy (`9.5% + $0.45` fee)</strong> at a <strong>`3.5×` markup</strong>:
+      </p>
+      <div class="formula-box">
+        Material Cost = (48.5 g ÷ 1000) × $22.00 = $1.0670<br/>
+        Energy Cost   = (150 W ÷ 1000) × 3.7 h × $0.16/kWh = $0.0888<br/>
+        Wear Cost     = 3.7 h × $0.15/h = $0.5550<br/>
+        Unit Cost     = ($1.0670 + $0.0888 + $0.5550) × (1 + 0.07) = $1.83<br/>
+        Selling Price = ($1.8306 × 3.5 + $0.45) ÷ (1 − 0.095) = $7.58<br/>
+        Net Profit    = $7.58 − $1.83 − ($7.58 × 0.095 + $0.45) = $4.58 (60% Margin)
+      </div>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        When a G-code file includes a slicer time header (`; estimated printing time` from PrusaSlicer/OrcaSlicer/Bambu or `;TIME:` from Cura), MeshKit uses that exact slicer duration. If the header is stripped, MeshKit computes an estimate from move lengths, feedrates (`F`), and trapezoidal acceleration (`M204`, defaulting to `1500 mm/s²`), which may differ by 5–12% from firmware-specific input-shaping or cornering junction deviation rules.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Are my G-code files uploaded to a remote server?</summary>
+          <p>No. Every G-code file is read locally in your browser using the File API and processed inside an isolated Web Worker. Your G-code never leaves your computer.</p>
+        </details>
+        <details>
+          <summary>How does MeshKit calculate filament grams if my G-code has no slicer header?</summary>
+          <p>MeshKit sums every positive and negative `E` movement across all `G0` and `G1` commands (supporting both `M82` absolute and `M83` relative extrusion and `G92` resets) and multiplies the extruded volume by your selected polymer density (`grams = E_mm / 10 × π × (d_cm / 2)² × density`).</p>
+        </details>
+        <details>
+          <summary>Why does the failure buffer apply to material as well as energy and wear?</summary>
+          <p>When a 3D print fails due to bed adhesion loss or filament jam, both the machine time and the extruded polymer are wasted. Applying `(1 + failure%)` to total production cost ensures your break-even floor covers scrap material.</p>
+        </details>
+        <details>
+          <summary>What is the difference between Cost Multiplier mode and Target Margin % mode?</summary>
+          <p>Cost Multiplier multiplies your unit cost by a factor (such as `3.5×`) before grossing up for marketplace fees. Target Margin % solves for the exact selling price where net profit divided by selling price equals your desired percentage after all platform fees.</p>
+        </details>
+        <details>
+          <summary>Can I use this calculator without uploading a G-code file?</summary>
+          <p>Yes. You can type your slicer's gram and hour estimates directly into Section B above, or use our dedicated <a href="/3d-print-cost-calculator">Manual 3D Print Cost Calculator</a>.</p>
+        </details>
+      </div>
+    </article>
 
     <section class="doc-grid">
       <div>
         <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
           Reference // Machine Power Draw &amp; Hourly Depreciation Schedule
         </h2>
-        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
-          MeshKit computes filament mass directly from E-axis extrusion (`G0`/`G1` moves in `M82` absolute or `M83` relative mode, respecting `G92` resets) and reads slicer header time or calculates trapezoidal acceleration duration (`M204`).
-        </p>
         <table class="tech-table mono">
           <thead>
             <tr>
@@ -316,6 +402,24 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

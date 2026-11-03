@@ -6,9 +6,38 @@
   <title>STL Weight Calculator Online &amp; Signed Volume Estimator</title>
   <meta name="description" content="Calculate STL volume (cm³), surface area, bounding box, and part weight in grams across PLA, PETG, ABS, ASA, TPU, PC, and Nylon." />
   <link rel="canonical" href="https://meshkit.pro/stl-volume-weight-calculator" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="STL Weight Calculator Online &amp; Signed Volume Estimator" />
+  <meta property="og:description" content="Calculate STL volume (cm³), surface area, bounding box, and part weight in grams across PLA, PETG, ABS, ASA, TPU, PC, and Nylon." />
+  <meta property="og:url" content="https://meshkit.pro/stl-volume-weight-calculator" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="STL Weight Calculator Online &amp; Signed Volume Estimator" />
+  <meta name="twitter:description" content="Calculate STL volume (cm³), surface area, bounding box, and part weight in grams across 10 polymers." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "MeshKit STL Volume & Weight Calculator",
+        "url": "https://meshkit.pro/stl-volume-weight-calculator",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+          { "@type": "ListItem", "position": 2, "name": "STL Volume & Weight Calculator", "item": "https://meshkit.pro/stl-volume-weight-calculator" }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body data-page="stl-volume">
 
@@ -61,7 +90,23 @@
       <div class="wb-left">
         <div class="wb-section">
           <div class="section-head">
-            <span>A. Volume &amp; Material Parameters</span>
+            <span>A. Upload .STL or Enter Volume</span>
+            <span id="stlVolParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="stlVolDropzone" tabindex="0" role="button" aria-label="Upload STL file for volume and weight">
+            <label for="stlVolFileInput" class="hidden">Upload STL file</label>
+            <input type="file" id="stlVolFileInput" accept=".stl" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="stlVolStatusTitle">[CLICK TO SELECT .STL] OR ENTER VOLUME BELOW</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Computes signed volume (cm³) and surface area (cm²) from binary or ASCII STL.</div>
+            <div class="btn-row">
+              <button type="button" id="stlVolBrowseBtn" class="btn-primary">BROWSE .STL...</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Volume &amp; Material Parameters</span>
             <span>CALCULATOR</span>
           </div>
           <div class="field-grid">
@@ -109,7 +154,7 @@
       <div class="wb-right">
         <div class="kpi-strip">
           <div class="kpi-cell">
-            <div class="kpi-label">Solid Volume</div>
+            <div class="kpi-label">Effective Volume</div>
             <div class="kpi-val" id="outStlVolCm3">38.4 cm³</div>
             <div class="kpi-sub">Displaced volume</div>
           </div>
@@ -135,6 +180,77 @@
         </div>
       </div>
     </section>
+
+    <article class="seo-content">
+      <h2>What the STL Volume &amp; Weight Calculator Does</h2>
+      <p>
+        The MeshKit STL Weight Calculator computes the geometric volume (`cm³`) of a 3D mesh from an uploaded `.stl` file (or a manual volume input) and converts that displaced volume into part weight in grams (`g`) and required filament length in meters (`m`) across ten engineering polymers (PLA, PETG, ABS, ASA, TPU, Polycarbonate, Nylon/PA, HIPS, PVA, and carbon-fiber composites).
+      </p>
+      <p>
+        When quoting a customer part before slicing, knowing the solid mesh volume and effective density lets you estimate polymer mass and compare material choices (for example, how much lighter a part is in ABS at `1.04 g/cm³` versus PETG at `1.27 g/cm³`).
+      </p>
+
+      <h2>How to Calculate STL Part Weight in 3 Steps</h2>
+      <ol>
+        <li><strong>Upload an `.STL` File or Enter Volume (`cm³`):</strong> Drop a binary or ASCII `.stl` file into Section A to extract exact signed tetrahedral volume (`cm³`), or type a known CAD volume into the Mesh Volume field.</li>
+        <li><strong>Set Effective Fill Percentage:</strong> For solid resin or 100% infill parts, keep Effective Fill at `100%`. For FDM parts with shells and sparse infill, enter the combined effective solid fraction (typically `25%–45%` for 2–3 walls and 15–20% infill).</li>
+        <li><strong>Choose Polymer Density &amp; Filament Diameter:</strong> Select your material preset or enter a custom density from your manufacturer's technical datasheet, then choose `1.75 mm`, `2.85 mm`, or `3.00 mm` filament.</li>
+      </ol>
+
+      <h2>Worked Example: Cube Volume to Grams &amp; Meters</h2>
+      <p>
+        For a solid `10 × 10 × 10 mm` cube (`1.000 cm³`, Golden Vector C13) or a `38.4 cm³` bracket printed at `100%` effective fill in PLA (`1.24 g/cm³`) with `1.75 mm` filament:
+      </p>
+      <div class="formula-box">
+        Part Weight (g) = Volume_cm3 × (Effective_Fill_% ÷ 100) × Density_g_cm3<br/>
+        Part Weight = 38.4 cm³ × 1.00 × 1.24 g/cm³ = 47.616 g (47.6 g)<br/>
+        Grams per Meter (1.75 mm PLA) = π × (0.175 cm ÷ 2)² × 100 × 1.24 = 2.9825 g/m<br/>
+        Filament Length = 47.616 g ÷ 2.9825 g/m = 15.96 m (16.0 m)
+      </div>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Signed tetrahedral volume integration requires a reasonably closed mesh. If an `.stl` file has large missing faces or unclosed boundary holes, the signed volume integral will under- or over-estimate volume; run <a href="/stl-repair-online">STL Repair Online</a> first to seal holes before relying on volume numbers. Furthermore, in FDM printing, perimeters, top/bottom solid layers, and support structures increase total filament usage beyond the raw infill percentage alone—use the <a href="/">G-Code Time Estimator</a> once sliced for exact extruder mass.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Why does an ABS part weigh less than the same STL printed in PLA?</summary>
+          <p>ABS has a density of `1.04 g/cm³`, whereas PLA has a density of `1.24 g/cm³` (and PETG is `1.27 g/cm³`). For the exact same STL volume and slicing settings, an ABS print weighs about 16% less in grams than PLA.</p>
+        </details>
+        <details>
+          <summary>Are cm³ and mL identical for SLA resin printing?</summary>
+          <p>Yes. One cubic centimeter (`1 cm³`) is exactly equal to one milliliter (`1 mL`). You can copy the `cm³` volume from this tool directly into the <a href="/resin-3d-print-cost-calculator">SLA Resin Print Cost Calculator</a>.</p>
+        </details>
+        <details>
+          <summary>How is STL volume calculated mathematically?</summary>
+          <p>Every triangle in the mesh forms a signed tetrahedron with the coordinate origin `(0,0,0)` whose volume is `v0 · (v1 × v2) / 6`. Summing across all triangles cancels interior regions and yields the exact enclosed volume in `mm³` (`1,000 mm³ = 1 cm³`).</p>
+        </details>
+        <details>
+          <summary>What if my STL was exported in inches instead of millimeters?</summary>
+          <p>STL files store unitless numbers that slicers interpret as millimeters. If a CAD model was exported in inches, its dimensions will appear `25.4×` smaller (`25.4³ = 16,387×` smaller in volume). Re-export in millimeters or use our <a href="/step-to-stl-converter">STEP to STL Converter</a> with millimeter units.</p>
+        </details>
+      </div>
+    </article>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
 
   </main>
 

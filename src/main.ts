@@ -14,6 +14,26 @@ import {
   metersToGrams,
   willPrintFinish,
 } from './core/spool';
+import { validateFileMetadata, validateTextBufferHead, ToolFileKind } from './core/validate';
+import {
+  auditStl,
+  repairStl,
+  exportBinaryStl,
+  Triangle,
+  Vec3,
+  StlAuditMetrics,
+} from './core/stl';
+import { convertStepToStl, StepConvertResult } from './core/step';
+import {
+  initAnalyticsConsentMode,
+  updateAnalyticsConsent,
+  trackFileLoadSuccess,
+  trackFileLoadError,
+  trackCalculate,
+  trackExportDownload,
+  trackSampleLoad,
+  trackInternalToolLink,
+} from './core/analytics';
 
 function maybeEl<T extends HTMLElement = HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
@@ -24,7 +44,7 @@ function getEl<T extends HTMLElement = HTMLElement>(id: string): T {
 }
 
 // =========================================================================
-// THEME MANAGEMENT
+// THEME MANAGEMENT & ANALYTICS INITIALIZATION
 // =========================================================================
 function applyTheme(theme: 'light' | 'dark'): void {
   document.documentElement.setAttribute('data-theme', theme);
@@ -56,26 +76,85 @@ try {
 
 maybeEl('themeToggle')?.addEventListener('click', toggleTheme);
 
-function downloadTextFile(filename: string, content: string): void {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+initAnalyticsConsentMode();
+
+function initPrivacyPageControls(): void {
+  const grantBtn = maybeEl('privacyGrantBtn');
+  const denyBtn = maybeEl('privacyDenyBtn');
+  const stateLabel = maybeEl('privacyCurrentState');
+  if (!grantBtn || !denyBtn || !stateLabel) return;
+
+  function renderConsentState(): void {
+    let cur = 'denied (default)';
+    try {
+      const saved = localStorage.getItem('meshkit-consent-v2');
+      if (saved === 'granted' || saved === 'denied') cur = saved;
+    } catch {
+      // ignore
+    }
+    stateLabel!.textContent = `CURRENT STATUS: ${cur.toUpperCase()}`;
+  }
+
+  grantBtn.addEventListener('click', () => {
+    updateAnalyticsConsent('granted');
+    renderConsentState();
+  });
+
+  denyBtn.addEventListener('click', () => {
+    updateAnalyticsConsent('denied');
+    renderConsentState();
+  });
+
+  renderConsentState();
+}
+
+function wireInternalLinkAnalytics(): void {
+  document.querySelectorAll<HTMLAnchorElement>('a.route-link, .sub-nav a').forEach((link) => {
+    link.addEventListener('click', () => {
+      trackInternalToolLink(window.location.pathname, link.getAttribute('href') ?? '');
+    });
+  });
+}
+
+function downloadBlobFile(filename: string, blob: Blob): void {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function downloadTextFile(filename: string, content: string): void {
+  downloadBlobFile(filename, new Blob([content], { type: 'text/plain;charset=utf-8' }));
 }
 
 function wireDropzone(
   dropzoneId: string,
   fileInputId: string,
   browseBtnId: string,
-  onFileSelected: (file: File) => void
+  kind: ToolFileKind,
+  onValidFile: (file: File) => void,
+  onValidationError: (message: string, code: string) => void
 ): void {
   const zone = maybeEl(dropzoneId);
   const input = maybeEl<HTMLInputElement>(fileInputId);
   const browseBtn = maybeEl<HTMLButtonElement>(browseBtnId);
   if (!zone || !input || !browseBtn) return;
+
+  function handleFileList(list: FileList | null | undefined): void {
+    if (!list || list.length === 0) return;
+    const files = Array.from(list).map((f) => ({ name: f.name, size: f.size }));
+    const metaCheck = validateFileMetadata(files, kind);
+    if (!metaCheck.ok) {
+      trackFileLoadError(kind, metaCheck.errorCode);
+      onValidationError(metaCheck.error, metaCheck.errorCode);
+      return;
+    }
+    onValidFile(list[0]);
+  }
 
   zone.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -100,9 +179,7 @@ function wireDropzone(
 
   input.addEventListener('change', (e: Event) => {
     const target = e.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-      onFileSelected(target.files[0]);
-    }
+    handleFileList(target.files);
   });
 
   zone.addEventListener('dragover', (e: DragEvent) => {
@@ -113,9 +190,7 @@ function wireDropzone(
   zone.addEventListener('drop', (e: DragEvent) => {
     e.preventDefault();
     zone.classList.remove('drag-active');
-    if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-      onFileSelected(e.dataTransfer.files[0]);
-    }
+    handleFileList(e.dataTransfer?.files);
   });
 }
 
@@ -140,7 +215,6 @@ function renderRealToolpath(maxPct = 100): void {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Subtle background grid
   ctx.strokeStyle = '#262624';
   ctx.lineWidth = 1;
   for (let x = 40; x < canvas.width; x += 40) {
@@ -327,9 +401,21 @@ function initGcodeAndCostPage(): void {
 
     const marginLabel = res.marginPct !== null ? `${res.marginPct}%` : '—';
     getEl('outNetProfit').textContent = `NET PROFIT: ${formatCurrency(res.profit)} (${marginLabel})`;
+    trackCalculate('gcode_cost', channelSelect.value);
   }
 
-  function loadGcodeText(text: string, labelName: string): void {
+  function showGcodeError(msg: string): void {
+    const statusTitle = maybeEl('gcodeStatusTitle');
+    const parseState = maybeEl('gcodeParseState');
+    if (statusTitle) statusTitle.textContent = msg;
+    if (parseState) {
+      parseState.textContent = 'ERROR';
+      parseState.style.color = 'var(--status-warn)';
+    }
+  }
+
+  function loadGcodeText(text: string, labelName: string, byteSize = text.length): void {
+    const t0 = performance.now();
     const density = getSelectedDensity() || 1.24;
     const diameter = getSelectedDiameter() || 1.75;
     const parsed = parseGcode(text, { densityGPerCm3: density, diameterMm: diameter });
@@ -339,13 +425,12 @@ function initGcodeAndCostPage(): void {
     const parseState = maybeEl('gcodeParseState');
 
     if (!parsed.ok) {
-      if (statusTitle) statusTitle.textContent = parsed.error;
-      if (parseState) {
-        parseState.textContent = 'ERROR';
-        parseState.style.color = 'var(--status-warn)';
-      }
+      trackFileLoadError('gcode', 'no_geometry');
+      showGcodeError(parsed.error);
       return;
     }
+
+    trackFileLoadSuccess('gcode', 'gcode', byteSize, performance.now() - t0);
 
     getEl<HTMLInputElement>('filamentGrams').value = parsed.filamentGrams.toFixed(1);
     getEl<HTMLInputElement>('printHours').value = parsed.printHours.toFixed(2);
@@ -408,16 +493,31 @@ function initGcodeAndCostPage(): void {
     maybeEl(id)?.addEventListener('change', recalculateCost);
   });
 
-  wireDropzone('gcodeDropzone', 'gcodeFileInput', 'gcodeBrowseBtn', (file) => {
-    if (file.size === 0) {
-      const titleEl = maybeEl('gcodeStatusTitle');
-      if (titleEl) titleEl.textContent = 'This file is empty (0 bytes). Please choose another file.';
-      return;
+  wireDropzone(
+    'gcodeDropzone',
+    'gcodeFileInput',
+    'gcodeBrowseBtn',
+    'gcode',
+    (file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (!buffer) return;
+        const headCheck = validateTextBufferHead(buffer, 'gcode');
+        if (!headCheck.ok) {
+          trackFileLoadError('gcode', headCheck.errorCode);
+          showGcodeError(headCheck.error);
+          return;
+        }
+        const text = new TextDecoder('utf-8').decode(buffer);
+        loadGcodeText(text, file.name, file.size);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => {
+      showGcodeError(message);
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => loadGcodeText(String(ev.target?.result ?? ''), file.name);
-    reader.readAsText(file);
-  });
+  );
 
   maybeEl<HTMLInputElement>('layerSlider')?.addEventListener('input', (e) => {
     const val = (e.target as HTMLInputElement).value;
@@ -428,11 +528,12 @@ function initGcodeAndCostPage(): void {
 
   maybeEl('gcodeSampleBtn')?.addEventListener('click', async (e) => {
     e.stopPropagation();
+    trackSampleLoad('gcode');
     try {
       const resp = await fetch('/samples/enclosure-bracket.gcode');
       if (resp.ok) {
         const text = await resp.text();
-        loadGcodeText(text, 'enclosure-bracket.gcode');
+        loadGcodeText(text, 'enclosure-bracket.gcode', text.length);
       }
     } catch {
       // ignore fetch errors offline
@@ -446,10 +547,16 @@ function initGcodeAndCostPage(): void {
       if (resp.ok) {
         const text = await resp.text();
         downloadTextFile('Sample_Enclosure_Bracket.gcode', text);
+        trackExportDownload('gcode_sample', 'gcode');
       }
     } catch {
       // ignore
     }
+  });
+
+  maybeEl('printSpecSheetBtn')?.addEventListener('click', () => {
+    trackExportDownload('gcode_cost_quote', 'print');
+    window.print();
   });
 
   recalculateCost();
@@ -519,13 +626,61 @@ function initStlVolumePage(): void {
     const weightG = effectiveVol * density;
     const lenRes = gramsToMeters(weightG, density, diameter);
 
-    getEl('outStlVolCm3').textContent = `${effectiveVol.toFixed(1)} cm³`;
+    getEl('outStlVolCm3').textContent = `${effectiveVol.toFixed(2)} cm³`;
     getEl('outStlWeightG').textContent = `${weightG.toFixed(1)} g`;
     getEl('outStlDensitySub').textContent = `@ ${density.toFixed(2)} g/cm³`;
     getEl('outStlMeters').textContent = lenRes.ok ? `${lenRes.meters.toFixed(1)} m` : '—';
     getEl('outStlDiaSub').textContent = `${diameter.toFixed(2)} mm diameter`;
     getEl('outStlSpoolPct').textContent = `${((weightG / 1000) * 100).toFixed(1)}%`;
+    trackCalculate('stl_volume_weight');
   }
+
+  wireDropzone(
+    'stlVolDropzone',
+    'stlVolFileInput',
+    'stlVolBrowseBtn',
+    'stl',
+    (file) => {
+      const t0 = performance.now();
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (!buffer) return;
+        const res = auditStl(buffer);
+        const statusTitle = maybeEl('stlVolStatusTitle');
+        const parseState = maybeEl('stlVolParseState');
+        if (!res.ok) {
+          trackFileLoadError('stl', res.errorCode);
+          if (statusTitle) statusTitle.textContent = res.error;
+          if (parseState) {
+            parseState.textContent = 'ERROR';
+            parseState.style.color = 'var(--status-warn)';
+          }
+          return;
+        }
+        trackFileLoadSuccess('stl_volume', res.metrics.format, file.size, performance.now() - t0);
+        if (statusTitle) {
+          statusTitle.textContent = `FILE LOADED: ${file.name} (${res.metrics.triangleCount.toLocaleString()} tris, ${res.metrics.volumeCm3.toFixed(3)} cm³)`;
+        }
+        if (parseState) {
+          parseState.textContent = 'PARSED OK';
+          parseState.style.color = 'var(--status-ok)';
+        }
+        getEl<HTMLInputElement>('stlVolInputCm3').value = res.metrics.volumeCm3.toFixed(3);
+        calc();
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => {
+      const statusTitle = maybeEl('stlVolStatusTitle');
+      const parseState = maybeEl('stlVolParseState');
+      if (statusTitle) statusTitle.textContent = message;
+      if (parseState) {
+        parseState.textContent = 'ERROR';
+        parseState.style.color = 'var(--status-warn)';
+      }
+    }
+  );
 
   ['stlVolInputCm3', 'stlVolInfillPct', 'stlVolMaterialSelect', 'stlVolCustomDensity', 'stlVolDiameterSelect'].forEach(
     (id) => {
@@ -538,83 +693,443 @@ function initStlVolumePage(): void {
 }
 
 // =========================================================================
-// TOOL 02 & 03: STL REPAIR & STEP TO STL (WEEK 2 FULL WASM SOLVERS)
+// TOOL 02: STL REPAIR & WATERTIGHT TOPOLOGY AUDITOR
 // =========================================================================
 function initStlPage(): void {
   if (!maybeEl('stlCanvas')) return;
 
-  function drawStlMesh(repaired = false): void {
+  let activeTriangles: Triangle[] = [];
+  let activeFileName = 'mesh.stl';
+
+  function drawStlWireframe(triangles: Triangle[], isWatertight: boolean): void {
     const c = getEl<HTMLCanvasElement>('stlCanvas');
     const ctx = c.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, c.width, c.height);
-    ctx.strokeStyle = repaired ? '#34D399' : '#D4D3CD';
+
+    // Background grid
+    ctx.strokeStyle = '#262624';
     ctx.lineWidth = 1;
-    for (let i = 0; i < 20; i++) {
-      const a = (i / 20) * Math.PI * 2;
+    for (let x = 40; x < c.width; x += 40) {
       ctx.beginPath();
-      ctx.moveTo(c.width / 2, 32);
-      ctx.lineTo(c.width / 2 + Math.cos(a) * 155, 175 + Math.sin(a) * 32);
-      ctx.lineTo(c.width / 2 + Math.cos(a + 0.31) * 155, 175 + Math.sin(a + 0.31) * 32);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, c.height);
+      ctx.stroke();
+    }
+    for (let y = 30; y < c.height; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(c.width, y);
+      ctx.stroke();
+    }
+
+    if (triangles.length === 0) {
+      ctx.fillStyle = '#9E9D97';
+      ctx.font = '12px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Upload an .STL file or click "LOAD DEFECTIVE SAMPLE" to inspect mesh topology', c.width / 2, c.height / 2);
+      return;
+    }
+
+    const cosA = Math.cos(Math.PI / 6);
+    const sinA = Math.sin(Math.PI / 6);
+    const project = (v: Vec3): [number, number] => {
+      const px = (v.x - v.y) * cosA;
+      const py = (v.x + v.y) * sinA - v.z;
+      return [px, py];
+    };
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    const step = Math.max(1, Math.floor(triangles.length / 1500));
+    for (let i = 0; i < triangles.length; i += step) {
+      const t = triangles[i];
+      for (const v of [t.v0, t.v1, t.v2]) {
+        const [px, py] = project(v);
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        if (py < minY) minY = py;
+        if (py > maxY) maxY = py;
+      }
+    }
+
+    const spanX = Math.max(1e-3, maxX - minX);
+    const spanY = Math.max(1e-3, maxY - minY);
+    const pad = 28;
+    const scale = Math.min((c.width - pad * 2) / spanX, (c.height - pad * 2) / spanY);
+    const cxOffset = (c.width - spanX * scale) / 2;
+    const cyOffset = (c.height - spanY * scale) / 2;
+
+    ctx.strokeStyle = isWatertight ? '#34D399' : '#FF5C1A';
+    ctx.lineWidth = 1.25;
+
+    for (let i = 0; i < triangles.length; i += step) {
+      const t = triangles[i];
+      const [x0, y0] = project(t.v0);
+      const [x1, y1] = project(t.v1);
+      const [x2, y2] = project(t.v2);
+
+      ctx.beginPath();
+      ctx.moveTo(cxOffset + (x0 - minX) * scale, cyOffset + (y0 - minY) * scale);
+      ctx.lineTo(cxOffset + (x1 - minX) * scale, cyOffset + (y1 - minY) * scale);
+      ctx.lineTo(cxOffset + (x2 - minX) * scale, cyOffset + (y2 - minY) * scale);
       ctx.closePath();
       ctx.stroke();
     }
   }
 
-  wireDropzone('stlDropzone', 'stlFileInput', 'stlBrowseBtn', (file) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const buffer = ev.target?.result as ArrayBuffer;
-      if (!buffer) return;
-      let triCount = 0;
-      if (buffer.byteLength >= 84) {
-        const expectedN = new DataView(buffer).getUint32(80, true);
-        if (buffer.byteLength === 84 + 50 * expectedN) {
-          triCount = expectedN;
-        } else {
-          const fullText = new TextDecoder().decode(buffer);
-          const matches = fullText.match(/facet normal/g);
-          triCount = matches ? matches.length : 0;
-        }
-      }
-      getEl('stlFileName').textContent = `FILE LOADED: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-      getEl('stlTris').textContent = triCount.toLocaleString();
-      drawStlMesh(false);
-    };
-    reader.readAsArrayBuffer(file);
+  function renderMetrics(metrics: StlAuditMetrics, statusText: string, isRepairedPass = false): void {
+    getEl('stlTris').textContent = metrics.triangleCount.toLocaleString();
+    getEl('stlHoles').textContent = metrics.holes.toLocaleString();
+    getEl('stlBoundaryEdgesSub').textContent = `${metrics.boundaryEdges.toLocaleString()} boundary edges`;
+    getEl('stlNormals').textContent = metrics.flippedFaces.toLocaleString();
+    getEl('stlVolume').textContent = `${metrics.volumeCm3.toFixed(3)} cm³`;
+    getEl('stlVolumeSub').textContent = metrics.isInsideOut
+      ? 'Warning: Inside-out (negative signed vol)'
+      : metrics.isWatertight
+        ? 'Watertight closed manifold'
+        : 'Open mesh (approx. volume)';
+
+    const { sizeX, sizeY, sizeZ } = metrics.bboxMm;
+    getEl('stlBboxOut').textContent = `${sizeX.toFixed(2)} × ${sizeY.toFixed(2)} × ${sizeZ.toFixed(2)} mm`;
+    getEl('stlAreaOut').textContent = `${metrics.surfaceAreaCm2.toFixed(2)} cm²`;
+    getEl('stlNonManifoldOut').textContent = metrics.nonManifoldEdges.toLocaleString();
+    getEl('stlDegenerateOut').textContent = metrics.degenerateFaces.toLocaleString();
+
+    const badge = getEl('stlStatusBadge');
+    const holesEl = getEl('stlHoles');
+    const normalsEl = getEl('stlNormals');
+
+    if (metrics.isWatertight && metrics.flippedFaces === 0 && !metrics.isInsideOut) {
+      badge.textContent = isRepairedPass ? 'STATUS: REPAIRED (0 DEFECTS)' : 'STATUS: WATERTIGHT (0 DEFECTS)';
+      badge.style.color = '#34D399';
+      holesEl.style.color = 'var(--status-ok)';
+      normalsEl.style.color = 'var(--status-ok)';
+    } else {
+      badge.textContent = isRepairedPass
+        ? `STATUS: PARTIAL REPAIR (${metrics.boundaryEdges} OPEN EDGES REMAIN)`
+        : `STATUS: DEFECTS DETECTED (${metrics.holes} HOLES, ${metrics.boundaryEdges} OPEN EDGES)`;
+      badge.style.color = '#FBBF24';
+      holesEl.style.color = metrics.holes > 0 ? 'var(--accent)' : 'var(--status-ok)';
+      normalsEl.style.color = metrics.flippedFaces > 0 ? 'var(--status-warn)' : 'var(--status-ok)';
+    }
+
+    getEl('stlRepairLog').textContent = statusText;
+    drawStlWireframe(activeTriangles, metrics.isWatertight && metrics.flippedFaces === 0);
+  }
+
+  function showStlError(msg: string): void {
+    getEl('stlFileName').textContent = msg;
+    const parseState = getEl('stlParseState');
+    parseState.textContent = 'ERROR';
+    parseState.style.color = 'var(--status-warn)';
+    getEl('stlStatusBadge').textContent = 'STATUS: INVALID STL FILE';
+    getEl('stlStatusBadge').style.color = 'var(--status-warn)';
+    getEl('stlRepairLog').textContent = msg;
+  }
+
+  function loadStlBuffer(buffer: ArrayBuffer, filename: string): void {
+    const t0 = performance.now();
+    const res = auditStl(buffer);
+    if (!res.ok) {
+      trackFileLoadError('stl', res.errorCode);
+      showStlError(res.error);
+      return;
+    }
+
+    trackFileLoadSuccess('stl_repair', res.metrics.format, buffer.byteLength, performance.now() - t0);
+    activeTriangles = res.triangles;
+    activeFileName = filename;
+
+    const parseState = getEl('stlParseState');
+    parseState.textContent = `${res.metrics.format.toUpperCase()} STL`;
+    parseState.style.color = 'var(--status-ok)';
+    getEl('stlFileName').textContent = `FILE LOADED: ${filename} (${(buffer.byteLength / 1024).toFixed(1)} KB)`;
+
+    const summary = res.metrics.isWatertight
+      ? `Audited ${res.metrics.triangleCount} facets (${res.metrics.weldedVertexCount} welded vertices): 0 open edges, watertight volume = ${res.metrics.volumeCm3.toFixed(3)} cm³.`
+      : `Audited ${res.metrics.triangleCount} facets: found ${res.metrics.holes} open hole loop(s) (${res.metrics.boundaryEdges} boundary edges) and ${res.metrics.flippedFaces} flipped normal(s). Click EXECUTE MANIFOLD REPAIR.`;
+    renderMetrics(res.metrics, summary, false);
+  }
+
+  wireDropzone(
+    'stlDropzone',
+    'stlFileInput',
+    'stlBrowseBtn',
+    'stl',
+    (file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (!buffer) return;
+        loadStlBuffer(buffer, file.name);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => {
+      showStlError(message);
+    }
+  );
+
+  maybeEl('runStlRepairBtn')?.addEventListener('click', () => {
+    if (activeTriangles.length === 0) {
+      showStlError('Please upload an .STL file or click LOAD DEFECTIVE SAMPLE first.');
+      return;
+    }
+    const rep = repairStl(activeTriangles);
+    if (!rep.ok) {
+      showStlError(rep.error);
+      return;
+    }
+    activeTriangles = rep.triangles;
+    trackCalculate('stl_repair');
+    renderMetrics(rep.after, rep.statusMessage, true);
   });
 
-  drawStlMesh(false);
+  maybeEl('downloadRepairedStlBtn')?.addEventListener('click', () => {
+    if (activeTriangles.length === 0) {
+      showStlError('Load and audit an .STL file before downloading.');
+      return;
+    }
+    const binBuffer = exportBinaryStl(activeTriangles);
+    const baseName = activeFileName.replace(/\.stl$/i, '');
+    downloadBlobFile(
+      `${baseName}-repaired.stl`,
+      new Blob([binBuffer], { type: 'application/octet-stream' })
+    );
+    trackExportDownload('stl_repair', 'binary_stl');
+  });
+
+  maybeEl('stlSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    trackSampleLoad('stl');
+    try {
+      const resp = await fetch('/samples/defective-cube.stl');
+      if (resp.ok) {
+        const buf = await resp.arrayBuffer();
+        loadStlBuffer(buf, 'defective-cube.stl');
+      }
+    } catch {
+      // ignore offline
+    }
+  });
+
+  maybeEl('downloadTestStlBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const resp = await fetch('/samples/defective-cube.stl');
+      if (resp.ok) {
+        const text = await resp.text();
+        downloadTextFile('defective-cube.stl', text);
+        trackExportDownload('stl_sample', 'ascii_stl');
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  fetch('/samples/defective-cube.stl')
+    .then((r) => (r.ok ? r.arrayBuffer() : null))
+    .then((buf) => {
+      if (buf) {
+        loadStlBuffer(buf, 'defective-cube.stl');
+      } else {
+        drawStlWireframe([], false);
+      }
+    })
+    .catch(() => drawStlWireframe([], false));
 }
 
+// =========================================================================
+// TOOL 03: STEP TO STL CONVERTER (ISO-10303-21 B-REP TESSELLATOR)
+// =========================================================================
 function initStepPage(): void {
   if (!maybeEl('stepTolPresetSelect')) return;
 
   const presetSelect = getEl<HTMLSelectElement>('stepTolPresetSelect');
   const customWrap = getEl('stepCustomTolWrap');
   const customInput = getEl<HTMLInputElement>('stepCustomTolInput');
+  const unitsSelect = getEl<HTMLSelectElement>('stepUnitsSelect');
   const formatSelect = getEl<HTMLSelectElement>('stepOutputFormatSelect');
+  const logBox = getEl('stepLogBox');
 
-  function updateStepControls(): void {
-    const isCustom = presetSelect.value === 'custom';
-    customWrap.classList.toggle('hidden', !isCustom);
-    const tol = isCustom ? parseStrictNumber(customInput.value) : parseStrictNumber(presetSelect.value);
-    if (Number.isFinite(tol) && tol > 0) {
-      getEl('stepTolLabel').textContent = `${tol.toFixed(3)} mm`;
-      getEl('stepChordVal').textContent = `${tol.toFixed(3)} mm`;
-    } else {
-      getEl('stepTolLabel').textContent = '—';
-      getEl('stepChordVal').textContent = '—';
-    }
-    getEl('stepFormatSub').textContent = formatSelect.value === 'ascii' ? 'ASCII STL' : 'Binary STL';
+  let activeStepText = '';
+  let activeStepName = 'planetary-gear-housing.step';
+  let lastConversion: Extract<StepConvertResult, { ok: true }> | null = null;
+
+  function getSelectedTolerance(): number {
+    return presetSelect.value === 'custom'
+      ? parseStrictNumber(customInput.value)
+      : parseStrictNumber(presetSelect.value);
   }
 
+  function renderStepError(message: string): void {
+    const parseState = getEl('stepParseState');
+    parseState.textContent = 'ERROR';
+    parseState.style.color = 'var(--status-warn)';
+    getEl('stepFileName').textContent = message;
+    getEl('stepBbox').textContent = '—';
+    getEl('stepTriOut').textContent = '—';
+    getEl('stepFileSize').textContent = '—';
+    getEl('stepExportStatus').textContent = message;
+    logBox.innerHTML = `<div style="color:#FF5C1A; margin-bottom:8px;">// ISO-10303-21 STEP VALIDATION ERROR</div><div style="color:var(--status-warn);">${message}</div>`;
+    lastConversion = null;
+  }
+
+  function runTessellation(): void {
+    const isCustom = presetSelect.value === 'custom';
+    customWrap.classList.toggle('hidden', !isCustom);
+    const tol = getSelectedTolerance();
+    const units = unitsSelect.value === 'inch' ? 'inch' : 'mm';
+    const format = formatSelect.value === 'ascii' ? 'ascii' : 'binary';
+
+    getEl('stepFormatSub').textContent = format === 'ascii' ? 'ASCII STL' : 'Binary STL';
+
+    if (!Number.isFinite(tol) || tol <= 0) {
+      getEl('stepTolLabel').textContent = '—';
+      getEl('stepChordVal').textContent = '—';
+      renderStepError('Enter a linear deflection tolerance greater than 0 mm.');
+      return;
+    }
+
+    getEl('stepTolLabel').textContent = `${tol.toFixed(3)} mm`;
+    getEl('stepChordVal').textContent = `${tol.toFixed(3)} mm`;
+
+    if (!activeStepText) return;
+
+    const res = convertStepToStl(activeStepText, {
+      linearDeflectionMm: tol,
+      units,
+      outputFormat: format,
+    });
+
+    if (!res.ok) {
+      trackFileLoadError('step', res.errorCode);
+      renderStepError(res.error);
+      return;
+    }
+
+    lastConversion = res;
+    trackCalculate('step_to_stl');
+
+    const parseState = getEl('stepParseState');
+    parseState.textContent = 'ISO-10303-21';
+    parseState.style.color = 'var(--status-ok)';
+
+    const { sizeX, sizeY, sizeZ } = res.bbox;
+    const unitSuffix = units === 'inch' ? 'in' : 'mm';
+    getEl('stepBbox').textContent = `${sizeX.toFixed(2)} × ${sizeY.toFixed(2)} × ${sizeZ.toFixed(2)} ${unitSuffix}`;
+    getEl('stepSolidsSub').textContent = `${res.solidCount} solid(s) · ${res.shellCount} shell(s) · ${res.faceCount} face(s)`;
+    getEl('stepTriOut').textContent = res.triangleCount.toLocaleString();
+    getEl('stepFileSize').textContent =
+      res.outputByteLength >= 1024 * 1024
+        ? `${(res.outputByteLength / (1024 * 1024)).toFixed(2)} MB`
+        : `${(res.outputByteLength / 1024).toFixed(1)} KB`;
+    getEl('stepExportStatus').textContent = `Ready: ${res.triangleCount.toLocaleString()} facets (${res.outputByteLength.toLocaleString()} bytes, ${format.toUpperCase()} STL).`;
+
+    logBox.innerHTML = [
+      `<div style="color:#FF5C1A; margin-bottom:8px;">// ISO-10303-21 STEP CONVERTER LOG — ${activeStepName}</div>`,
+      ...res.logs.map((line) => `<div>[OK] ${line}</div>`),
+    ].join('');
+  }
+
+  function loadStepString(text: string, filename: string, byteSize = text.length): void {
+    const t0 = performance.now();
+    activeStepText = text;
+    activeStepName = filename;
+    getEl('stepFileName').textContent = `FILE LOADED: ${filename} (${(byteSize / 1024).toFixed(1)} KB)`;
+    runTessellation();
+    if (lastConversion) {
+      trackFileLoadSuccess('step_to_stl', 'step', byteSize, performance.now() - t0);
+    }
+  }
+
+  wireDropzone(
+    'stepDropzone',
+    'stepFileInput',
+    'stepBrowseBtn',
+    'step',
+    (file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (!buffer) return;
+        const headCheck = validateTextBufferHead(buffer, 'step');
+        if (!headCheck.ok) {
+          trackFileLoadError('step', headCheck.errorCode);
+          renderStepError(headCheck.error);
+          return;
+        }
+        const text = new TextDecoder('utf-8').decode(buffer);
+        loadStepString(text, file.name, file.size);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => {
+      renderStepError(message);
+    }
+  );
+
   ['stepTolPresetSelect', 'stepCustomTolInput', 'stepUnitsSelect', 'stepOutputFormatSelect'].forEach((id) => {
-    maybeEl(id)?.addEventListener('input', updateStepControls);
-    maybeEl(id)?.addEventListener('change', updateStepControls);
+    maybeEl(id)?.addEventListener('input', runTessellation);
+    maybeEl(id)?.addEventListener('change', runTessellation);
   });
 
-  updateStepControls();
+  maybeEl('downloadConvertedStlBtn')?.addEventListener('click', () => {
+    if (!lastConversion) {
+      renderStepError('Select a valid .STEP file before exporting .STL.');
+      return;
+    }
+    const baseName = activeStepName.replace(/\.(step|stp)$/i, '');
+    if (lastConversion.outputFormat === 'ascii' && lastConversion.asciiStl) {
+      downloadTextFile(`${baseName}.stl`, lastConversion.asciiStl);
+      trackExportDownload('step_to_stl', 'ascii_stl');
+    } else {
+      downloadBlobFile(
+        `${baseName}.stl`,
+        new Blob([lastConversion.binaryStl], { type: 'application/octet-stream' })
+      );
+      trackExportDownload('step_to_stl', 'binary_stl');
+    }
+  });
+
+  maybeEl('stepSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    trackSampleLoad('step');
+    try {
+      const resp = await fetch('/samples/planetary-gear-housing.step');
+      if (resp.ok) {
+        const text = await resp.text();
+        loadStepString(text, 'planetary-gear-housing.step', text.length);
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  maybeEl('downloadTestStepBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const resp = await fetch('/samples/planetary-gear-housing.step');
+      if (resp.ok) {
+        const text = await resp.text();
+        downloadTextFile('planetary-gear-housing.step', text);
+        trackExportDownload('step_sample', 'step');
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  fetch('/samples/planetary-gear-housing.step')
+    .then((r) => (r.ok ? r.text() : ''))
+    .then((text) => {
+      if (text) loadStepString(text, 'planetary-gear-housing.step', text.length);
+    })
+    .catch(() => runTessellation());
 }
 
 // =========================================================================
@@ -710,6 +1225,7 @@ function initResinPage(): void {
     getEl('outResinLayers').textContent = `${timeRes.layers.toLocaleString()} Z-slices`;
     getEl('outResinQuoteLabel').textContent = `RECOMMENDED COMMERCIAL QUOTE (${markupMultiplier.toFixed(1)}x MARKUP)`;
     getEl('outResinPrice').textContent = `${formatCurrency(costRes.recommendedQuote)} (Unit Cost: ${formatCurrency(costRes.unitCost)})`;
+    trackCalculate('resin_cost');
   }
 
   const ids = [
@@ -739,6 +1255,11 @@ function initResinPage(): void {
   ids.forEach((id) => {
     maybeEl(id)?.addEventListener('input', calcResin);
     maybeEl(id)?.addEventListener('change', calcResin);
+  });
+
+  maybeEl('printResinQuoteBtn')?.addEventListener('click', () => {
+    trackExportDownload('resin_quote', 'print');
+    window.print();
   });
 
   calcResin();
@@ -830,6 +1351,7 @@ function initSpoolPage(): void {
       finishBadge.textContent = `NO (short by ${Math.abs(fin.marginG).toFixed(1)} g)`;
       finishBadge.style.color = 'var(--status-warn)';
     }
+    trackCalculate('spool_weight');
   }
 
   const ids = [
@@ -909,6 +1431,7 @@ function initGramsMetersPage(): void {
     getEl('outGmMeters').textContent = `${meters.toFixed(1)} m`;
     getEl('outGmLinear').textContent = `${res.gramsPerMeter.toFixed(2)} g/m`;
     getEl('outGmArea').textContent = `${areaMm2.toFixed(2)} mm²`;
+    trackCalculate('grams_to_meters');
   }
 
   ['gmDirectionSelect', 'gmInputVal', 'gmMaterialSelect', 'gmCustomDensity', 'gmDiameterSelect'].forEach((id) => {
@@ -919,6 +1442,8 @@ function initGramsMetersPage(): void {
   calc();
 }
 
+initPrivacyPageControls();
+wireInternalLinkAnalytics();
 initGcodeAndCostPage();
 initStlVolumePage();
 initStlPage();

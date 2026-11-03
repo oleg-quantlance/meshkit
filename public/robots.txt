@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /samples/
+
+Sitemap: https://meshkit.pro/sitemap.xml

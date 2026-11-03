@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methodology &amp; Formulas — MeshKit 3D Printing Calculators</title>
+  <meta name="description" content="Complete mathematical formulas, golden test vectors, polymer density references, marketplace fee schedules, and empty spool tare methodology used by MeshKit." />
+  <link rel="canonical" href="https://meshkit.pro/methodology" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Methodology &amp; Formulas — MeshKit 3D Printing Calculators" />
+  <meta property="og:description" content="Complete mathematical formulas, golden test vectors, polymer densities, and marketplace fee schedules." />
+  <meta property="og:url" content="https://meshkit.pro/methodology" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/meshkit-og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/" },
+      { "@type": "ListItem", "position": 2, "name": "Methodology", "item": "https://meshkit.pro/methodology" }
+    ]
+  }
+  </script>
+</head>
+<body data-page="methodology">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="spec-strip">
+      <h1 class="spec-title">Methodology, Equations &amp; Data Sources</h1>
+      <div class="spec-meta mono">
+        <span>LAST UPDATED: 2026-11-01</span>
+        <span>VERIFIED AGAINST GOLDEN VECTORS C1–C14</span>
+      </div>
+    </div>
+
+    <section style="background:var(--bg-panel); border:1px solid var(--border-strong); padding:24px; line-height:1.65;">
+      <h2 class="mono" style="font-size:16px; margin-top:0;">1. G-Code Extrusion Mass &amp; Unit Costing</h2>
+      <p>
+        When you load a `.gcode` file on <a href="/">G-Code Time Estimator</a>, the parser tracks axis mode commands (`G20` inches / `G21` millimeters, `G90` absolute / `G91` relative XYZ, `M82` absolute / `M83` relative extruder, and `G92` coordinate resets). Net extruded filament length <code>E_total_mm</code> is converted to mass in grams:
+      </p>
+      <pre class="mono" style="background:var(--bg-subtle); padding:12px; border:1px solid var(--border); overflow-x:auto;">grams = (E_total_mm / 10) × π × (d_cm / 2)² × density_g_cm3</pre>
+      <p>
+        At 1.75 mm diameter (`d_cm = 0.175`), the cross-sectional volume is `0.024053 cm³` per centimeter of filament length. Unit cost and commercial pricing are calculated as:
+      </p>
+      <pre class="mono" style="background:var(--bg-subtle); padding:12px; border:1px solid var(--border); overflow-x:auto;">material_cost = (grams / 1000) × price_per_kg
+energy_cost   = (watts / 1000) × hours × kwh_rate
+wear_cost     = hours × wear_rate_per_hour
+unit_cost     = (material_cost + energy_cost + wear_cost) × (1 + failure_pct / 100)
+selling_price = (unit_cost × markup + channel_fixed_fee) / (1 − channel_fee_pct / 100)</pre>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">2. STL Edge Topology &amp; Signed Volume</h2>
+      <p>
+        On <a href="/stl-repair-online">STL Repair Online</a>, binary STL detection checks whether `file.byteLength === 84 + 50 × N`, where `N` is the 32-bit unsigned integer at byte offset 80. Vertices are welded using spatial quantization with `epsilon = 1e-6 × bbox_diagonal`. Undirected edges used by 1 triangle are counted as boundary edges (forming boundary hole loops); edges used by more than 2 triangles are non-manifold. Signed volume is computed via tetrahedral divergence:
+      </p>
+      <pre class="mono" style="background:var(--bg-subtle); padding:12px; border:1px solid var(--border); overflow-x:auto;">signed_volume_mm3 = Σ [ v0 · (v1 × v2) ] / 6</pre>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">3. SLA / MSLA Resin Volume, Consumables &amp; Exposure Time</h2>
+      <p>
+        On <a href="/resin-3d-print-cost-calculator">Resin Print Cost Calculator</a>, resin draw accounts for hollow shell retention and support volume overhead, while exposure time accounts for both normal layers and bottom burn-in layers:
+      </p>
+      <pre class="mono" style="background:var(--bg-subtle); padding:12px; border:1px solid var(--border); overflow-x:auto;">resin_ml = solid_volume_ml × retained_fraction × (1 + support_pct / 100)
+layers   = ceil(height_mm / layer_height_mm)
+seconds  = layers × (exposure_s + lift_s) + bottom_layers × (bottom_exposure_s − exposure_s)</pre>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">4. Spool Tare Subtraction &amp; Linear Mass Density</h2>
+      <p>
+        On <a href="/filament-spool-weight-calculator">Filament Spool Weight Calculator</a> and <a href="/empty-spool-weight-database">Empty Spool Weight Database</a>, empty spool tare values represent typical dry weights recorded on `2026-11-01`. Because cardboard and injection-molded spools vary by production batch and humidity, weighing an empty spool of the same brand once is recommended.
+      </p>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
