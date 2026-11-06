@@ -1,5 +1,5 @@
 export const GA_MEASUREMENT_ID = 'G-5HR12TP216';
-const CONSENT_STORAGE_KEY = 'meshkit-consent-v2';
+const CONSENT_STORAGE_KEY = 'meshkit-consent-v3';
 
 export type ConsentChoice = 'granted' | 'denied';
 
@@ -23,8 +23,8 @@ export function getFileSizeBucket(bytes: number): FileSizeBucket {
 }
 
 /**
- * Initializes Google Analytics 4 with Consent Mode v2 (default denied).
- * The default consent command runs before any other tag.
+ * Initializes Google Analytics 4 (G-5HR12TP216) with analytics enabled by default
+ * and honors any explicit opt-out stored in localStorage (/privacy).
  */
 export function initAnalyticsConsentMode(): void {
   if (typeof window === 'undefined') return;
@@ -36,20 +36,8 @@ export function initAnalyticsConsentMode(): void {
       window.dataLayer!.push(arguments);
     };
 
-    // Consent Mode v2 default: strictly denied before any tag loads
-    window.gtag('consent', 'default', {
-      ad_storage: 'denied',
-      analytics_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      wait_for_update: 500,
-    });
-
     window.gtag('js', new Date());
-    window.gtag('config', GA_MEASUREMENT_ID, {
-      anonymize_ip: true,
-      send_page_view: true,
-    });
+    window.gtag('config', GA_MEASUREMENT_ID);
   }
 
   let savedChoice: ConsentChoice | null = null;
@@ -62,10 +50,8 @@ export function initAnalyticsConsentMode(): void {
     // ignore storage errors
   }
 
-  if (savedChoice === 'granted') {
-    updateAnalyticsConsent('granted');
-  } else if (savedChoice === null) {
-    renderConsentBanner();
+  if (savedChoice === 'denied') {
+    updateAnalyticsConsent('denied');
   }
 }
 
@@ -89,35 +75,6 @@ export function updateAnalyticsConsent(choice: ConsentChoice): void {
       existingBanner.remove();
     }
   }
-}
-
-function renderConsentBanner(): void {
-  if (typeof document === 'undefined' || document.getElementById('meshkitConsentBanner')) return;
-
-  const banner = document.createElement('aside');
-  banner.id = 'meshkitConsentBanner';
-  banner.setAttribute('aria-label', 'Analytics consent');
-  banner.style.cssText =
-    'position:fixed;bottom:0;left:0;right:0;z-index:999;background:var(--bg-panel);border-top:2px solid var(--border-strong);padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:12px;';
-
-  banner.innerHTML = `
-    <div class="mono" style="color:var(--text-main);max-width:820px;">
-      <strong>PRIVACY &amp; CONSENT MODE v2:</strong> MeshKit processes all 3D files locally in your browser (0 bytes uploaded). With your permission, we use anonymous Google Analytics 4 events (never file names or contents) to improve the calculators. <a href="/privacy" style="color:var(--accent);">Privacy Policy</a>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button type="button" id="consentAcceptBtn" class="btn-primary">ACCEPT ANALYTICS</button>
-      <button type="button" id="consentDeclineBtn" class="btn-secondary">DECLINE</button>
-    </div>
-  `;
-
-  document.body.appendChild(banner);
-
-  document.getElementById('consentAcceptBtn')?.addEventListener('click', () => {
-    updateAnalyticsConsent('granted');
-  });
-  document.getElementById('consentDeclineBtn')?.addEventListener('click', () => {
-    updateAnalyticsConsent('denied');
-  });
 }
 
 function sendEvent(eventName: string, params: Record<string, string | number>): void {

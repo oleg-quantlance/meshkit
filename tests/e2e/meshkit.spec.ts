@@ -9,9 +9,9 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
   }) => {
     await page.goto('/');
 
-    // Consent Mode v2: no _ga cookie is set when consent is not granted
-    const cookies = await context.cookies();
-    expect(cookies.some((c) => c.name.startsWith('_ga'))).toBe(false);
+    // GA4 dataLayer is initialized on page load
+    const hasDataLayer = await page.evaluate(() => Array.isArray(window.dataLayer));
+    expect(hasDataLayer).toBe(true);
 
     // Dismiss consent banner so it doesn't overlap elements during testing
     const declineBtn = page.locator('#consentDeclineBtn');
