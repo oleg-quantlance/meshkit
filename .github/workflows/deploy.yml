@@ -6,6 +6,13 @@ on:
       - main
   pull_request:
 
+# The hosting action posts the preview URL as a check run and PR comment,
+# which needs these scopes on the default GITHUB_TOKEN.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
