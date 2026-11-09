@@ -97,4 +97,76 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
       expect(buf.byteLength).toBe(84 + 50 * triCount);
     }
   });
+
+  test('3MF to STL Converter: sample package → binary STL of exactly 84 + 50·N bytes, axe clean', async ({ page }) => {
+    await page.goto('/3mf-to-stl-converter');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await expect(page.locator('#cvKpiB')).toHaveText('204');
+    await expect(page.locator('#cvKpiD')).toHaveText('2'); // cube + boss merged
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#cvDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('calibration-cube-and-boss.stl');
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    if (path) {
+      const buf = readFileSync(path);
+      expect(buf.byteLength).toBe(84 + 50 * 204);
+      expect(buf.readUInt32LE(80)).toBe(204);
+    }
+
+    // Same bar as the home-page test (WCAG 2.0 A/AA, serious or critical). `color-contrast` is
+    // excluded on purpose: the shared tokens (--accent on white buttons, --text-faint) fail it on
+    // every page of the site today, including the home page; fixing that is a site-wide CSS change.
+    const axe = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['color-contrast'])
+      .analyze();
+    const seriousOrCritical = axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+    expect(seriousOrCritical).toEqual([]);
+  });
+
+  test('STL to 3MF Converter: sample STL → ZIP package that the 3MF→STL page can read back', async ({ page }) => {
+    await page.goto('/stl-to-3mf-converter');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await page.locator('#cvObjectName').fill('E2E cube');
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#cvDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('defective-cube.3mf');
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    if (!path) return;
+    const threeMf = readFileSync(path);
+    expect(threeMf[0]).toBe(0x50); // 'P'
+    expect(threeMf[1]).toBe(0x4b); // 'K'
+
+    // Round-trip through the other converter page.
+    await page.goto('/3mf-to-stl-converter');
+    await page.locator('#cvFileInput').setInputFiles({ name: 'e2e.3mf', mimeType: 'model/3mf', buffer: threeMf });
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await expect(page.locator('#cvKpiB')).toHaveText('10');
+    await expect(page.locator('#cvLogBox')).toContainText('MeshKit');
+  });
+
+  test('STL ASCII ↔ Binary: rejects wrong file type with the validation message', async ({ page }) => {
+    await page.goto('/stl-ascii-to-binary-converter');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await expect(page.locator('#cvKpiD')).toContainText('→');
+
+    await page.locator('#cvFileInput').setInputFiles({ name: 'nope.obj', mimeType: 'text/plain', buffer: Buffer.from('v 0 0 0') });
+    await expect(page.locator('#cvFileName')).toContainText('accepts .stl files');
+    await expect(page.locator('#cvParseState')).toHaveText('ERROR');
+  });
 });

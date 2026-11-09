@@ -2,15 +2,17 @@ export const FILE_LIMITS = {
   gcode: 150 * 1024 * 1024, // 150 MB
   stl: 100 * 1024 * 1024,   // 100 MB
   step: 50 * 1024 * 1024,   // 50 MB
+  threemf: 100 * 1024 * 1024, // 100 MB (zip; expands in memory)
 } as const;
 
 export const ACCEPTED_EXTENSIONS: Record<ToolFileKind, string[]> = {
   gcode: ['.gcode', '.gco', '.g'],
   stl: ['.stl'],
   step: ['.step', '.stp'],
+  threemf: ['.3mf'],
 };
 
-export type ToolFileKind = 'gcode' | 'stl' | 'step';
+export type ToolFileKind = 'gcode' | 'stl' | 'step' | 'threemf';
 
 export type ValidationErrorCode =
   | 'empty'
