@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeshKit Filament Inventory Tracker — Read Me First</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body class="readme">
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · v{{VERSION}} · {{DATE}}</div>
+      <h1>Filament Inventory Tracker</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p>Thanks for buying the spreadsheet. This page gets you from download to a weighed, tracked shelf of spools in about five minutes. Keep it next to the workbook and the kitchen scale.</p>
+
+    <h2>Files included</h2>
+    <table>
+      <thead><tr><th style="width:52%;">File</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">MeshKit-Filament-Inventory-Tracker-v1.0.xlsx</td><td>The workbook. Opens in Excel 2016 or newer, LibreOffice Calc, Numbers, and imports into Google Sheets.</td></tr>
+        <tr><td class="mono">MeshKit-Filament-Inventory-Tracker-Read-Me-First.pdf</td><td>This document, with the Google Sheets copy link below.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Open it: Google Sheets</h2>
+    <ol>
+      <li>Open the view-only master: <a href="{{SHEETS_LINK}}">{{SHEETS_LINK}}</a></li>
+      <li>In the menu choose <span class="kbd">File</span> → <span class="kbd">Make a copy</span>. The copy lands in your own Drive and is fully editable; the master stays read-only.</li>
+      <li>Do not request edit access to the master. That is the one thing that does not work.</li>
+    </ol>
+
+    <h2>Open it: Excel</h2>
+    <ol>
+      <li>Download the <span class="mono">.xlsx</span> from your Etsy purchases page.</li>
+      <li>Open it; if a yellow bar says <em>Protected View</em>, click <span class="kbd">Enable Editing</span>.</li>
+      <li>Excel 2016 or newer, Excel for Microsoft 365, or Excel for Mac 2016+. Older versions open the file but some formulas show <span class="mono">#NAME?</span> (see troubleshooting).</li>
+    </ol>
+
+    <h2>Five steps to a tracked shelf</h2>
+    <ol class="steps">
+      <li><div><strong>Settings tab.</strong> Check the low-stock threshold in grams (default 150 g), the default net spool weight (1,000 g), the fallback tare weight, and the dry-box humidity warning percentage. Customise the Materials and Locations lists so the drop-downs match your shelf.</div></li>
+      <li><div><strong>Spools tab: add a spool.</strong> One row per spool (up to 60 rows). Pick the brand and spool type from the drop-down; the empty-spool (tare) weight fills in automatically from the built-in <em>Tare DB</em> tab. Choose material, colour and location, and type what you paid.</div></li>
+      <li><div><strong>Weigh it.</strong> Put the spool on a kitchen scale and type the gross grams into <em>Gross weight now (g)</em>. Grams left, percent left, cost per gram and value left are calculated, plus a <em>LOW</em> or <em>CHECK TARE</em> flag. Re-weigh whenever you put a spool away; overwrite the number.</div></li>
+      <li><div><strong>Dry Box Log tab.</strong> Log the date, box name, humidity percentage and whether you changed desiccant. Readings above your warning threshold are flagged <em>HIGH</em>.</div></li>
+      <li><div><strong>Summary tab.</strong> Total spools, grams and dollar value on hand grouped by material, count of low-stock spools, and dry-box warning count, with a bar chart of stock by material. Four sample spools are prefilled so you can see it working; overwrite or clear them.</div></li>
+    </ol>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · Filament Inventory Tracker v{{VERSION}} · {{DATE}}</div>
+    <div>1 / 2</div>
+  </footer>
+</section>
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · continued</div>
+      <h1>Troubleshooting and support</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <h2>Troubleshooting</h2>
+    <table>
+      <thead><tr><th style="width:34%;">Symptom</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">#NAME?</span> or <span class="mono">#SPILL!</span> in result cells</td><td>Your Excel is older than 2016, or a function is not supported. Use the Google Sheets copy (link on page 1), update Excel, or open the file in LibreOffice Calc (free).</td></tr>
+        <tr><td>"The cell you're trying to change is protected"</td><td>Formula cells are locked so they cannot be overwritten by accident. Only the yellow input cells are meant to be edited. If you really want to change a formula: <span class="kbd">Review</span> → <span class="kbd">Unprotect Sheet</span> (Excel) or <span class="kbd">Data</span> → <span class="kbd">Protect sheets and ranges</span> (Sheets). There is no password.</td></tr>
+        <tr><td>My spool brand is missing from the drop-down</td><td>Weigh an empty spool of that brand once and add a row in the yellow cells at the bottom of the <em>Tare DB</em> tab (it joins the drop-down automatically), or pick <em>Generic cardboard (fallback)</em> / <em>Generic plastic (fallback)</em> and type your measured weight in <em>Tare override (g)</em>. Submit the measurement at <span class="mono">meshkit.pro/empty-spool-weight-database</span> so it joins the next version.</td></tr>
+        <tr><td>Grams left shows 0</td><td>The gross weight is at or below the tare, so either the scale was not zeroed, the wrong spool type is selected, or the spool really is empty. Re-weigh and check the brand row.</td></tr>
+        <tr><td>Percent left is above 100% or flag says <span class="mono">CHECK TARE</span></td><td>Calculated grams left exceeds 105% of nominal net weight: either the manufacturer overfilled the spool or the tare is too low for this batch. Enter your own measured tare in <em>Tare override (g)</em>.</td></tr>
+        <tr><td>I also want metres left</td><td>The sheet tracks grams; convert grams to metres for any material and diameter with the free tool at <span class="mono">meshkit.pro/filament-grams-to-meters</span>.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Support</h2>
+    <p>Message me on Etsy first; that is the fastest route and keeps the order history attached. Email works too: <span class="mono">admin@quantlance.com</span>. I answer within two business days. If a formula is broken, I fix it and send you the updated file, or refund you.</p>
+
+    <h2>Updates</h2>
+    <p>This is version {{VERSION}}, released {{DATE}}. The tare database is re-issued as the community database grows; updated versions appear in your Etsy downloads at no extra cost. Your spool rows copy across with a paste.</p>
+
+    <h2>Free online version</h2>
+    <p>There is a free spool-weight calculator and the full empty-spool database at <span class="mono">meshkit.pro/filament-spool-weight-calculator</span>. The spreadsheet is for keeping your whole shelf in one file, offline, with your own prices, colours and dry-box history.</p>
+
+    <h2>Licence</h2>
+    <p>Personal and small-business use. You may use it for as many spools and printers as you like, make copies for your own use, and modify it. You may not resell, share or redistribute the file or a modified version of it, free or paid.</p>
+
+    <div class="callout">Numbers are estimates; check your own costs. Tare weights are typical values and vary by production batch and humidity; weigh one empty spool of each brand you buy.</div>
+
+    <p class="closing">If this helped, a review helps the next person find it.</p>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · Filament Inventory Tracker v{{VERSION}} · {{DATE}}</div>
+    <div>2 / 2</div>
+  </footer>
+</section>
+
+</body>
+</html>

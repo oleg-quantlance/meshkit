@@ -1,0 +1,125 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "footer_tag": "Printable PDF · Letter and A4",
+  "shots": [
+    {
+      "id": "01-hero",
+      "type": "image",
+      "frame": "tablet",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "5 printable cheat sheets",
+      "sub": "Material settings, empty-spool weights, troubleshooting, bed adhesion and rules of thumb. One page each, Letter and A4 PDFs.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-1.png",
+      "images": [
+        "__SCRATCH__/cheat/page-2.png",
+        "__SCRATCH__/cheat/page-3.png"
+      ],
+      "fit": [
+        880,
+        1138
+      ]
+    },
+    {
+      "id": "02-materials",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "Filament settings by material",
+      "sub": "Sheet 1: nozzle and bed temperatures, enclosure, fan, speed, drying and density for PLA, PETG, ABS, ASA, TPU, nylon, PC and CF blends.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-1.png",
+      "fit": [
+        912,
+        1180
+      ]
+    },
+    {
+      "id": "03-spool-weights",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "How much filament is left?",
+      "sub": "Sheet 2: empty-spool weights by brand, a worked example, grams to metres by material and weighing tips. A kitchen scale is all you need.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-2.png",
+      "fit": [
+        912,
+        1180
+      ]
+    },
+    {
+      "id": "04-troubleshooting",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "Symptom, cause, fix",
+      "sub": "Sheet 3: stringing, warping, layer shifts, under- and over-extrusion and more. Likely causes, the first fix to try, then the second.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-3.png",
+      "fit": [
+        912,
+        1180
+      ]
+    },
+    {
+      "id": "05-bed-adhesion",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "Which surface for which material",
+      "sub": "Sheet 4: smooth and textured PEI, glass, garolite, tape and glue stick against each material, with bed temperatures and plate care.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-4.png",
+      "fit": [
+        912,
+        1180
+      ]
+    },
+    {
+      "id": "06-quick-reference",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "Settings and pricing rules of thumb",
+      "headline_size": 110,
+      "sub": "Sheet 5: layer height versus nozzle, walls and infill for strength, what a print costs, and the numbers worth memorising.",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "image": "__SCRATCH__/cheat/page-5.png",
+      "fit": [
+        912,
+        1180
+      ]
+    },
+    {
+      "id": "07-faq",
+      "type": "faq",
+      "eyebrow": "3D Printing Cheat Sheets",
+      "headline": "Good to know",
+      "sub": "",
+      "footer_tag": "Printable PDF · Letter and A4",
+      "faq": [
+        {
+          "q": "How do I get it?",
+          "a": "Instant download after purchase: two PDFs, one laid out for US Letter and one for A4."
+        },
+        {
+          "q": "How do I print it?",
+          "a": "Any home or office printer at 100% scale; black and white is fine. Each sheet is one page."
+        },
+        {
+          "q": "What can I do with it?",
+          "a": "Personal use: print as many copies as you like for your own workshop. Please do not resell or share the files."
+        },
+        {
+          "q": "Where do the numbers come from?",
+          "a": "Manufacturer guidance and the meshkit.pro materials and spool databases; sources are listed on each sheet."
+        },
+        {
+          "q": "What about updates?",
+          "a": "Updated versions are added to the same listing; re-download from your Etsy purchases at no charge."
+        }
+      ]
+    }
+  ]
+}

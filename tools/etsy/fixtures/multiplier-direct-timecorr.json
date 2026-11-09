@@ -1,0 +1,31 @@
+{
+  "case": "multiplier-direct-timecorr",
+  "input": {
+    "grams": 120,
+    "hours": 6.25,
+    "pricePerKg": 26,
+    "watts": 150,
+    "electricityRatePerKwh": 0.16,
+    "wearRatePerHour": 0.15,
+    "failurePct": 7,
+    "channelFeePct": 0,
+    "channelFixedFee": 0,
+    "pricingMode": "multiplier",
+    "markupMultiplier": 3,
+    "timeCorrectionPct": 12
+  },
+  "result": {
+    "ok": true,
+    "adjustedHours": 7.000000000000001,
+    "materialCost": 3.12,
+    "energyCost": 0.168,
+    "wearCost": 1.05,
+    "overheadCost": 1.5216600000000007,
+    "unitCost": 4.641660000000001,
+    "sellingPrice": 13.924980000000001,
+    "channelFees": 0,
+    "profit": 9.28332,
+    "marginPct": 67,
+    "belowCostWarning": false
+  }
+}

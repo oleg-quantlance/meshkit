@@ -1,0 +1,201 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "shots": [
+    {
+      "id": "01-hero",
+      "type": "sheet",
+      "frame": "laptop",
+      "eyebrow": "Print Job Log",
+      "headline": "Know what each job earned",
+      "sub": "One row per print job. Filament, energy, wear, labour and channel fees are calculated, then total cost, profit and margin. Google Sheets and Excel.",
+      "sheet": "Jobs",
+      "range": "A1:Z205",
+      "cols": [
+        "A",
+        "F",
+        "I",
+        "J",
+        "M",
+        "N",
+        "V",
+        "W"
+      ],
+      "rows": [
+        "1:1",
+        "4:11",
+        "205:205"
+      ],
+      "active": "W5",
+      "screen": [
+        1680,
+        null
+      ]
+    },
+    {
+      "id": "02-monthly",
+      "type": "chart",
+      "eyebrow": "Print Job Log",
+      "headline": "Profit per month, per job",
+      "sub": "Monthly P&L sums revenue, each cost line, fees, hours, grams and the failure rate from the Jobs tab; 24 months from any start.",
+      "sheet": "Monthly P&L",
+      "range": "A6:Q9",
+      "cols": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "H",
+        "O",
+        "P",
+        "Q"
+      ],
+      "active": "P7",
+      "screen": [
+        1700,
+        600
+      ],
+      "window_title": "MeshKit-Print-Job-Log.xlsx",
+      "chart": {
+        "bar": true,
+        "title": "Revenue and profit by month",
+        "y_title": "$",
+        "sheet": "MONTHLY P&L",
+        "categories": [
+          "A",
+          7,
+          12
+        ],
+        "category_format": "mmm yyyy",
+        "series": [
+          {
+            "name": "Revenue",
+            "col": "H"
+          },
+          {
+            "name": "Profit",
+            "col": "P"
+          }
+        ],
+        "colors": [
+          "#1F2937",
+          "#C43E0B"
+        ]
+      }
+    },
+    {
+      "id": "03-failures",
+      "type": "sheet",
+      "frame": "browser",
+      "eyebrow": "Print Job Log",
+      "headline": "Track failures too",
+      "sub": "Status Queued, Printing, Done or Failed with a reason. A failed job keeps its cost at zero revenue and feeds the monthly failure rate.",
+      "sheet": "Jobs",
+      "range": "A4:Z9",
+      "cols": [
+        "A",
+        "F",
+        "M",
+        "N",
+        "O",
+        "W"
+      ],
+      "active": "O7",
+      "screen": [
+        1700,
+        null
+      ]
+    },
+    {
+      "id": "04-fees",
+      "type": "sheet",
+      "frame": "browser",
+      "eyebrow": "Print Job Log",
+      "headline": "Fees per channel, editable",
+      "sub": "Etsy 6.5% + 3% + $0.25 + $0.20 listing, Shopify, eBay, direct and two custom rows. Offsite-ads orders add the ads % on top.",
+      "screen": [
+        1700,
+        null
+      ],
+      "views": {
+        "settings": {
+          "sheet": "Settings",
+          "range": "A24:G28",
+          "cols": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "active": "B25",
+          "caption": "Settings",
+          "note": "fee table: transaction %, payment % and fixed, listing fee"
+        },
+        "jobs": {
+          "sheet": "Jobs",
+          "range": "A4:Z9",
+          "cols": [
+            "A",
+            "B",
+            "D",
+            "E",
+            "F",
+            "M",
+            "U"
+          ],
+          "active": "U6",
+          "caption": "Jobs",
+          "note": "channel fees per job, offsite ads included when marked Yes"
+        }
+      }
+    },
+    {
+      "id": "05-compatibility",
+      "type": "badges",
+      "eyebrow": "Print Job Log",
+      "headline": "Google Sheets and Excel 2016+",
+      "headline_size": 104,
+      "sub": "No macros, no add-ons, formulas you can inspect.",
+      "badges": [
+        "Google Sheets",
+        "Microsoft Excel 2016+"
+      ],
+      "notes": [
+        "Open the .xlsx in Excel, or upload it to Google Drive and open with Sheets.",
+        "Sheets are protected against accidental edits; unprotect with no password.",
+        "Plain formulas only: IF, VLOOKUP, IFERROR, SUMIFS, COUNTIFS, DATE."
+      ],
+      "formula_sample": "=IF(P5=\"\",\"\",N(M5)-V5-U5)",
+      "formula_caption": "Jobs!W5, the profit cell: price charged minus total cost minus channel fees"
+    },
+    {
+      "id": "06-faq",
+      "type": "faq",
+      "eyebrow": "Print Job Log",
+      "headline": "Good to know",
+      "sub": "",
+      "faq": [
+        {
+          "q": "How do I get it?",
+          "a": "Instant download after purchase: one .xlsx file and a Read-Me-First PDF."
+        },
+        {
+          "q": "Google Sheets or Excel?",
+          "a": "Both. Excel 2016 or newer, or upload to Google Drive and open with Sheets. No macros or add-ons."
+        },
+        {
+          "q": "How many jobs?",
+          "a": "200 job rows and a 24-month P&L from any start month; five sample jobs are included to overwrite."
+        },
+        {
+          "q": "Is this tax or financial advice?",
+          "a": "No. It is a record of your own jobs and costs; taxes, refunds and overheads are yours to add."
+        },
+        {
+          "q": "What about updates?",
+          "a": "Updated versions are added to the same listing; re-download from your Etsy purchases at no charge."
+        }
+      ]
+    }
+  ]
+}

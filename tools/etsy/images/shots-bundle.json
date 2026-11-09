@@ -1,0 +1,113 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "footer_tag": "3 workbooks · Google Sheets & Excel",
+  "shots": [
+    {
+      "id": "01-hero",
+      "type": "cards",
+      "card_badge": "Bundle",
+      "eyebrow": "Print Seller Spreadsheet Bundle",
+      "headline": "Quote it, weigh it, log the profit",
+      "headline_size": 108,
+      "sub": "All three MeshKit spreadsheets for running a 3D-printing shop in Google Sheets or Excel. Save vs buying individually.",
+      "footer_tag": "3 workbooks · Google Sheets & Excel",
+      "cards": [
+        {
+          "title": "1. 3D Print Pricing Calculator",
+          "text": "Exact meshkit.pro cost formula, markup or target margin, Etsy/Shopify/eBay fee presets and a 30-row Batch tab."
+        },
+        {
+          "title": "2. Filament Inventory Tracker",
+          "text": "Built-in empty-spool tare weights for 14 spool types, gross-minus-tare grams left, LOW flags and Dry Box Log."
+        },
+        {
+          "title": "3. Print Job Log & Monthly P&L",
+          "text": "200 job rows with Queued/Printing/Done/Failed status, honest failure costs and a 24-month profit rollup."
+        },
+        {
+          "title": "Etsy fees built in",
+          "text": "6.5% transaction + 3% + $0.25 payment + $0.20 listing, plus an optional 15% offsite-ads toggle per order."
+        },
+        {
+          "title": "Google Sheets & Excel 2016+",
+          "text": "Formula-only .xlsx files plus Google Sheets copy links. Protected without a password; no macros."
+        },
+        {
+          "title": "Small-business licence",
+          "text": "Use across your own printers and shop for unlimited quotes and orders. Free updates on Etsy."
+        }
+      ]
+    },
+    {
+      "id": "02-pricing",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "Included · Workbook 1 of 3",
+      "headline": "3D Print Pricing Calculator",
+      "sub": "Material, energy, wear, failure buffer and labour, with single-print Quote and 30-job Batch tabs.",
+      "footer_tag": "3 workbooks · Google Sheets & Excel",
+      "image": "tools/etsy/dist/images/pricing/01-hero.png",
+      "fit": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "id": "03-filament",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "Included · Workbook 2 of 3",
+      "headline": "Filament Inventory Tracker",
+      "sub": "Weigh any spool on a kitchen scale; built-in tare database calculates grams left, % left and stock value.",
+      "footer_tag": "3 workbooks · Google Sheets & Excel",
+      "image": "tools/etsy/dist/images/filament/01-hero.png",
+      "fit": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "id": "04-joblog",
+      "type": "image",
+      "frame": "paper",
+      "eyebrow": "Included · Workbook 3 of 3",
+      "headline": "Print Job Log & Monthly P&L",
+      "sub": "Every print, every failure and every fee rolled into a 24-month revenue and profit dashboard.",
+      "footer_tag": "3 workbooks · Google Sheets & Excel",
+      "image": "tools/etsy/dist/images/joblog/01-hero.png",
+      "fit": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "id": "05-faq",
+      "type": "faq",
+      "eyebrow": "Print Seller Spreadsheet Bundle",
+      "headline": "Good to know",
+      "footer_tag": "3 workbooks · Google Sheets & Excel",
+      "faq": [
+        {
+          "q": "What files do I get?",
+          "a": "Three .xlsx workbooks plus MeshKit-Read-Me-First.zip containing the three Read-Me PDFs and Google Sheets copy links."
+        },
+        {
+          "q": "Google Sheets or Excel?",
+          "a": "Both: Excel 2016+ (Windows/Mac), Microsoft 365, LibreOffice Calc, Numbers and Google Sheets."
+        },
+        {
+          "q": "Can I use this for my Etsy shop?",
+          "a": "Yes. Personal and small-business use is included; only reselling or redistributing the files themselves is prohibited."
+        },
+        {
+          "q": "Can I change the fee percentages?",
+          "a": "Yes. Every marketplace fee cell on Settings is an unlocked yellow input."
+        },
+        {
+          "q": "Do I get future tare DB updates?",
+          "a": "Yes. Re-download updated files from your Etsy purchases page at no extra cost."
+        }
+      ]
+    }
+  ]
+}

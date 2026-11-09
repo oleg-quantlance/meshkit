@@ -1,0 +1,48 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "window_title": "MeshKit-3D-Print-Pricing-Calculator.xlsx",
+  "output": "video.mp4",
+  "max_seconds": 10,
+  "hold_ms": 2800,
+  "eyebrow": "3D Print Pricing Calculator",
+  "headline": "Change the grams. Read the price.",
+  "sub": "PLA at $20 per kg, 3.7 hours, 10 minutes of labour.",
+  "footer_tag": "Google Sheets · Excel · .xlsx",
+  "screen": [
+    968
+  ],
+  "inputs_view": {
+    "sheet": "Quote",
+    "range": "A7:B9",
+    "active": "B7"
+  },
+  "results_view": {
+    "sheet": "Quote",
+    "range": "A32:B35",
+    "active": "B32"
+  },
+  "scenarios": [
+    {
+      "id": "video-50",
+      "set": [
+        "Quote!B7=50"
+      ],
+      "callout": "Filament <b>50 g</b>"
+    },
+    {
+      "id": "video-120",
+      "set": [
+        "Quote!B7=120"
+      ],
+      "callout": "Filament <b>120 g</b>"
+    },
+    {
+      "id": "video-200",
+      "set": [
+        "Quote!B7=200"
+      ],
+      "callout": "Filament <b>200 g</b>"
+    }
+  ],
+  "extra_css": "h1{font-size:54px}"
+}

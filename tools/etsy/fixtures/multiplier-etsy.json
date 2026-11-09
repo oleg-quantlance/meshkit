@@ -1,0 +1,30 @@
+{
+  "case": "multiplier-etsy",
+  "input": {
+    "grams": 48.5,
+    "hours": 3.7,
+    "pricePerKg": 22,
+    "watts": 150,
+    "electricityRatePerKwh": 0.16,
+    "wearRatePerHour": 0.15,
+    "failurePct": 7,
+    "channelFeePct": 9.5,
+    "channelFixedFee": 0.45,
+    "pricingMode": "multiplier",
+    "markupMultiplier": 3.5
+  },
+  "result": {
+    "ok": true,
+    "adjustedHours": 3.7,
+    "materialCost": 1.067,
+    "energyCost": 0.0888,
+    "wearCost": 0.555,
+    "overheadCost": 0.7635560000000001,
+    "unitCost": 1.830556,
+    "sellingPrice": 7.576735911602211,
+    "channelFees": 1.1697899116022101,
+    "profit": 4.57639,
+    "marginPct": 60,
+    "belowCostWarning": false
+  }
+}

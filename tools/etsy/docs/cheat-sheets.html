@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeshKit 3D Printing Cheat Sheets v{{VERSION}}</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .mat th:first-child, .mat td:first-child { width: 58px; }
+  .mat td, .mat th { font-size: 8pt; padding: 4px 5px; }
+  .mat td.notes { font-size: 7.6pt; line-height: 1.3; }
+  .spool-table td.num { font-size: 10pt; font-weight: 600; }
+  .big-formula { font-size: 13pt; padding: 10px 12px; text-align: center; white-space: normal; }
+  .flow td:first-child { font-weight: 600; width: 86px; }
+  .flow td { font-size: 8pt; line-height: 1.32; padding: 4px 5px; }
+  .flow .fix { background: var(--bg-panel); }
+  .flow .fix b { color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-size: 7pt; margin-right: 3px; }
+  .adh th { text-align: center; font-size: 7.5pt; }
+  .adh th:first-child { text-align: left; }
+  .adh td { padding: 4px 3px; font-size: 7.8pt; }
+  .adh .good small, .adh .ok small, .adh .bad small { font-size: 7pt; }
+  .ref .cols-2 { grid-template-columns: 1.05fr 0.95fr; }
+  .ref table td, .ref table th { font-size: 7.6pt; padding: 3px 4px; }
+  .ref .box h2 { font-size: 8.5pt; }
+  .ref .box { padding: 7px 9px; }
+  .ref .box p, .ref .box li { font-size: 8.2pt; line-height: 1.35; }
+  .ref .formula { font-size: 8pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ 1. MATERIALS -->
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Sheet 1 of 5 · Material settings</div>
+      <h1>Filament settings by material</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p class="lede">Starting points for 1.75 mm filament on a 0.4 mm nozzle. Every brand ships its own profile; when the spool label and this table disagree, trust the label, then tune with a temperature tower.</p>
+    <table class="mat tight">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th class="num">Nozzle °C</th>
+          <th class="num">Bed °C</th>
+          <th>Enclosure</th>
+          <th class="num">Fan %</th>
+          <th class="num">Speed mm/s</th>
+          <th>Drying</th>
+          <th class="num">g/cm³</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="name">PLA</td><td class="num">190–220</td><td class="num">50–60</td><td>No</td><td class="num">100</td><td class="num">50–150</td><td>45–55 °C · 4–6 h</td><td class="num">1.24</td><td class="notes">Easiest material. Softens around 55–60 °C, so keep parts out of hot cars. Never dry above 55 °C or the coil fuses.</td></tr>
+        <tr><td class="name">PLA+</td><td class="num">200–230</td><td class="num">50–65</td><td>No</td><td class="num">80–100</td><td class="num">50–150</td><td>45–55 °C · 4–6 h</td><td class="num">1.24</td><td class="notes">"Plus" is a brand term, not a standard: tougher, runs 10 °C hotter than plain PLA. Check the label range.</td></tr>
+        <tr><td class="name">PETG</td><td class="num">230–250</td><td class="num">70–85</td><td>No (helps)</td><td class="num">30–60</td><td class="num">40–100</td><td>60–65 °C · 6–8 h</td><td class="num">1.27</td><td class="notes">Strings when wet or too hot. Raise Z-offset slightly; it bonds too well to smooth PEI (use glue stick as release).</td></tr>
+        <tr><td class="name">ABS</td><td class="num">240–270</td><td class="num">95–110</td><td>Yes</td><td class="num">0–20</td><td class="num">40–100</td><td>70–80 °C · 4–6 h</td><td class="num">1.04</td><td class="notes">Warps and splits without a warm chamber. Ventilate: styrene fumes. Smoothable with acetone vapour.</td></tr>
+        <tr><td class="name">ASA</td><td class="num">245–270</td><td class="num">95–110</td><td>Yes</td><td class="num">0–20</td><td class="num">40–100</td><td>70–80 °C · 4–6 h</td><td class="num">1.07</td><td class="notes">UV-stable ABS alternative for outdoor parts. Same enclosure and ventilation needs as ABS.</td></tr>
+        <tr><td class="name">TPU 95A</td><td class="num">210–235</td><td class="num">30–50</td><td>No</td><td class="num">50–100</td><td class="num">15–40</td><td>55–70 °C · 6–8 h</td><td class="num">1.21</td><td class="notes">Direct drive strongly preferred. Slow down, cut retraction to 0.5–1 mm or off. Wet TPU strings badly and pops.</td></tr>
+        <tr><td class="name">Nylon (PA)</td><td class="num">250–290</td><td class="num">80–110</td><td>Yes</td><td class="num">0–30</td><td class="num">30–80</td><td>80–90 °C · 8–12 h</td><td class="num">1.14</td><td class="notes">The most hygroscopic common filament: print from a dry box. Glue stick on PEI or bare garolite for adhesion.</td></tr>
+        <tr><td class="name">PC</td><td class="num">260–300</td><td class="num">100–115</td><td>Yes</td><td class="num">0–20</td><td class="num">30–60</td><td>80–90 °C · 6–12 h</td><td class="num">1.20</td><td class="notes">Needs an all-metal hotend rated to 300 °C. Bonds permanently to bare smooth PEI: always use a glue layer.</td></tr>
+        <tr><td class="name">PLA-CF</td><td class="num">200–240</td><td class="num">50–65</td><td>No</td><td class="num">50–100</td><td class="num">40–100</td><td>50–55 °C · 6–8 h</td><td class="num">≈1.29*</td><td class="notes">Abrasive: hardened steel nozzle, 0.4 mm or larger. Stiffer and matte, but weaker between layers than plain PLA.</td></tr>
+        <tr><td class="name">PETG-CF</td><td class="num">240–270</td><td class="num">70–85</td><td>Recommended</td><td class="num">20–50</td><td class="num">40–80</td><td>65–80 °C · 6–8 h</td><td class="num">≈1.29*</td><td class="notes">Hardened nozzle. Strings less than plain PETG, good dimensional stability, brittle in the Z direction.</td></tr>
+      </tbody>
+    </table>
+    <div class="cols cols-3" style="margin-top:8px;">
+      <div class="box">
+        <h2>Reading the table</h2>
+        <p><strong>Speed</strong> is an outer-wall figure for a typical direct-drive bedslinger. High-speed CoreXY machines run 2–3× these numbers with the same temperatures pushed 5–15 °C higher.</p>
+        <p><strong>Fan %</strong> is the part-cooling fan after the first few layers. Bridges and overhangs want more; layer adhesion wants less.</p>
+      </div>
+      <div class="box">
+        <h2>Drying</h2>
+        <p>Dry when you hear popping, see steam at the nozzle, or get stringing that temperature changes do not fix. A filament dryer or a food dehydrator both work; a kitchen oven overshoots and is a last resort.</p>
+        <p>Store open spools with desiccant. PETG, TPU, nylon and PC absorb moisture within days.</p>
+      </div>
+      <div class="box">
+        <h2>Density</h2>
+        <p>Density converts slicer grams to spool length and cost. <span class="mono">1.75 mm PLA ≈ 2.98 g per metre</span>, so a 1 kg spool is about 335 m.</p>
+        <p>*Filled filaments vary from 1.20 to 1.30 g/cm³ by fibre content; use the value on the manufacturer datasheet.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <div>
+      meshkit.pro — free online 3D-printing tools · v{{VERSION}} · {{DATE}}
+      <div class="sources">Ranges consolidated from manufacturer guidance: Prusa Research Knowledge Base (help.prusa3d.com, material table and Prusament datasheets); Bambu Lab Wiki (wiki.bambulab.com, filament guide); Polymaker technical data sheets (polymaker.com). Densities from meshkit.pro materials data, verified 2026-11-01. Values are typical, not guarantees; check your own spool.</div>
+    </div>
+    <div>1 / 5</div>
+  </footer>
+</section>
+
+<!-- ============================================================ 2. SPOOL WEIGHTS -->
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Sheet 2 of 5 · Empty-spool weights</div>
+      <h1>How much filament is left?</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <div class="cols cols-2" style="grid-template-columns: 1.25fr 0.75fr;">
+      <div>
+        <p class="lede">Put the spool on a kitchen scale, subtract the empty-spool (tare) weight, and you have grams of filament left. No app, no guessing.</p>
+        <div class="formula big-formula">gross weight − tare = filament left (g)</div>
+        <table class="spool-table" style="margin-top:8px;">
+          <thead>
+            <tr><th>Brand</th><th>Spool</th><th>Material</th><th class="num">Tare g</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Bambu Lab</td><td>Reusable spool (PLA Basic, PETG HF, ABS, …)</td><td>Plastic</td><td class="num">250</td></tr>
+            <tr><td class="name">Bambu Lab</td><td>Cardboard spool</td><td>Cardboard</td><td class="num">132</td></tr>
+            <tr><td class="name">Polymaker</td><td>PolyLite / PolyTerra 1 kg</td><td>Cardboard</td><td class="num">140</td></tr>
+            <tr><td class="name">Elegoo</td><td>Rapid PLA+ / PETG 1 kg</td><td>Cardboard</td><td class="num">132</td></tr>
+            <tr><td class="name">Overture</td><td>PLA / PLA+ / PETG 1 kg</td><td>Cardboard</td><td class="num">168</td></tr>
+            <tr><td class="name">Sunlu</td><td>Standard black plastic spool 1 kg</td><td>Plastic</td><td class="num">195</td></tr>
+            <tr><td class="name">Sunlu</td><td>Eco cardboard spool 1 kg</td><td>Cardboard</td><td class="num">140</td></tr>
+            <tr><td class="name">eSUN</td><td>PLA+ / PETG 1 kg plastic</td><td>Plastic</td><td class="num">225</td></tr>
+            <tr><td class="name">Prusament</td><td>Hexagonal plastic spool 1 kg</td><td>Plastic</td><td class="num">202</td></tr>
+            <tr><td class="name">Hatchbox</td><td>PLA / PETG / ABS 1 kg</td><td>Plastic</td><td class="num">238</td></tr>
+            <tr><td class="name">Jessie (Printed Solid)</td><td>Jessie Premium PLA 1 kg</td><td>Plastic</td><td class="num">240</td></tr>
+            <tr><td class="name">Inland (Micro Center)</td><td>PLA+ / PETG 1 kg cardboard</td><td>Cardboard</td><td class="num">130</td></tr>
+            <tr><td class="name">Generic</td><td>Any 1 kg cardboard spool (fallback)</td><td>Cardboard</td><td class="num">140</td></tr>
+            <tr><td class="name">Generic</td><td>Any 1 kg plastic spool (fallback)</td><td>Plastic</td><td class="num">220</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted" style="margin:5px 0 0;">Typical empty-spool weights; spools vary by production batch and humidity (cardboard by ±10 g). Weigh one empty spool of each brand you buy and write it on the shelf. Data: meshkit.pro spool database, verified 2026-11-09.</p>
+      </div>
+      <div>
+        <div class="box">
+          <h2>Worked example</h2>
+          <p>Half-used Prusament PLA on the scale reads <span class="mono">712 g</span>.</p>
+          <div class="formula">712 − 202 = 510 g left</div>
+          <p>At 2.98 g/m that is about <span class="mono">171 m</span>, roughly half a spool. A 60 g print will finish with room to spare.</p>
+        </div>
+        <div class="box" style="margin-top:10px;">
+          <h2>Grams to metres (1.75 mm)</h2>
+          <table class="tight">
+            <thead><tr><th>Material</th><th class="num">g / m</th><th class="num">m per kg</th></tr></thead>
+            <tbody>
+              <tr><td>PLA</td><td class="num">2.98</td><td class="num">335</td></tr>
+              <tr><td>PETG</td><td class="num">3.05</td><td class="num">327</td></tr>
+              <tr><td>ABS</td><td class="num">2.50</td><td class="num">400</td></tr>
+              <tr><td>ASA</td><td class="num">2.57</td><td class="num">389</td></tr>
+              <tr><td>TPU</td><td class="num">2.91</td><td class="num">344</td></tr>
+              <tr><td>Nylon</td><td class="num">2.74</td><td class="num">365</td></tr>
+              <tr><td>PC</td><td class="num">2.89</td><td class="num">347</td></tr>
+            </tbody>
+          </table>
+          <p class="small muted" style="margin-top:4px;">metres = grams ÷ (π × 0.0875² × 100 × density)</p>
+        </div>
+        <div class="box" style="margin-top:10px;">
+          <h2>Tips</h2>
+          <ul>
+            <li>Weigh with the spool upright on a flat scale; tare the scale first.</li>
+            <li>Refill spools: use the reusable-spool tare, not the refill cardboard core.</li>
+            <li>Mark the gross weight on masking tape each time you put a spool away.</li>
+            <li>Brand not listed? Measure it and submit it to the community database at the link below.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Live database and calculator</strong><br>
+          <span class="mono small">meshkit.pro/empty-spool-weight-database</span><br>
+          <span class="small muted">Community medians update as people submit measurements. Weigh, type, done.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · v{{VERSION}} · {{DATE}}<div class="sources">Full table and submission form: https://meshkit.pro/empty-spool-weight-database?utm_source=etsy&amp;utm_medium=pdf</div></div>
+    <div>2 / 5</div>
+  </footer>
+</section>
+
+<!-- ============================================================ 3. TROUBLESHOOTING -->
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Sheet 3 of 5 · Troubleshooting</div>
+      <h1>Symptom → cause → fix</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p class="lede">Change one thing at a time and reprint the same small test. Work left to right: the first fix solves most cases, the second covers the rest.</p>
+    <table class="flow tight">
+      <thead>
+        <tr><th>Symptom</th><th>Likely causes</th><th style="width:26%;">First fix</th><th style="width:26%;">Second fix</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stringing / hairs between parts</td>
+          <td>Wet filament; nozzle too hot; retraction too short or too slow; slow travel moves</td>
+          <td class="fix"><b>1</b>Dry the filament (see sheet 1), then lower nozzle temperature 5 °C at a time with a temperature tower.</td>
+          <td class="fix"><b>2</b>Increase retraction distance (direct drive 0.5–2 mm, Bowden 4–7 mm) and speed to 35–45 mm/s. Raise travel speed; enable "avoid crossing perimeters".</td>
+        </tr>
+        <tr>
+          <td>Warping / corners lifting</td>
+          <td>Bed too cold or dirty; drafts; no enclosure for ABS/ASA/PC; sharp corners on large flat parts; part cooling too high on the first layers</td>
+          <td class="fix"><b>1</b>Wash the plate with dish soap and hot water (no IPA alone), raise bed temperature 5–10 °C, add a brim 5–8 mm wide.</td>
+          <td class="fix"><b>2</b>Block drafts or enclose the printer; turn the part-cooling fan off for the first 3–5 layers; add mouse-ear discs on corners; round sharp corners in the model.</td>
+        </tr>
+        <tr>
+          <td>Layer shifts</td>
+          <td>Loose belt or pulley grub screw; speed or acceleration too high; nozzle catching curled edges; stepper driver overheating</td>
+          <td class="fix"><b>1</b>Check belt tension and tighten pulley grub screws on both motor shafts (one on the flat). Cut travel acceleration by a third.</td>
+          <td class="fix"><b>2</b>Enable Z-hop 0.2–0.4 mm so the nozzle clears curled overhangs. Check that the driver heatsink fan runs and that the axis moves freely by hand when powered off.</td>
+        </tr>
+        <tr>
+          <td>Under-extrusion (gaps, thin walls, missing lines)</td>
+          <td>Partial clog; nozzle too cold for the speed; worn or slipping extruder gear; flow rate too low; filament tangle or dragging spool</td>
+          <td class="fix"><b>1</b>Cold-pull or swap the nozzle; raise temperature 5–10 °C or slow down 20%. Clean the extruder gear teeth.</td>
+          <td class="fix"><b>2</b>Calibrate E-steps / rotation distance (mark 120 mm, extrude 100 mm), then calibrate flow with a single-wall cube. Check the spool unwinds freely and the PTFE tube is seated.</td>
+        </tr>
+        <tr>
+          <td>Over-extrusion (blobs, rough tops, dimensions too big)</td>
+          <td>Flow rate too high; wrong filament diameter in slicer (2.85 vs 1.75); nozzle too hot; E-steps too high</td>
+          <td class="fix"><b>1</b>Confirm filament diameter in the slicer, then lower flow/extrusion multiplier in 2% steps until a single-wall cube measures one line width.</td>
+          <td class="fix"><b>2</b>Lower nozzle temperature 5–10 °C; enable pressure/linear advance; check E-steps as above.</td>
+        </tr>
+        <tr>
+          <td>Elephant foot (first layers bulge outward)</td>
+          <td>Nozzle too close on the first layer; bed too hot; weight of the part squashing soft lower layers</td>
+          <td class="fix"><b>1</b>Raise Z-offset by 0.02–0.05 mm; set the slicer's elephant-foot compensation to 0.1–0.2 mm.</td>
+          <td class="fix"><b>2</b>Lower bed temperature 5 °C after the first layer; add a 0.5 mm chamfer to the bottom edge of the model; use a raft only if nothing else works.</td>
+        </tr>
+        <tr>
+          <td>Poor first layer (does not stick, ripples, gaps between lines)</td>
+          <td>Bed not level / mesh stale; Z-offset wrong; oily plate; first-layer speed too high; wrong surface for the material (see sheet 4)</td>
+          <td class="fix"><b>1</b>Wash the plate, re-run bed levelling or mesh at print temperature, then tune Z-offset live: lines should be flattened and touching, not round, not transparent.</td>
+          <td class="fix"><b>2</b>Slow the first layer to 15–25 mm/s, set first-layer height to 0.2–0.3 mm and width 120%, raise bed temperature 5 °C. Switch surface or add glue stick.</td>
+        </tr>
+        <tr>
+          <td>Clogs / jams (clicking extruder, nothing comes out)</td>
+          <td>Heat creep (hotend fan weak or stopped); debris or burnt filament in the nozzle; retraction too long; PTFE tube degraded above 240 °C; wrong temperature for the material</td>
+          <td class="fix"><b>1</b>Heat to the material's max temperature, push filament through by hand, then do 2–3 cold pulls with nylon or cleaning filament. Replace the nozzle if it still resists.</td>
+          <td class="fix"><b>2</b>Check that the hotend (heat-break) fan spins at full speed from power-on; shorten retraction; trim or replace the PTFE tube and reseat it hard against the nozzle; fit an all-metal hotend for &gt;240 °C materials.</td>
+        </tr>
+        <tr>
+          <td>Layers separate / cracks on tall parts</td>
+          <td>Nozzle too cold; too much part cooling; drafts or no enclosure; layer height too high for the nozzle</td>
+          <td class="fix"><b>1</b>Raise nozzle temperature 10 °C and cut the fan to 30–50% (ABS/ASA/PC: 0–20%).</td>
+          <td class="fix"><b>2</b>Enclose the printer; keep layer height ≤ 75% of nozzle diameter; slow down 20% so each layer has time to bond.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin-top:8px;">
+      <strong>Before any of the above:</strong> dry the filament, wash the plate, confirm the slicer profile matches the material on the spool. These three fix roughly half of all "my printer is broken" problems.
+    </div>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · v{{VERSION}} · {{DATE}}</div>
+    <div>3 / 5</div>
+  </footer>
+</section>
+
+<!-- ============================================================ 4. ADHESION -->
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Sheet 4 of 5 · Bed adhesion</div>
+      <h1>Which surface for which material</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p class="lede">Bed temperature in each cell is a starting point. "Good" means it sticks and releases cleanly once cool. "OK" works with the noted help. "Avoid" means poor adhesion, damaged surface, or parts that will not come off.</p>
+    <table class="adh tight">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Smooth PEI</th>
+          <th>Textured PEI</th>
+          <th>Glass</th>
+          <th>Garolite / G10</th>
+          <th>Painter's tape</th>
+          <th>Glue stick (PVA)</th>
+          <th>Hairspray</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name">PLA / PLA+</td>
+          <td class="good">Good<small>55–60 °C, bare</small></td>
+          <td class="good">Good<small>60–65 °C; wants a little more heat than smooth</small></td>
+          <td class="ok">OK<small>60 °C; bare glass needs glue or hairspray</small></td>
+          <td class="ok">OK<small>60 °C; fine for small parts</small></td>
+          <td class="good">Good<small>Cold bed works; rough underside</small></td>
+          <td class="good">Good<small>Thin layer on glass or textured PEI</small></td>
+          <td class="good">Good<small>Glass; reapply every few prints</small></td>
+        </tr>
+        <tr>
+          <td class="name">PETG / PETG-CF</td>
+          <td class="ok">OK<small>75–85 °C only with glue stick as release; bare can tear the PEI</small></td>
+          <td class="good">Good<small>75–85 °C, bare; the default pairing</small></td>
+          <td class="ok">OK<small>80 °C with glue; bare can chip glass on release</small></td>
+          <td class="ok">OK<small>80 °C; light glue helps</small></td>
+          <td class="ok">OK<small>60–70 °C; tape may lift</small></td>
+          <td class="good">Good<small>As release layer on smooth PEI or glass</small></td>
+          <td class="ok">OK<small>On glass; thin coat</small></td>
+        </tr>
+        <tr>
+          <td class="name">ABS / ASA</td>
+          <td class="good">Good<small>100–110 °C + enclosure</small></td>
+          <td class="ok">OK<small>100–110 °C; sticks less than smooth, use brim</small></td>
+          <td class="ok">OK<small>105–110 °C with ABS slurry or glue</small></td>
+          <td class="ok">OK<small>105 °C; brim</small></td>
+          <td class="bad">Avoid<small>Tape lifts at bed temperature</small></td>
+          <td class="good">Good<small>On PEI or glass; adds grip</small></td>
+          <td class="good">Good<small>On glass, 105 °C</small></td>
+        </tr>
+        <tr>
+          <td class="name">TPU</td>
+          <td class="ok">OK<small>30–50 °C; sticks very hard, glue stick as release</small></td>
+          <td class="good">Good<small>30–50 °C, bare</small></td>
+          <td class="ok">OK<small>40 °C with glue stick</small></td>
+          <td class="ok">OK<small>40 °C</small></td>
+          <td class="ok">OK<small>Cold bed; soft parts can tear the tape</small></td>
+          <td class="good">Good<small>Release layer; stops PEI damage</small></td>
+          <td class="ok">OK<small>On glass</small></td>
+        </tr>
+        <tr>
+          <td class="name">Nylon (PA)</td>
+          <td class="ok">OK<small>90–110 °C only over glue stick; bare bond can pull PEI off</small></td>
+          <td class="ok">OK<small>90–110 °C over glue stick</small></td>
+          <td class="bad">Avoid<small>Poor bare adhesion; warps off</small></td>
+          <td class="good">Good<small>100–110 °C, bare; the classic nylon surface</small></td>
+          <td class="bad">Avoid<small>Tape fails at nylon bed temperatures</small></td>
+          <td class="good">Good<small>Required on PEI; thick coat</small></td>
+          <td class="ok">OK<small>Weaker than glue stick</small></td>
+        </tr>
+        <tr>
+          <td class="name">PC</td>
+          <td class="bad">Avoid bare<small>Bonds permanently, rips PEI; OK over glue at 110 °C</small></td>
+          <td class="ok">OK<small>105–115 °C over glue stick</small></td>
+          <td class="bad">Avoid<small>Can crack the glass on cooling</small></td>
+          <td class="ok">OK<small>110 °C; brim</small></td>
+          <td class="bad">Avoid<small>Fails at temperature</small></td>
+          <td class="good">Good<small>Mandatory release layer on PEI</small></td>
+          <td class="ok">OK<small>On glass with caution</small></td>
+        </tr>
+        <tr>
+          <td class="name">PLA-CF</td>
+          <td class="good">Good<small>55–65 °C, bare</small></td>
+          <td class="good">Good<small>60–65 °C, bare</small></td>
+          <td class="ok">OK<small>60 °C with glue or hairspray</small></td>
+          <td class="ok">OK<small>60 °C</small></td>
+          <td class="good">Good<small>Cold bed</small></td>
+          <td class="good">Good<small>Thin layer</small></td>
+          <td class="good">Good<small>On glass</small></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="legend">
+      <span class="good">Good</span><span class="ok">OK</span><span class="bad">Avoid</span>
+      <span style="border:0;padding:0;">Cell temperatures are bed temperatures for the first layer.</span>
+    </div>
+    <div class="cols cols-3" style="margin-top:8px;">
+      <div class="box">
+        <h2>Clean plate, every time</h2>
+        <p>Fingerprints are the number one adhesion problem. Wash PEI and glass with dish soap and hot water; dry with a paper towel. Isopropyl alcohol alone smears skin oil around instead of removing it. Never touch the print area with bare hands.</p>
+      </div>
+      <div class="box">
+        <h2>Glue stick is a release agent too</h2>
+        <p>On smooth PEI, glue stick does two jobs: it stops PETG, TPU, nylon and PC from fusing to the sheet, and it adds grip on textured sheets. Water-soluble PVA stick, thin even coat, wiped with a damp cloth between prints and reapplied every 3–5 prints.</p>
+      </div>
+      <div class="box">
+        <h2>Removing stuck parts</h2>
+        <p>Let the bed cool to room temperature first; most parts pop off on their own as the plate contracts. Flex spring-steel sheets. On glass, a minute in the freezer or a few drops of IPA under the edge breaks the bond. Do not pry with a sharp blade toward your hand.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · v{{VERSION}} · {{DATE}}<div class="sources">Surface guidance consolidated from Prusa Research print-sheet documentation (help.prusa3d.com), Bambu Lab Wiki build-plate guide (wiki.bambulab.com) and common practice; glass and tape rows reflect widely reported community results. Check your plate manufacturer's limits before applying adhesives.</div></div>
+    <div>4 / 5</div>
+  </footer>
+</section>
+
+<!-- ============================================================ 5. QUICK REFERENCE -->
+<section class="sheet ref">
+  <header class="head">
+    <div>
+      <div class="kicker">Sheet 5 of 5 · Quick reference</div>
+      <h1>Settings and pricing rules of thumb</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <div class="cols cols-2">
+      <div>
+        <div class="box">
+          <h2>Layer height vs nozzle</h2>
+          <p>Keep layer height between <strong>25% and 75%</strong> of the nozzle diameter. Below that the extrusion is squashed and inconsistent; above it layers do not bond.</p>
+          <table class="tight" style="margin:4px 0;">
+            <thead><tr><th>Nozzle</th><th class="num">Min</th><th class="num">Everyday</th><th class="num">Max</th><th>Use</th></tr></thead>
+            <tbody>
+              <tr><td class="num">0.25 mm</td><td class="num">0.06</td><td class="num">0.10–0.15</td><td class="num">0.18</td><td>Miniatures, fine text</td></tr>
+              <tr><td class="num">0.40 mm</td><td class="num">0.10</td><td class="num">0.20</td><td class="num">0.30</td><td>Default for almost everything</td></tr>
+              <tr><td class="num">0.60 mm</td><td class="num">0.15</td><td class="num">0.30</td><td class="num">0.45</td><td>Fast functional parts</td></tr>
+              <tr><td class="num">0.80 mm</td><td class="num">0.20</td><td class="num">0.40</td><td class="num">0.60</td><td>Large, strong, quick</td></tr>
+            </tbody>
+          </table>
+          <p class="small muted">Line width 100–120% of nozzle diameter. First layer 0.2–0.3 mm regardless of nozzle (within the limits above).</p>
+        </div>
+        <div class="box" style="margin-top:8px;">
+          <h2>Walls, tops, bottoms for strength</h2>
+          <table class="tight" style="margin:4px 0;">
+            <thead><tr><th>Goal</th><th class="num">Walls</th><th class="num">Top layers</th><th class="num">Bottom</th><th class="num">Infill</th></tr></thead>
+            <tbody>
+              <tr><td>Display / decorative</td><td class="num">2</td><td class="num">3–4</td><td class="num">3</td><td class="num">5–10%</td></tr>
+              <tr><td>Everyday functional</td><td class="num">3</td><td class="num">4–5</td><td class="num">4</td><td class="num">15–25%</td></tr>
+              <tr><td>Load-bearing / brackets</td><td class="num">4–5</td><td class="num">5–6</td><td class="num">5</td><td class="num">30–50%</td></tr>
+              <tr><td>Threads, snap fits, thin posts</td><td class="num">4+</td><td class="num">5</td><td class="num">5</td><td class="num">40%+</td></tr>
+            </tbody>
+          </table>
+          <p>Walls add far more strength per gram than infill: going from 2 to 4 walls usually beats going from 20% to 60% infill. Add walls first, then infill.</p>
+        </div>
+        <div class="box" style="margin-top:8px;">
+          <h2>Infill pattern</h2>
+          <ul>
+            <li><strong>Gyroid</strong>: strong in every direction, no crossing lines, slower.</li>
+            <li><strong>Cubic</strong>: good all-round strength, fast; the usual default.</li>
+            <li><strong>Grid / lines</strong>: fast, weakest in shear; fine for display parts.</li>
+            <li><strong>Concentric / lightning</strong>: top-surface support only; not structural.</li>
+            <li>Above about 50% infill, switch to more walls or a solid part instead.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="box">
+          <h2>What a print costs</h2>
+          <div class="formula">material $ = grams ÷ 1000 × price per kg</div>
+          <p>Example: a 42 g part on $22/kg filament is <span class="mono">0.042 × 22 = $0.92</span> in plastic. That is rarely the whole story:</p>
+          <div class="formula">electricity $ = printer watts ÷ 1000 × hours × $/kWh</div>
+          <div class="formula">wear $ = hours × machine rate per hour</div>
+          <div class="formula">unit cost = (material + electricity + wear) × (1 + failure %)</div>
+          <p>Typical starting numbers: 120–350 W average draw, a wear rate of $0.10–0.50 per hour (printer price plus consumables ÷ expected hours), and a failure buffer of 5–15%.</p>
+          <p><strong>Selling price</strong> is unit cost × markup (2.5–4× is common for small parts), or set a target margin and solve for price. Marketplace fees come out of the price, not the cost, so add them last:</p>
+          <div class="formula">price = (unit cost × markup + fixed fee) ÷ (1 − fee %)</div>
+        </div>
+        <div class="callout" style="margin-top:8px;">
+          <strong>Do not do this by hand.</strong> The free calculator at<br>
+          <span class="mono">meshkit.pro/3d-print-cost-calculator</span><br>
+          <span class="small muted">runs exactly this formula with material, energy, wear, failure buffer, markup or target margin, and marketplace fee presets. Nothing uploads; it runs in your browser.</span>
+        </div>
+        <div class="box" style="margin-top:8px;">
+          <h2>Other numbers worth memorising</h2>
+          <ul>
+            <li>1 kg of 1.75 mm PLA ≈ 335 m; PETG ≈ 327 m; ABS ≈ 400 m.</li>
+            <li>Slicer time estimates run 5–20% short on most machines; log a few real prints and apply a correction.</li>
+            <li>Supports typically add 10–30% material and the same in time.</li>
+            <li>A 0.4 mm nozzle at 0.2 mm layers extrudes about 10–12 mm³/s on a stock hotend; high-flow hotends reach 25–40 mm³/s.</li>
+            <li>Shrinkage to allow for in holes: PLA ≈ 0.2–0.3%, PETG ≈ 0.4–0.6%, ABS/ASA ≈ 0.8–1.0%. Add 0.1–0.2 mm to hole diameters.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="closing">If this helped, a review helps the next person find it.</p>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · v{{VERSION}} · {{DATE}}<div class="sources">Cost calculator: https://meshkit.pro/3d-print-cost-calculator?utm_source=etsy&amp;utm_medium=pdf · Grams-to-metres: https://meshkit.pro/filament-grams-to-meters?utm_source=etsy&amp;utm_medium=pdf · Numbers are estimates; check your own costs.</div></div>
+    <div>5 / 5</div>
+  </footer>
+</section>
+
+</body>
+</html>

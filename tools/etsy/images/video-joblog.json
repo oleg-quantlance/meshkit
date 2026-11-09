@@ -1,0 +1,69 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "window_title": "MeshKit-Print-Job-Log.xlsx",
+  "output": "video.mp4",
+  "max_seconds": 10,
+  "hold_ms": 2800,
+  "eyebrow": "Print Job Log",
+  "headline": "Add a price. The month updates.",
+  "sub": "Two ASA planters, 420 g, 19 hours, sold on Etsy in November.",
+  "footer_tag": "Google Sheets · Excel · .xlsx",
+  "screen": [
+    968
+  ],
+  "extra_css": "h1{font-size:54px}",
+  "inputs_view": {
+    "sheet": "Jobs",
+    "range": "A4:Z9",
+    "cols": [
+      "A",
+      "F",
+      "G",
+      "H",
+      "M",
+      "N"
+    ],
+    "rows": [
+      "4:4",
+      "9:9"
+    ],
+    "active": "M9"
+  },
+  "results_view": {
+    "sheet": "Monthly P&L",
+    "range": "A6:Q8",
+    "cols": [
+      "A",
+      "B",
+      "D",
+      "H",
+      "O",
+      "P",
+      "Q"
+    ],
+    "active": "P8"
+  },
+  "scenarios": [
+    {
+      "id": "video-45",
+      "set": [
+        "Jobs!M9=45"
+      ],
+      "callout": "Price <b>$45</b>"
+    },
+    {
+      "id": "video-58",
+      "set": [
+        "Jobs!M9=58"
+      ],
+      "callout": "Price <b>$58</b>"
+    },
+    {
+      "id": "video-72",
+      "set": [
+        "Jobs!M9=72"
+      ],
+      "callout": "Price <b>$72</b>"
+    }
+  ]
+}

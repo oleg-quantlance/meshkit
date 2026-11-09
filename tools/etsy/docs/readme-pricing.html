@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeshKit 3D Print Pricing Calculator — Read Me First</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body class="readme">
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · v{{VERSION}} · {{DATE}}</div>
+      <h1>3D Print Pricing Calculator</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p>Thanks for buying the spreadsheet. This page gets you from download to a first quote in about five minutes. Keep it next to the workbook.</p>
+
+    <h2>Files included</h2>
+    <table>
+      <thead><tr><th style="width:52%;">File</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">MeshKit-3D-Print-Pricing-Calculator-v1.0.xlsx</td><td>The workbook. Opens in Excel 2016 or newer, LibreOffice Calc, Numbers, and imports into Google Sheets.</td></tr>
+        <tr><td class="mono">MeshKit-3D-Print-Pricing-Calculator-Read-Me-First.pdf</td><td>This document, with the Google Sheets copy link below.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Open it: Google Sheets</h2>
+    <ol>
+      <li>Open the view-only master: <a href="{{SHEETS_LINK}}">{{SHEETS_LINK}}</a></li>
+      <li>In the menu choose <span class="kbd">File</span> → <span class="kbd">Make a copy</span>. The copy lands in your own Drive and is fully editable; the master stays read-only.</li>
+      <li>Do not request edit access to the master. That is the one thing that does not work.</li>
+    </ol>
+
+    <h2>Open it: Excel</h2>
+    <ol>
+      <li>Download the <span class="mono">.xlsx</span> from your Etsy purchases page.</li>
+      <li>Open it; if a yellow bar says <em>Protected View</em>, click <span class="kbd">Enable Editing</span>.</li>
+      <li>Excel 2016 or newer, Excel for Microsoft 365, or Excel for Mac 2016+. Older versions open the file but some formulas show <span class="mono">#NAME?</span> (see troubleshooting).</li>
+    </ol>
+
+    <h2>Five steps to a quote</h2>
+    <ol class="steps">
+      <li><div><strong>Settings tab.</strong> Enter your filament prices per kg, printer wattage, electricity rate, machine wear rate per hour, failure buffer, and your default markup or target margin. Pick a sales channel preset (Etsy, Shopify, direct) or type your own fee percentage and fixed fee.</div></li>
+      <li><div><strong>Quote tab.</strong> Type the grams and hours from your slicer, choose the material, add labour minutes and any post-processing or packaging. Quantity if the order is for more than one.</div></li>
+      <li><div><strong>Read the result.</strong> The quote block shows unit cost, selling price, marketplace fees, profit per piece and margin. A red flag appears if the price would be below cost.</div></li>
+      <li><div><strong>Adjust.</strong> Change markup, failure buffer or channel and watch the price move. Nothing else needs touching; the yellow cells are inputs, everything grey is calculated.</div></li>
+      <li><div><strong>Batch tab.</strong> Paste a list of parts (grams, hours, material, quantity) to price a whole order or a catalogue at once; totals and per-line margin are at the bottom.</div></li>
+    </ol>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · 3D Print Pricing Calculator v{{VERSION}} · {{DATE}}</div>
+    <div>1 / 2</div>
+  </footer>
+</section>
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · continued</div>
+      <h1>Troubleshooting and support</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <h2>Troubleshooting</h2>
+    <table>
+      <thead><tr><th style="width:34%;">Symptom</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">#NAME?</span> or <span class="mono">#SPILL!</span> in result cells</td><td>Your Excel is older than 2016, or a function is not supported. Use the Google Sheets copy (link on page 1), update Excel, or open the file in LibreOffice Calc (free).</td></tr>
+        <tr><td>"The cell you're trying to change is protected"</td><td>Formula cells are locked so they cannot be overwritten by accident. Only the yellow input cells are meant to be edited. If you really want to change a formula: <span class="kbd">Review</span> → <span class="kbd">Unprotect Sheet</span> (Excel) or <span class="kbd">Data</span> → <span class="kbd">Protect sheets and ranges</span> (Sheets). There is no password.</td></tr>
+        <tr><td>Price looks too high or too low</td><td>Check the pricing mode in Settings. <em>Markup</em> multiplies unit cost (3.5× is the default). <em>Target margin</em> solves for a price where profit is that share of the sale. Also check the failure buffer: 10% means every tenth print is assumed to be scrap.</td></tr>
+        <tr><td>Fees do not match my Etsy statement</td><td>The channel preset is a typical rate; Etsy fees vary by country, payment method and offsite ads. Type your effective percentage from a recent statement into the custom fee cells.</td></tr>
+        <tr><td>Numbers differ from the online calculator</td><td>They use the same formula. Compare the inputs one by one; the usual culprit is a different wear rate or a time correction percentage.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Support</h2>
+    <p>Message me on Etsy first; that is the fastest route and keeps the order history attached. Email works too: <span class="mono">admin@quantlance.com</span>. I answer within two business days. If a formula is broken, I fix it and send you the updated file, or refund you.</p>
+
+    <h2>Updates</h2>
+    <p>This is version {{VERSION}}, released {{DATE}}. Updated versions appear in your Etsy downloads at no extra cost. Your own numbers live in the Settings tab, so moving to a new version means copying one tab.</p>
+
+    <h2>Free online version</h2>
+    <p>There is a free print cost calculator at <span class="mono">meshkit.pro/3d-print-cost-calculator</span> that runs the same maths in your browser. The spreadsheet is for quoting offline, pricing batches, and keeping your own numbers in a file you control.</p>
+
+    <h2>Licence</h2>
+    <p>Personal and small-business use. You may use it to price and sell as many prints as you like, make copies for your own machines, and modify it. You may not resell, share or redistribute the file or a modified version of it, free or paid.</p>
+
+    <div class="callout">Numbers are estimates; check your own costs. Electricity rates, machine wear and failure rates vary by printer and location, and the defaults are starting points, not advice.</div>
+
+    <p class="closing">If this helped, a review helps the next person find it.</p>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · 3D Print Pricing Calculator v{{VERSION}} · {{DATE}}</div>
+    <div>2 / 2</div>
+  </footer>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "MeshKit",
+  "logo": "public/favicon.svg",
+  "wordmark": "MeshKit",
+  "domain": "meshkit.pro",
+  "footer_tag": "Google Sheets · Excel · .xlsx",
+  "palette": {
+    "ink": "#1F2937",
+    "ink_soft": "#4B5563",
+    "paper": "#FAF9F5",
+    "line": "#C8C5BC",
+    "accent": "#C43E0B",
+    "accent_deep": "#A33309",
+    "slate": "#5C5B57",
+    "moss": "#156D3B",
+    "blue": "#1F2937",
+    "amber_bg": "#FBEBD2"
+  },
+  "fonts": {
+    "heading": "'IBM Plex Sans', sans-serif",
+    "body": "'IBM Plex Sans', sans-serif",
+    "mono": "'IBM Plex Mono', monospace",
+    "css": "@font-face{font-family:'IBM Plex Sans';font-weight:400;src:url('__REPO_URL__/public/fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2')}@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url('__REPO_URL__/public/fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2')}@font-face{font-family:'IBM Plex Sans';font-weight:600;src:url('__REPO_URL__/public/fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2')}@font-face{font-family:'IBM Plex Sans';font-weight:700;src:url('__REPO_URL__/public/fonts/ibm-plex-sans-latin-700-normal.woff2') format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;src:url('__REPO_URL__/public/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:700;src:url('__REPO_URL__/public/fonts/ibm-plex-mono-latin-700-normal.woff2') format('woff2')}",
+    "heading_line_height": 1.1
+  }
+}

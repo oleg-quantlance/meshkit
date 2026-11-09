@@ -1,0 +1,176 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "shots": [
+    {
+      "id": "01-hero",
+      "type": "sheet",
+      "frame": "laptop",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Weigh it. Know what's left.",
+      "sub": "Pick the brand, type the gross weight from your kitchen scale. Grams left, % left, value and a LOW flag follow. Google Sheets and Excel.",
+      "sheet": "Spools",
+      "range": "A1:R65",
+      "cols": [
+        "A",
+        "B",
+        "C",
+        "I",
+        "J",
+        "K",
+        "L",
+        "O",
+        "P"
+      ],
+      "rows": [
+        "1:1",
+        "4:12",
+        "65:65"
+      ],
+      "active": "K5",
+      "screen": [
+        1680,
+        null
+      ]
+    },
+    {
+      "id": "02-tare-db",
+      "type": "sheet",
+      "frame": "browser",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Empty-spool weights for 14 brands",
+      "headline_size": 104,
+      "sub": "The Tare DB holds measured empty-spool weights from the meshkit.pro community database; add your own in the yellow rows and they join the dropdown.",
+      "sheet": "Tare DB",
+      "range": "A4:I18",
+      "cols": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "F",
+        "I"
+      ],
+      "active": "F5",
+      "screen": [
+        1700,
+        null
+      ]
+    },
+    {
+      "id": "03-summary",
+      "type": "chart",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Your shelf, in numbers",
+      "sub": "Summary totals grams and value on hand, counts low and unweighed spools, and charts what is left by material.",
+      "sheet": "Summary",
+      "range": "A4:G9",
+      "active": "B6",
+      "screen": [
+        1700,
+        600
+      ],
+      "window_title": "MeshKit-Filament-Inventory-Tracker.xlsx",
+      "chart": {
+        "bar": true,
+        "title": "Grams left by material",
+        "y_title": "Grams",
+        "y_format": "number",
+        "sheet": "SUMMARY",
+        "categories": [
+          "A",
+          17,
+          28
+        ],
+        "series": [
+          {
+            "name": "Grams left",
+            "col": "C"
+          }
+        ],
+        "colors": [
+          "#C43E0B"
+        ]
+      }
+    },
+    {
+      "id": "04-dry-box",
+      "type": "sheet",
+      "frame": "browser",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Log your dry boxes",
+      "sub": "One row per humidity reading. Anything above the warning level on Settings is flagged HIGH, and Summary counts those readings.",
+      "screen": [
+        1700,
+        null
+      ],
+      "views": {
+        "log": {
+          "sheet": "Dry Box Log",
+          "range": "A1:F10",
+          "rows": [
+            "1:1",
+            "4:10"
+          ],
+          "active": "C6",
+          "caption": "Dry Box Log",
+          "note": "humidity as a percent, flagged against the Settings warning level"
+        },
+        "summary": {
+          "sheet": "Summary",
+          "range": "A12:F13",
+          "active": "B12",
+          "caption": "Summary",
+          "note": "HIGH readings counted, last reading dated",
+          "col_px": 8.5
+        }
+      }
+    },
+    {
+      "id": "05-compatibility",
+      "type": "badges",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Google Sheets and Excel 2016+",
+      "sub": "No macros, no add-ons, formulas you can inspect.",
+      "badges": [
+        "Google Sheets",
+        "Microsoft Excel 2016+"
+      ],
+      "notes": [
+        "Open the .xlsx in Excel, or upload it to Google Drive and open with Sheets.",
+        "Sheets are protected against accidental edits; unprotect with no password.",
+        "Plain formulas only: IF, VLOOKUP, IFERROR, SUMIFS, COUNTIF, MAX."
+      ],
+      "formula_sample": "=IF(I5=\"\",\"\",IF(J5=\"\",\"\",MAX(0,J5-I5)))",
+      "formula_caption": "Spools!K5, the grams-left cell: gross weight minus the tare from the Tare DB"
+    },
+    {
+      "id": "06-faq",
+      "type": "faq",
+      "eyebrow": "Filament Inventory Tracker",
+      "headline": "Good to know",
+      "sub": "",
+      "faq": [
+        {
+          "q": "How do I get it?",
+          "a": "Instant download after purchase: one .xlsx file and a Read-Me-First PDF."
+        },
+        {
+          "q": "Google Sheets or Excel?",
+          "a": "Both. Excel 2016 or newer, or upload to Google Drive and open with Sheets. No macros or add-ons."
+        },
+        {
+          "q": "How many spools?",
+          "a": "60 spool rows, 100 dry box readings and 15 custom tare rows; four sample spools are included to overwrite."
+        },
+        {
+          "q": "What can I do with it?",
+          "a": "Personal and small-business use on your own devices. Please do not resell or share the file."
+        },
+        {
+          "q": "What about updates?",
+          "a": "Updated versions are added to the same listing; re-download from your Etsy purchases at no charge."
+        }
+      ]
+    }
+  ]
+}

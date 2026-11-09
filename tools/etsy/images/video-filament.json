@@ -1,0 +1,63 @@
+{
+  "brand": "tools/etsy/images/brand-meshkit.json",
+  "window_title": "MeshKit-Filament-Inventory-Tracker.xlsx",
+  "output": "video.mp4",
+  "max_seconds": 10,
+  "hold_ms": 2800,
+  "eyebrow": "Filament Inventory Tracker",
+  "headline": "Weigh the spool. Read what's left.",
+  "sub": "Bambu Lab reusable spool, 250 g tare, LOW under 150 g.",
+  "footer_tag": "Google Sheets · Excel · .xlsx",
+  "screen": [
+    968
+  ],
+  "extra_css": "h1{font-size:54px}",
+  "inputs_view": {
+    "sheet": "Spools",
+    "range": "A4:R5",
+    "cols": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "J"
+    ],
+    "active": "J5"
+  },
+  "results_view": {
+    "sheet": "Spools",
+    "range": "A4:R5",
+    "cols": [
+      "I",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O"
+    ],
+    "active": "K5"
+  },
+  "scenarios": [
+    {
+      "id": "video-820",
+      "set": [
+        "Spools!J5=820"
+      ],
+      "callout": "Gross <b>820 g</b>"
+    },
+    {
+      "id": "video-500",
+      "set": [
+        "Spools!J5=500"
+      ],
+      "callout": "Gross <b>500 g</b>"
+    },
+    {
+      "id": "video-380",
+      "set": [
+        "Spools!J5=380"
+      ],
+      "callout": "Gross <b>380 g</b>"
+    }
+  ]
+}

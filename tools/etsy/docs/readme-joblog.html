@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeshKit Print Job Log — Read Me First</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body class="readme">
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · v{{VERSION}} · {{DATE}}</div>
+      <h1>Print Job Log &amp; Order Tracker</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <p>Thanks for buying the spreadsheet. This page gets you from download to your first logged job in about five minutes. Keep it next to the workbook.</p>
+
+    <h2>Files included</h2>
+    <table>
+      <thead><tr><th style="width:52%;">File</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">MeshKit-Print-Job-Log-v1.0.xlsx</td><td>The workbook. Opens in Excel 2016 or newer, LibreOffice Calc, Numbers, and imports into Google Sheets.</td></tr>
+        <tr><td class="mono">MeshKit-Print-Job-Log-Read-Me-First.pdf</td><td>This document, with the Google Sheets copy link below.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Open it: Google Sheets</h2>
+    <ol>
+      <li>Open the view-only master: <a href="{{SHEETS_LINK}}">{{SHEETS_LINK}}</a></li>
+      <li>In the menu choose <span class="kbd">File</span> → <span class="kbd">Make a copy</span>. The copy lands in your own Drive and is fully editable; the master stays read-only.</li>
+      <li>Do not request edit access to the master. That is the one thing that does not work.</li>
+    </ol>
+
+    <h2>Open it: Excel</h2>
+    <ol>
+      <li>Download the <span class="mono">.xlsx</span> from your Etsy purchases page.</li>
+      <li>Open it; if a yellow bar says <em>Protected View</em>, click <span class="kbd">Enable Editing</span>.</li>
+      <li>Excel 2016 or newer, Excel for Microsoft 365, or Excel for Mac 2016+. Older versions open the file but some formulas show <span class="mono">#NAME?</span> (see troubleshooting).</li>
+    </ol>
+
+    <h2>Five steps to a monthly P&amp;L</h2>
+    <ol class="steps">
+      <li><div><strong>Settings tab.</strong> Enter your printer power draw (W), electricity rate ($ per kWh), machine wear rate ($ per hour), labour rate ($ per hour), material prices per kg, and marketplace fee percentages (Etsy, Shopify, eBay, Direct, plus a custom row).</div></li>
+      <li><div><strong>Jobs tab: log a job.</strong> One row per print (200 rows built in): date, order reference, customer, sales channel, offsite-ad toggle, item, quantity, material, total grams and hours, labour minutes, any other cost, and price charged. Five sample rows are included; overwrite or clear them.</div></li>
+      <li><div><strong>Read the row.</strong> Filament, energy, wear and labour cost, channel fees, total cost, profit and margin are calculated as soon as the price is in.</div></li>
+      <li><div><strong>Status &amp; failures.</strong> Set the <em>Status</em> column to <em>Queued</em>, <em>Printing</em>, <em>Done</em> or <em>Failed</em> (and note any failure reason). Header filters let you view only <em>Queued</em> / <em>Printing</em> jobs. Failed rows keep their material/energy/wear cost and charge zero channel fees, so failures show up honestly.</div></li>
+      <li><div><strong>Monthly P&amp;L tab.</strong> Set the yellow <em>First month</em> cell; 24 months roll up automatically: jobs, done vs failed count, failure rate, hours printed, grams used, revenue, costs, fees, profit and a monthly chart.</div></li>
+    </ol>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · Print Job Log v{{VERSION}} · {{DATE}}</div>
+    <div>1 / 2</div>
+  </footer>
+</section>
+
+<section class="sheet">
+  <header class="head">
+    <div>
+      <div class="kicker">Read me first · continued</div>
+      <h1>Troubleshooting and support</h1>
+    </div>
+    <div class="brand">
+      <div class="mk">MK</div>
+      <div><div class="brand-name">MeshKit</div><div class="brand-sub">free online 3D-printing tools</div></div>
+    </div>
+  </header>
+  <div class="sheet-body">
+    <h2>Troubleshooting</h2>
+    <table>
+      <thead><tr><th style="width:34%;">Symptom</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">#NAME?</span> or <span class="mono">#SPILL!</span> in result cells</td><td>Your Excel is older than 2016, or a function is not supported. Use the Google Sheets copy (link on page 1), update Excel, or open the file in LibreOffice Calc (free).</td></tr>
+        <tr><td>"The cell you're trying to change is protected"</td><td>Formula cells are locked so they cannot be overwritten by accident. Only the yellow input cells are meant to be edited. If you really want to change a formula: <span class="kbd">Review</span> → <span class="kbd">Unprotect Sheet</span> (Excel) or <span class="kbd">Data</span> → <span class="kbd">Protect sheets and ranges</span> (Sheets). There is no password.</td></tr>
+        <tr><td>A month is missing from the P&amp;L</td><td>Check two things: (1) the yellow <em>First month</em> cell at the top of <em>Monthly P&amp;L</em> covers your date range (24 months from that start month), and (2) the <em>Date</em> cell on <em>Jobs</em> is a real date (YYYY-MM-DD), not text.</td></tr>
+        <tr><td>Margin looks too high or too low</td><td>Check the channel fee on that row and the wear rate in Settings. A wear rate of zero flatters every job; $0.10–0.50 per hour is a realistic range for hobby machines.</td></tr>
+        <tr><td>I ran out of rows</td><td>200 job rows are pre-built. Start a fresh copy of the workbook for the new year or quarter so your file stays fast and easy to archive.</td></tr>
+        <tr><td>I want to price a job before logging it</td><td>Use the free calculator at <span class="mono">meshkit.pro/3d-print-cost-calculator</span>, or the Pricing Calculator spreadsheet, then log the agreed price here.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Support</h2>
+    <p>Message me on Etsy first; that is the fastest route and keeps the order history attached. Email works too: <span class="mono">admin@quantlance.com</span>. I answer within two business days. If a formula is broken, I fix it and send you the updated file, or refund you.</p>
+
+    <h2>Updates</h2>
+    <p>This is version {{VERSION}}, released {{DATE}}. Updated versions appear in your Etsy downloads at no extra cost. Your job rows copy across with a paste; your settings live on one tab.</p>
+
+    <h2>Free online version</h2>
+    <p>There is a free print cost calculator at <span class="mono">meshkit.pro/3d-print-cost-calculator</span> for pricing a single job in the browser. The spreadsheet is for the record: every job, every failure, and a month-by-month view you own.</p>
+
+    <h2>Licence</h2>
+    <p>Personal and small-business use. You may use it for as many printers and orders as you like, make copies for your own use, and modify it. You may not resell, share or redistribute the file or a modified version of it, free or paid.</p>
+
+    <div class="callout">Numbers are estimates; check your own costs. The P&amp;L is bookkeeping for your print operation, not tax or accounting advice.</div>
+
+    <p class="closing">If this helped, a review helps the next person find it.</p>
+  </div>
+  <footer class="foot">
+    <div>meshkit.pro — free online 3D-printing tools · Print Job Log v{{VERSION}} · {{DATE}}</div>
+    <div>2 / 2</div>
+  </footer>
+</section>
+
+</body>
+</html>

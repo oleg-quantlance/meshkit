@@ -1,0 +1,30 @@
+{
+  "case": "target-margin-shopify",
+  "input": {
+    "grams": 310,
+    "hours": 14.5,
+    "pricePerKg": 19.99,
+    "watts": 350,
+    "electricityRatePerKwh": 0.21,
+    "wearRatePerHour": 0.3,
+    "failurePct": 0,
+    "channelFeePct": 2.9,
+    "channelFixedFee": 0.3,
+    "pricingMode": "target_margin",
+    "targetMarginPct": 40
+  },
+  "result": {
+    "ok": true,
+    "adjustedHours": 14.5,
+    "materialCost": 6.196899999999999,
+    "energyCost": 1.0657499999999998,
+    "wearCost": 4.35,
+    "overheadCost": 5.415749999999999,
+    "unitCost": 11.612649999999999,
+    "sellingPrice": 20.862784588441333,
+    "channelFees": 0.9050207530647987,
+    "profit": 8.345113835376536,
+    "marginPct": 40,
+    "belowCostWarning": false
+  }
+}

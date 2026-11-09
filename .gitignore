@@ -26,3 +26,8 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+
+# Etsy spreadsheet builds
+tools/etsy/dist/
+__pycache__/
+*.pyc
