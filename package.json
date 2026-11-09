@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && vite build -c vite.embed.config.ts",
     "preview": "vite preview",
     "test": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:embed": "vite build -c vite.embed.config.ts"
   },
   "dependencies": {
     "fflate": "^0.8.0",

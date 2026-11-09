@@ -2340,6 +2340,89 @@ function initViewerPage(): void {
     });
 }
 
+
+// =========================================================================
+// TOOL 10: EMBED LANDING PAGE — live snippet builder + preview
+// =========================================================================
+function initEmbedPage(): void {
+  const codeEl = maybeEl('emCode');
+  const preview = maybeEl('emPreview');
+  if (!codeEl || !preview) return;
+
+  const fields = ['emPrice', 'emCurrency', 'emTheme', 'emAccent', 'emWatts', 'emKwh', 'emTitle'];
+
+  function attrs(): Record<string, string> {
+    const v = (id: string) => (maybeEl<HTMLInputElement>(id)?.value ?? '').trim();
+    const out: Record<string, string> = {};
+    const price = v('emPrice');
+    if (price && price !== '22') out['data-price-per-kg'] = price;
+    else out['data-price-per-kg'] = price || '22';
+    const cur = v('emCurrency') || '$';
+    out['data-currency'] = cur;
+    if (v('emTheme') === 'dark') out['data-theme'] = 'dark';
+    const accent = v('emAccent');
+    if (accent && accent.toUpperCase() !== '#C43E0B') out['data-accent'] = accent;
+    const watts = v('emWatts');
+    if (watts && watts !== '150') out['data-watts'] = watts;
+    const kwh = v('emKwh');
+    if (kwh && kwh !== '0.16') out['data-kwh'] = kwh;
+    const title = v('emTitle');
+    if (title && title !== '3D Print Cost Calculator') out['data-title'] = title;
+    return out;
+  }
+
+  function esc(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function snippet(a: Record<string, string>): string {
+    const parts = Object.entries(a).map(([k, val]) => `${k}="${esc(val)}"`);
+    return `<script src="https://meshkit.pro/embed/print-cost.js" ${parts.join(' ')} async></script>`;
+  }
+
+  let renderTimer: ReturnType<typeof setTimeout> | null = null;
+  function render(): void {
+    const a = attrs();
+    codeEl!.textContent = snippet(a);
+    if (renderTimer) clearTimeout(renderTimer);
+    renderTimer = setTimeout(() => {
+      preview!.innerHTML = '';
+      const sc = document.createElement('script');
+      sc.src = '/embed/print-cost.js';
+      sc.async = true;
+      for (const [k, val] of Object.entries(a)) sc.setAttribute(k, val);
+      preview!.appendChild(sc);
+    }, 150);
+  }
+
+  fields.forEach((id) => {
+    maybeEl(id)?.addEventListener('input', render);
+    maybeEl(id)?.addEventListener('change', render);
+  });
+
+  maybeEl('emCopyBtn')?.addEventListener('click', async () => {
+    const text = codeEl!.textContent ?? '';
+    const state = maybeEl('emCopyState');
+    try {
+      await navigator.clipboard.writeText(text);
+      if (state) state.textContent = 'COPIED';
+      trackExportDownload('embed', 'snippet');
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(codeEl!);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      if (state) state.textContent = 'SELECTED — PRESS CTRL/CMD+C';
+    }
+    setTimeout(() => {
+      if (state) state.textContent = 'PASTE ANYWHERE IN YOUR HTML';
+    }, 2500);
+  });
+
+  render();
+}
+
 initPrivacyPageControls();
 wireInternalLinkAnalytics();
 initGcodeAndCostPage();
@@ -2352,3 +2435,4 @@ initSpoolDatabasePage();
 initGramsMetersPage();
 initConverterPage();
 initViewerPage();
+initEmbedPage();
