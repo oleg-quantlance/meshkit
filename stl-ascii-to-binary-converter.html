@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>STL ASCII to Binary Converter Online (and Back)</title>
+  <meta name="description" content="Convert ASCII STL to binary STL (4–6× smaller) or binary to ASCII in your browser. Auto-detects the encoding, keeps geometry bit-exact, reports facet count and size ratio. Nothing is uploaded." />
+  <link rel="canonical" href="https://meshkit.pro/stl-ascii-to-binary-converter" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="STL ASCII to Binary Converter Online (and Back)" />
+  <meta property="og:description" content="Free browser-based STL re-encoder: ASCII ↔ binary with auto-detection, exact geometry and size report. Zero upload." />
+  <meta property="og:url" content="https://meshkit.pro/stl-ascii-to-binary-converter" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/stl-ascii-to-binary-converter.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="STL ASCII to Binary Converter Online (and Back)" />
+  <meta name="twitter:description" content="Free browser-based STL re-encoder: ASCII ↔ binary with auto-detection, exact geometry and size report. Zero upload." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/stl-ascii-to-binary-converter.png" />
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "MeshKit STL ASCII/Binary Converter",
+      "url": "https://meshkit.pro/stl-ascii-to-binary-converter",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "MeshKit",
+          "item": "https://meshkit.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "STL ASCII to Binary Converter",
+          "item": "https://meshkit.pro/stl-ascii-to-binary-converter"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body data-page="converter" data-converter="stl-encoding">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Mesh converters">
+      <a href="/step-to-stl-converter">STEP to STL</a>
+      <a href="/3mf-to-stl-converter">3MF to STL</a>
+      <a href="/stl-to-3mf-converter">STL to 3MF</a>
+      <a href="/stl-ascii-to-binary-converter" class="active">STL ASCII ↔ Binary</a>
+      <a href="/stl-repair-online">STL Repair</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">STL ASCII to Binary Converter — and Binary to ASCII, No Upload</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">KERNEL: STL FORMAT SNIFFER + RE-ENCODER</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-converter" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. STL Input (either encoding)</span>
+            <span id="cvParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="cvDropzone" aria-label="Upload STL file">
+            <label for="cvFileInput" class="hidden">Upload STL file</label>
+            <input type="file" id="cvFileInput" accept=".stl" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="cvFileName">[CLICK TO SELECT .STL] OR DRAG MESH HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="cvFileSub">Sniffs the real encoding from byte length and structure, not the 'solid' prefix.</div>
+            <div class="btn-row">
+              <button type="button" id="cvBrowseBtn" class="btn-primary">BROWSE .STL...</button>
+              <button type="button" id="cvSampleBtn" class="btn-secondary">LOAD SAMPLE .STL</button>
+              <button type="button" id="cvGetSampleBtn" class="btn-ghost" title="Download the sample file to test uploading">⬇ GET TEST .STL</button>
+              <button type="button" id="cvRetryBtn" class="btn-secondary hidden">RETRY CONVERSION</button>
+            </div>
+            <div id="cvProgressBarWrap" class="progress-bar-wrap hidden" aria-label="Conversion progress">
+              <div id="cvProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Target Encoding</span>
+            <span style="color:var(--accent);">LOCAL</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="cvTargetSelect"><span>Convert To</span><span class="unit-tag">[encoding]</span></label>
+              <select id="cvTargetSelect">
+                <option value="auto" selected>Auto — the other encoding</option>
+                <option value="binary">Binary STL (compact)</option>
+                <option value="ascii">ASCII STL (text)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="cvGeometryNote"><span>Geometry</span><span class="unit-tag">[exact]</span></label>
+              <input type="text" id="cvGeometryNote" value="Unchanged: same facets, same order" readonly />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section mono" id="cvLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// STL ASCII ↔ BINARY LOG</div>
+          <div>Awaiting .STL file selection...</div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Bounding Box</div>
+            <div class="kpi-val" id="cvKpiA" style="font-size:17px;">—</div>
+            <div class="kpi-sub">X / Y / Z extents, mm</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Facets</div>
+            <div class="kpi-val" id="cvKpiB">—</div>
+            <div class="kpi-sub">Triangles</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Size</div>
+            <div class="kpi-val" id="cvKpiC">—</div>
+            <div class="kpi-sub" id="cvKpiCSub">re-encoded STL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Encoding</div>
+            <div class="kpi-val" id="cvKpiD">—</div>
+            <div class="kpi-sub" id="cvKpiDSub">detected → written</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="cvExportStatus">Select an .STL file to re-encode.</span>
+          <button type="button" id="cvDownloadBtn" class="btn-primary">EXPORT RE-ENCODED .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the STL ASCII ↔ Binary Converter Does</h2>
+      <p>
+        Every <code>.stl</code> file is one of two encodings. <strong>ASCII STL</strong> is human-readable text — <code>facet normal</code>, <code>outer loop</code>, three <code>vertex</code> lines — and is what many CAD exporters, scanners and scripts write by default. <strong>Binary STL</strong> packs the same facets into fixed 50-byte records after an 80-byte header, loads far faster, and is 4–6× smaller. This tool detects which one you have, re-encodes it to the other (or to the encoding you choose), and reports the facet count, the exact byte sizes and the size ratio.
+      </p>
+      <p>
+        The geometry is not touched: same triangles, same order, same coordinates (ASCII output uses six-digit exponent notation, binary stores IEEE-754 float32, which is what both formats have always used). Facet normals are recomputed from the vertex winding, which fixes files whose stored normals disagree with their triangles. The conversion runs in a Web Worker in your browser; nothing is uploaded.
+      </p>
+
+      <h2>How to Convert in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop the <code>.stl</code>:</strong> The sniffer checks the binary size identity (84 + 50 × N) before falling back to a text parse, so files that start with "solid" but are really binary are handled correctly.</li>
+        <li><strong>Choose the target:</strong> <strong>Auto</strong> flips to the other encoding. Force <strong>Binary</strong> to shrink a file for a slicer or upload, or <strong>ASCII</strong> when a script, a course assignment or a diff tool needs readable text.</li>
+        <li><strong>Export:</strong> Review facets, bounding box and the size ratio in the log, then click <strong>Export re-encoded .STL</strong>. The download is named <code>name-binary.stl</code> or <code>name-ascii.stl</code> so you keep the original.</li>
+      </ol>
+
+      <h2>Worked Example: Size of the Two Encodings</h2>
+      <div class="formula-box">
+        Binary STL = 80-byte header + 4-byte uint32 count + N × (12 normal + 36 vertices + 2 attribute) bytes = 84 + 50 N<br/>
+        ASCII STL ≈ N × 7 lines × ~30–45 characters ≈ 220–300 N bytes<br/>
+        N = 100,000 facets: binary 5.0 MB vs ASCII 22–30 MB (×4.4–6)<br/>
+        Binary parse: one typed-array read &nbsp;·&nbsp; ASCII parse: ~700,000 tokens to scan
+      </div>
+
+      <h2>When You Need Which Encoding</h2>
+      <ul>
+        <li><strong>Binary</strong> for slicers (Bambu Studio, OrcaSlicer, PrusaSlicer, Cura), print services, Printables/Thingiverse uploads and anything with a size limit. Some upload forms silently reject ASCII STL above a few megabytes.</li>
+        <li><strong>ASCII</strong> for inspecting a mesh in a text editor, version control diffs, teaching, generating STL from scripts, and a few legacy CAM and FEA importers that choke on binary.</li>
+        <li><strong>Either, but smaller:</strong> if size is the real problem, convert to <a href="/stl-to-3mf-converter">3MF</a>, which indexes shared vertices and compresses the result.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        The 2-byte per-facet attribute field (used by a few tools for colour) is written as zero in binary output. ASCII solid names are replaced by <code>meshkit_export</code>. Multi-solid ASCII files are read as one mesh. The tool does not repair geometry — open edges, flipped faces and duplicate triangles pass through unchanged; use <a href="/stl-repair-online">STL Repair</a> for that.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>My file starts with "solid" — isn't that ASCII?</summary>
+          <p>Not necessarily. Many binary exporters (SolidWorks, some Blender add-ons) write "solid" in the 80-byte header. The converter checks whether the byte length equals 84 + 50 × N first; that identity is the reliable test. The log tells you what was detected.</p>
+        </details>
+        <details>
+          <summary>Does converting change precision?</summary>
+          <p>Binary STL stores float32, and ASCII STL written by nearly every tool also carries float32 precision (six to seven significant digits). Round-tripping ASCII → binary → ASCII reproduces the same values; only the text formatting differs.</p>
+        </details>
+        <details>
+          <summary>Why is the binary file exactly 684 bytes for a cube?</summary>
+          <p>A cube is 12 triangles: 84 + 50 × 12 = 684. You can verify any binary STL this way — if the size does not match the count in the header, the file is truncated or not binary.</p>
+        </details>
+        <details>
+          <summary>Can I batch-convert many files?</summary>
+          <p>One file at a time in this free tool. Drag the next file in as soon as the first download starts; conversion takes well under a second for typical parts.</p>
+        </details>
+        <details>
+          <summary>Is anything uploaded?</summary>
+          <p>No. Detection, parsing and re-encoding happen in a Web Worker in your browser. The export is generated from memory as a download.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // How the Encoding Is Detected
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          A binary STL is exactly 84 + 50 × N bytes, where N is the uint32 at offset 80. The checker verifies that identity first; only when it fails does it try to read the file as text. Many binary exporters start the 80-byte header with the word <code>solid</code>, so the prefix alone proves nothing.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; AUDIT &amp; REPAIR STL MESH</a>
+          <a href="/stl-to-3mf-converter" class="btn-secondary route-link">07 -&gt; PACKAGE AS 3MF (SMALLER STILL)</a>
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; CALCULATE STL VOLUME &amp; PART WEIGHT</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/3mf-to-stl-converter">3MF to STL</a>
+        <a href="/stl-to-3mf-converter">STL to 3MF</a>
+        <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

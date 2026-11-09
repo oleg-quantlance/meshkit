@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>Convert 3MF to STL Online — Free, No Upload</title>
+  <meta name="description" content="Convert .3mf files to binary or ASCII STL in your browser. Reads Bambu Studio, Orca, PrusaSlicer and Cura 3MF projects, applies plate transforms and units, exports a watertight STL. Nothing is uploaded." />
+  <link rel="canonical" href="https://meshkit.pro/3mf-to-stl-converter" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Convert 3MF to STL Online — Free, No Upload" />
+  <meta property="og:description" content="Free browser-based 3MF to STL converter. Handles slicer project files, component transforms and units; exports binary or ASCII STL with zero upload." />
+  <meta property="og:url" content="https://meshkit.pro/3mf-to-stl-converter" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/3mf-to-stl-converter.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Convert 3MF to STL Online — Free, No Upload" />
+  <meta name="twitter:description" content="Free browser-based 3MF to STL converter. Handles slicer project files, component transforms and units; exports binary or ASCII STL with zero upload." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/3mf-to-stl-converter.png" />
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "MeshKit 3MF to STL Converter",
+      "url": "https://meshkit.pro/3mf-to-stl-converter",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "MeshKit",
+          "item": "https://meshkit.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "3MF to STL Converter",
+          "item": "https://meshkit.pro/3mf-to-stl-converter"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body data-page="converter" data-converter="3mf-to-stl">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Mesh converters">
+      <a href="/step-to-stl-converter">STEP to STL</a>
+      <a href="/3mf-to-stl-converter" class="active">3MF to STL</a>
+      <a href="/stl-to-3mf-converter">STL to 3MF</a>
+      <a href="/stl-ascii-to-binary-converter">STL ASCII ↔ Binary</a>
+      <a href="/stl-repair-online">STL Repair</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Convert 3MF to STL Online — Browser-Side, No Upload</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">KERNEL: OPC ZIP + 3MF CORE / PRODUCTION PARSER</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-converter" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. 3MF Package Input (.3MF)</span>
+            <span id="cvParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="cvDropzone" aria-label="Upload 3MF file">
+            <label for="cvFileInput" class="hidden">Upload 3MF file</label>
+            <input type="file" id="cvFileInput" accept=".3mf" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="cvFileName">[CLICK TO SELECT .3MF] OR DRAG PACKAGE HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="cvFileSub">Unzips the OPC package and reads 3D/3dmodel.model locally in browser memory.</div>
+            <div class="btn-row">
+              <button type="button" id="cvBrowseBtn" class="btn-primary">BROWSE .3MF...</button>
+              <button type="button" id="cvSampleBtn" class="btn-secondary">LOAD SAMPLE .3MF</button>
+              <button type="button" id="cvGetSampleBtn" class="btn-ghost" title="Download the sample file to test uploading">⬇ GET TEST .3MF</button>
+              <button type="button" id="cvRetryBtn" class="btn-secondary hidden">RETRY CONVERSION</button>
+            </div>
+            <div id="cvProgressBarWrap" class="progress-bar-wrap hidden" aria-label="Conversion progress">
+              <div id="cvProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. STL Output Encoding</span>
+            <span style="color:var(--accent);">LOCAL</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="cvFormatSelect"><span>STL Format</span><span class="unit-tag">[encoding]</span></label>
+              <select id="cvFormatSelect">
+                <option value="binary" selected>Binary STL (Compact)</option>
+                <option value="ascii">ASCII STL (Text)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="cvUnitsNote"><span>Units</span><span class="unit-tag">[mm]</span></label>
+              <input type="text" id="cvUnitsNote" value="Auto: 3MF unit attribute → mm" readonly />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section mono" id="cvLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// 3MF → STL CONVERTER LOG</div>
+          <div>Awaiting .3MF package selection...</div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Bounding Box</div>
+            <div class="kpi-val" id="cvKpiA" style="font-size:17px;">—</div>
+            <div class="kpi-sub">X / Y / Z extents, mm</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Facets</div>
+            <div class="kpi-val" id="cvKpiB">—</div>
+            <div class="kpi-sub">Triangles</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Size</div>
+            <div class="kpi-val" id="cvKpiC">—</div>
+            <div class="kpi-sub" id="cvKpiCSub">Binary STL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Objects Merged</div>
+            <div class="kpi-val" id="cvKpiD">—</div>
+            <div class="kpi-sub" id="cvKpiDSub">mesh object(s)</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="cvExportStatus">Select a .3MF package to convert and export.</span>
+          <button type="button" id="cvDownloadBtn" class="btn-primary">EXPORT .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the Online 3MF to STL Converter Does</h2>
+      <p>
+        3MF (3D Manufacturing Format, ISO/ASTM 52915) is the project format written by Bambu Studio, OrcaSlicer, PrusaSlicer, Cura and Windows 3D Builder. It is a ZIP package holding an XML model part plus optional thumbnails, print settings and plate layout. Most CAD tools, mesh repair utilities, online print services and older slicers still want a plain <code>.stl</code>. This converter opens the package in your browser, resolves every object placed on the build plate, applies the component and build-item transforms, converts the declared unit (millimeter, inch, micron, centimeter, foot or meter) to millimetres, and writes a single STL.
+      </p>
+      <p>
+        It understands the 3MF Core specification and the Production extension used by slicer project files, where each model lives in its own part under <code>3D/Objects/</code> and is referenced through <code>p:path</code>. Support and surface objects are skipped so only printable geometry reaches the STL. The result is audited for open edges before download, and the file never leaves your machine — there is no upload, no queue and no size cap beyond your browser's memory (100 MB package limit).
+      </p>
+
+      <h2>How to Convert 3MF to STL in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop your <code>.3mf</code> file:</strong> Click the upload area or drag a 3MF package from Bambu Studio, OrcaSlicer, PrusaSlicer, Cura, Fusion or Windows 3D Builder. The ZIP is unpacked in browser memory.</li>
+        <li><strong>Pick the STL encoding:</strong> <strong>Binary STL</strong> is the default and what every slicer and print service expects. Choose <strong>ASCII STL</strong> only if a downstream tool specifically requires text.</li>
+        <li><strong>Review and export:</strong> Check the bounding box, triangle count, number of merged objects and output size in the log, then click <strong>Export .STL</strong>. Multi-object plates are merged into one mesh with their plate positions preserved.</li>
+      </ol>
+
+      <h2>Worked Example: Plate Transforms and Units</h2>
+      <p>
+        A 3MF component or build item carries a 3×4 affine matrix written row-major as twelve numbers. Each vertex is transformed as a row vector, then scaled by the model unit:
+      </p>
+      <div class="formula-box">
+        transform="m00 m01 m02 m10 m11 m12 m20 m21 m22 m30 m31 m32"<br/>
+        x' = x·m00 + y·m10 + z·m20 + m30 &nbsp;(likewise y', z')<br/>
+        Sample package: 20 mm cube at (−10, −10, 0) + Ø12 × 8 mm boss offset (10, 10, 20) → one STL, 204 facets, 8.90 cm³<br/>
+        unit="inch" ⇒ every coordinate × 25.4 before writing STL
+      </div>
+      <p>
+        If a transform mirrors the part (negative determinant), triangle winding is flipped so the STL keeps outward normals and a positive signed volume. Open <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a> on the result to confirm.
+      </p>
+
+      <h2>Why Convert 3MF to STL?</h2>
+      <ul>
+        <li><strong>Sharing on Printables, Thingiverse or MakerWorld:</strong> STL remains the universal download format and the one most viewers render.</li>
+        <li><strong>Mesh editing:</strong> Meshmixer, Blender importers and many CAD "insert mesh" dialogs accept STL but not slicer-specific 3MF projects.</li>
+        <li><strong>Print services and older firmware tools:</strong> Quote engines and legacy slicers (Simplify3D 4, older Cura builds) still expect STL.</li>
+        <li><strong>Stripping slicer metadata:</strong> A project 3MF carries your printer profile, filament settings and thumbnails; the STL contains geometry only.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Colour, material and texture information (the 3MF Materials extension), beam lattices, slice-stack extensions and per-object print settings are not representable in STL and are discarded. Multiple build items become a single merged mesh; if you need one STL per object, open the project in your slicer and export each object separately. Encrypted (Secure Content) 3MF packages are not supported.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Is my 3MF file uploaded anywhere?</summary>
+          <p>No. The ZIP is unpacked and the XML parsed in a Web Worker inside your browser. The only network request the page makes is for the sample file if you click "Load sample".</p>
+        </details>
+        <details>
+          <summary>Does it work with Bambu Studio and OrcaSlicer project files?</summary>
+          <p>Yes. Those projects keep the plate in <code>3D/3dmodel.model</code> and each part under <code>3D/Objects/object_N.model</code>, referenced through the Production extension's <code>p:path</code>. The converter follows those references, applies the plate transforms and skips support/modifier objects.</p>
+        </details>
+        <details>
+          <summary>My plate had three parts — why do I get one STL?</summary>
+          <p>STL has no concept of separate objects, so everything on the plate is merged into one mesh with positions preserved. The "Objects merged" counter tells you how many meshes went in. For per-part files, export each object from your slicer.</p>
+        </details>
+        <details>
+          <summary>Why does the STL come out at a different size than I expected?</summary>
+          <p>3MF files declare a unit; the converter scales to millimetres, which is what slicers assume for STL. A model authored in inches is multiplied by 25.4. If the bounding box in the log looks 25× too big or too small, the source file's unit attribute is wrong — fix it in the source or scale in the slicer.</p>
+        </details>
+        <details>
+          <summary>Binary or ASCII STL?</summary>
+          <p>Binary. It is exactly 84 + 50 × N bytes, loads faster, and is what every slicer expects. ASCII STL is 4–6× larger and only useful when a tool requires readable text.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // 3MF Package Anatomy
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          A .3mf file is a ZIP. <code>_rels/.rels</code> points at the model part (normally <code>3D/3dmodel.model</code>), which lists mesh objects, component assemblies with 3×4 transforms, and the build items actually placed on the plate. Slicer projects add <code>Metadata/</code> and per-object parts under <code>3D/Objects/</code>.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; AUDIT &amp; REPAIR THE EXPORTED STL</a>
+          <a href="/stl-to-3mf-converter" class="btn-secondary route-link">07 -&gt; GO THE OTHER WAY: STL TO 3MF</a>
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; CALCULATE STL VOLUME &amp; PART WEIGHT</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/3mf-to-stl-converter">3MF to STL</a>
+        <a href="/stl-to-3mf-converter">STL to 3MF</a>
+        <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

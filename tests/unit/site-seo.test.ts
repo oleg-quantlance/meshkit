@@ -10,6 +10,9 @@ const TOOL_PAGES = [
   { file: 'stl-repair-online.html', canonical: 'https://meshkit.pro/stl-repair-online' },
   { file: 'stl-volume-weight-calculator.html', canonical: 'https://meshkit.pro/stl-volume-weight-calculator' },
   { file: 'step-to-stl-converter.html', canonical: 'https://meshkit.pro/step-to-stl-converter' },
+  { file: '3mf-to-stl-converter.html', canonical: 'https://meshkit.pro/3mf-to-stl-converter' },
+  { file: 'stl-to-3mf-converter.html', canonical: 'https://meshkit.pro/stl-to-3mf-converter' },
+  { file: 'stl-ascii-to-binary-converter.html', canonical: 'https://meshkit.pro/stl-ascii-to-binary-converter' },
   { file: 'resin-3d-print-cost-calculator.html', canonical: 'https://meshkit.pro/resin-3d-print-cost-calculator' },
   { file: 'filament-spool-weight-calculator.html', canonical: 'https://meshkit.pro/filament-spool-weight-calculator' },
   { file: 'empty-spool-weight-database.html', canonical: 'https://meshkit.pro/empty-spool-weight-database' },
@@ -93,7 +96,7 @@ describe('Section 7 & 10: Multi-page SEO, Accessibility & Schema Audit', () => {
     }
   });
 
-  it('public/sitemap.xml and public/robots.txt exist and cover all 12 canonical URLs', () => {
+  it('public/sitemap.xml and public/robots.txt exist and cover all 15 canonical URLs', () => {
     const robots = readFileSync(resolve(ROOT, 'public/robots.txt'), 'utf-8');
     expect(robots).toContain('Sitemap: https://meshkit.pro/sitemap.xml');
 
@@ -106,5 +109,6 @@ describe('Section 7 & 10: Multi-page SEO, Accessibility & Schema Audit', () => {
     expect(existsSync(resolve(ROOT, 'public/samples/enclosure-bracket.gcode'))).toBe(true);
     expect(existsSync(resolve(ROOT, 'public/samples/defective-cube.stl'))).toBe(true);
     expect(existsSync(resolve(ROOT, 'public/samples/planetary-gear-housing.step'))).toBe(true);
+    expect(existsSync(resolve(ROOT, 'public/samples/calibration-cube-and-boss.3mf'))).toBe(true);
   });
 });

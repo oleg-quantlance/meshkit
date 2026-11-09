@@ -39,6 +39,16 @@ import {
   StepConvertOptions,
 } from './core/step';
 import {
+  convert3mfToStl,
+  convertStlEncoding,
+  convertStlTo3mf,
+  type StlEncoding,
+  type StlEncodingResult,
+  type StlTo3mfResult,
+  type ThreeMfToStlResult,
+} from './core/convert';
+import type { ConvertWorkerRequest } from './workers/convert.worker';
+import {
   initAnalyticsConsentMode,
   updateAnalyticsConsent,
   trackFileLoadSuccess,
@@ -1810,6 +1820,285 @@ function initGramsMetersPage(): void {
   calc();
 }
 
+
+// =========================================================================
+// TOOLS 06–08: MESH FORMAT CONVERTERS (3MF → STL, STL → 3MF, STL ASCII ↔ BINARY)
+// One controller, three pages. Each page declares the same element ids with a
+// prefix (cv*) and a data-converter attribute on <body> naming the action.
+// =========================================================================
+type ConvertAction = ConvertWorkerRequest['action'];
+type ConvertAnyResult = ThreeMfToStlResult | StlTo3mfResult | StlEncodingResult;
+
+interface ConverterPageConfig {
+  action: ConvertAction;
+  inputKind: ToolFileKind;
+  samplePath: string;
+  sampleName: string;
+  /** Builds the download filename from the input name. */
+  outputName: (inputName: string, result: Extract<ConvertAnyResult, { ok: true }>) => string;
+  /** Pulls the user's options from the page controls. */
+  readOptions: () => ConvertWorkerRequest['options'];
+  logTitle: string;
+}
+
+function formatBytes(n: number): string {
+  if (n >= 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  if (n >= 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${n} B`;
+}
+
+function runConversionLocally(req: ConvertWorkerRequest): ConvertAnyResult {
+  if (req.action === '3mf-to-stl') return convert3mfToStl(req.buffer, req.options);
+  if (req.action === 'stl-to-3mf') return convertStlTo3mf(req.buffer, req.options);
+  return convertStlEncoding(req.buffer, req.options);
+}
+
+function initConverterPage(): void {
+  const body = document.body;
+  const action = body.getAttribute('data-converter') as ConvertAction | null;
+  if (!action || !maybeEl('cvDropzone')) return;
+
+  const configs: Record<ConvertAction, ConverterPageConfig> = {
+    '3mf-to-stl': {
+      action,
+      inputKind: 'threemf',
+      samplePath: '/samples/calibration-cube-and-boss.3mf',
+      sampleName: 'calibration-cube-and-boss.3mf',
+      outputName: (name) => `${name.replace(/\.3mf$/i, '')}.stl`,
+      readOptions: () => ({
+        outputFormat: (maybeEl<HTMLSelectElement>('cvFormatSelect')?.value === 'ascii' ? 'ascii' : 'binary') as StlEncoding,
+      }),
+      logTitle: '3MF → STL CONVERTER LOG',
+    },
+    'stl-to-3mf': {
+      action,
+      inputKind: 'stl',
+      samplePath: '/samples/defective-cube.stl',
+      sampleName: 'defective-cube.stl',
+      outputName: (name) => `${name.replace(/\.stl$/i, '')}.3mf`,
+      readOptions: () => ({
+        unit: (maybeEl<HTMLSelectElement>('cvUnitSelect')?.value || 'millimeter') as 'millimeter' | 'inch',
+        name: maybeEl<HTMLInputElement>('cvObjectName')?.value.trim() || undefined,
+      }),
+      logTitle: 'STL → 3MF PACKAGER LOG',
+    },
+    'stl-encoding': {
+      action,
+      inputKind: 'stl',
+      samplePath: '/samples/defective-cube.stl',
+      sampleName: 'defective-cube.stl',
+      outputName: (name, result) => {
+        const fmt = 'outputFormat' in result ? result.outputFormat : 'binary';
+        return `${name.replace(/\.stl$/i, '')}-${fmt}.stl`;
+      },
+      readOptions: () => ({
+        target: (maybeEl<HTMLSelectElement>('cvTargetSelect')?.value || 'auto') as StlEncoding | 'auto',
+      }),
+      logTitle: 'STL ASCII ↔ BINARY LOG',
+    },
+  };
+  const cfg = configs[action];
+
+  const logBox = getEl('cvLogBox');
+  const progressBarWrap = maybeEl('cvProgressBarWrap');
+  const progressBarFill = maybeEl('cvProgressBarFill');
+  const retryBtn = maybeEl('cvRetryBtn');
+
+  let activeBuffer: ArrayBuffer | null = null;
+  let activeName = cfg.sampleName;
+  let lastResult: Extract<ConvertAnyResult, { ok: true }> | null = null;
+
+  function setProgress(pct: number | null): void {
+    if (!progressBarWrap || !progressBarFill) return;
+    if (pct === null) {
+      progressBarWrap.classList.add('hidden');
+      progressBarFill.style.width = '0%';
+    } else {
+      progressBarWrap.classList.remove('hidden');
+      progressBarFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    }
+  }
+
+  function renderError(message: string, allowRetry = false): void {
+    setProgress(null);
+    retryBtn?.classList.toggle('hidden', !allowRetry);
+    const state = getEl('cvParseState');
+    state.textContent = 'ERROR';
+    state.style.color = 'var(--status-warn)';
+    getEl('cvFileName').textContent = message;
+    ['cvKpiA', 'cvKpiB', 'cvKpiC', 'cvKpiD'].forEach((id) => {
+      const el = maybeEl(id);
+      if (el) el.textContent = '—';
+    });
+    getEl('cvExportStatus').textContent = message;
+    logBox.innerHTML = `<div style="color:#FF5C1A; margin-bottom:8px;">// ${cfg.logTitle} — VALIDATION ERROR</div><div style="color:var(--status-warn);">${message}</div>`;
+    lastResult = null;
+  }
+
+  async function convertViaWorker(buffer: ArrayBuffer): Promise<ConvertAnyResult> {
+    const req = { action: cfg.action, buffer: buffer.slice(0), options: cfg.readOptions() } as ConvertWorkerRequest;
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<ConvertAnyResult>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/convert.worker.ts', import.meta.url), { type: 'module' });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data.result as ConvertAnyResult);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            worker.postMessage(req, [req.buffer]);
+          }),
+          (timeoutMsg) => renderError(timeoutMsg, true)
+        );
+      } catch {
+        // fall through to the main thread
+      }
+    }
+    return runConversionLocally({ ...req, buffer: buffer.slice(0) } as ConvertWorkerRequest);
+  }
+
+  function renderResult(res: Extract<ConvertAnyResult, { ok: true }>): void {
+    const state = getEl('cvParseState');
+    state.textContent = 'OK';
+    state.style.color = 'var(--status-ok)';
+
+    const m = res.metrics;
+    getEl('cvKpiA').textContent = `${m.bboxMm.sizeX.toFixed(2)} × ${m.bboxMm.sizeY.toFixed(2)} × ${m.bboxMm.sizeZ.toFixed(2)} mm`;
+    getEl('cvKpiB').textContent = res.triangleCount.toLocaleString();
+    getEl('cvKpiC').textContent = formatBytes(res.outputBytes);
+    const kpiCSub = maybeEl('cvKpiCSub');
+    if (kpiCSub) kpiCSub.textContent = `from ${formatBytes(res.inputBytes)} (×${(res.outputBytes / res.inputBytes).toFixed(2)})`;
+
+    const kpiD = getEl('cvKpiD');
+    const kpiDSub = maybeEl('cvKpiDSub');
+    if (cfg.action === '3mf-to-stl' && 'info' in res) {
+      kpiD.textContent = `${res.info.meshes.length}`;
+      if (kpiDSub) kpiDSub.textContent = `mesh object(s) · unit ${res.info.unit}`;
+    } else if (cfg.action === 'stl-to-3mf' && 'vertexCount' in res) {
+      kpiD.textContent = res.vertexCount.toLocaleString();
+      if (kpiDSub) kpiDSub.textContent = `welded vertices (from ${(res.triangleCount * 3).toLocaleString()})`;
+    } else if ('inputFormat' in res && 'outputFormat' in res) {
+      kpiD.textContent = `${res.inputFormat.toUpperCase()} → ${res.outputFormat.toUpperCase()}`;
+      if (kpiDSub) kpiDSub.textContent = m.isWatertight ? 'watertight mesh' : `${m.boundaryEdges} open edges`;
+    }
+
+    const watertight = m.isWatertight ? 'watertight' : `${m.boundaryEdges} open edges`;
+    getEl('cvExportStatus').textContent = `Ready: ${res.triangleCount.toLocaleString()} facets, ${watertight}, ${formatBytes(res.outputBytes)}.`;
+
+    logBox.innerHTML = [
+      `<div style="color:#FF5C1A; margin-bottom:8px;">// ${cfg.logTitle} — ${activeName}</div>`,
+      ...res.logs.map((line) => `<div>[OK] ${line}</div>`),
+    ].join('');
+  }
+
+  async function runConversion(): Promise<void> {
+    if (!activeBuffer) return;
+    retryBtn?.classList.add('hidden');
+    setProgress(35);
+    const t0 = performance.now();
+    const res = await convertViaWorker(activeBuffer);
+    setProgress(100);
+    setTimeout(() => setProgress(null), 250);
+    if (!res.ok) {
+      trackFileLoadError(cfg.inputKind, res.errorCode);
+      renderError(res.error);
+      return;
+    }
+    lastResult = res;
+    trackCalculate(cfg.action);
+    trackFileLoadSuccess(cfg.action, cfg.inputKind, res.inputBytes, performance.now() - t0);
+    renderResult(res);
+  }
+
+  function loadBuffer(buffer: ArrayBuffer, filename: string, notice?: string): void {
+    activeBuffer = buffer;
+    activeName = filename;
+    const prefix = notice ? `${notice} — ` : '';
+    getEl('cvFileName').textContent = `${prefix}FILE LOADED: ${filename} (${formatBytes(buffer.byteLength)})`;
+    void runConversion();
+  }
+
+  wireDropzone(
+    'cvDropzone',
+    'cvFileInput',
+    'cvBrowseBtn',
+    cfg.inputKind,
+    (file, notice) => {
+      setProgress(15);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (buffer) loadBuffer(buffer, file.name, notice);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => renderError(message)
+  );
+
+  retryBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    void runConversion();
+  });
+
+  ['cvFormatSelect', 'cvUnitSelect', 'cvTargetSelect', 'cvObjectName'].forEach((id) => {
+    maybeEl(id)?.addEventListener('change', () => void runConversion());
+  });
+  maybeEl('cvObjectName')?.addEventListener('input', debounce(() => void runConversion(), 250));
+
+  maybeEl('cvDownloadBtn')?.addEventListener('click', () => {
+    if (!lastResult) {
+      renderError(`Select a valid ${cfg.inputKind === 'threemf' ? '.3MF' : '.STL'} file before exporting.`);
+      return;
+    }
+    const filename = cfg.outputName(activeName, lastResult);
+    if ('threeMf' in lastResult) {
+      downloadBlobFile(filename, new Blob([lastResult.threeMf], { type: 'model/3mf' }));
+      trackExportDownload(cfg.action, '3mf');
+    } else if ('asciiStl' in lastResult && lastResult.asciiStl) {
+      downloadTextFile(filename, lastResult.asciiStl);
+      trackExportDownload(cfg.action, 'ascii_stl');
+    } else if ('binaryStl' in lastResult && lastResult.binaryStl) {
+      downloadBlobFile(filename, new Blob([lastResult.binaryStl], { type: 'application/octet-stream' }));
+      trackExportDownload(cfg.action, 'binary_stl');
+    }
+  });
+
+  async function fetchSample(): Promise<ArrayBuffer | null> {
+    try {
+      const resp = await fetch(cfg.samplePath);
+      return resp.ok ? await resp.arrayBuffer() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  maybeEl('cvSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    trackSampleLoad(cfg.action);
+    setProgress(15);
+    const buf = await fetchSample();
+    if (buf) loadBuffer(buf, cfg.sampleName);
+    else renderError('The sample could not be fetched. Check your connection and retry.', true);
+  });
+
+  maybeEl('cvGetSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const buf = await fetchSample();
+    if (buf) {
+      downloadBlobFile(cfg.sampleName, new Blob([buf], { type: 'application/octet-stream' }));
+      trackExportDownload(`${cfg.action}_sample`, cfg.inputKind);
+    }
+  });
+
+  void fetchSample().then((buf) => {
+    if (buf) loadBuffer(buf, cfg.sampleName);
+  });
+}
+
 initPrivacyPageControls();
 wireInternalLinkAnalytics();
 initGcodeAndCostPage();
@@ -1820,3 +2109,4 @@ initResinPage();
 initSpoolPage();
 initSpoolDatabasePage();
 initGramsMetersPage();
+initConverterPage();
