@@ -18,6 +18,16 @@ const TOOL_PAGES = [
   { file: 'embed.html', canonical: 'https://meshkit.pro/embed' },
   { file: 'stl-scale-units-fixer.html', canonical: 'https://meshkit.pro/stl-scale-units-fixer' },
   { file: 'stl-simplifier-online.html', canonical: 'https://meshkit.pro/stl-simplifier-online' },
+  { file: 'bambu-lab-empty-spool-weight.html', canonical: 'https://meshkit.pro/bambu-lab-empty-spool-weight' },
+  { file: 'polymaker-empty-spool-weight.html', canonical: 'https://meshkit.pro/polymaker-empty-spool-weight' },
+  { file: 'elegoo-empty-spool-weight.html', canonical: 'https://meshkit.pro/elegoo-empty-spool-weight' },
+  { file: 'overture-empty-spool-weight.html', canonical: 'https://meshkit.pro/overture-empty-spool-weight' },
+  { file: 'sunlu-empty-spool-weight.html', canonical: 'https://meshkit.pro/sunlu-empty-spool-weight' },
+  { file: 'esun-empty-spool-weight.html', canonical: 'https://meshkit.pro/esun-empty-spool-weight' },
+  { file: 'prusament-empty-spool-weight.html', canonical: 'https://meshkit.pro/prusament-empty-spool-weight' },
+  { file: 'hatchbox-empty-spool-weight.html', canonical: 'https://meshkit.pro/hatchbox-empty-spool-weight' },
+  { file: 'jessie-empty-spool-weight.html', canonical: 'https://meshkit.pro/jessie-empty-spool-weight' },
+  { file: 'inland-empty-spool-weight.html', canonical: 'https://meshkit.pro/inland-empty-spool-weight' },
   { file: 'resin-3d-print-cost-calculator.html', canonical: 'https://meshkit.pro/resin-3d-print-cost-calculator' },
   { file: 'filament-spool-weight-calculator.html', canonical: 'https://meshkit.pro/filament-spool-weight-calculator' },
   { file: 'empty-spool-weight-database.html', canonical: 'https://meshkit.pro/empty-spool-weight-database' },
@@ -101,7 +111,7 @@ describe('Section 7 & 10: Multi-page SEO, Accessibility & Schema Audit', () => {
     }
   });
 
-  it('public/sitemap.xml and public/robots.txt exist and cover all 20 canonical URLs', () => {
+  it('public/sitemap.xml and public/robots.txt exist and cover all 30 canonical URLs', () => {
     const robots = readFileSync(resolve(ROOT, 'public/robots.txt'), 'utf-8');
     expect(robots).toContain('Sitemap: https://meshkit.pro/sitemap.xml');
 

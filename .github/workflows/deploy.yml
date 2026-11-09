@@ -88,6 +88,16 @@ jobs:
                 "https://meshkit.pro/stl-viewer-online",
                 "https://meshkit.pro/embed",
                 "https://meshkit.pro/stl-scale-units-fixer",
-                "https://meshkit.pro/stl-simplifier-online"
+                "https://meshkit.pro/stl-simplifier-online",
+                "https://meshkit.pro/bambu-lab-empty-spool-weight",
+                "https://meshkit.pro/polymaker-empty-spool-weight",
+                "https://meshkit.pro/elegoo-empty-spool-weight",
+                "https://meshkit.pro/overture-empty-spool-weight",
+                "https://meshkit.pro/sunlu-empty-spool-weight",
+                "https://meshkit.pro/esun-empty-spool-weight",
+                "https://meshkit.pro/prusament-empty-spool-weight",
+                "https://meshkit.pro/hatchbox-empty-spool-weight",
+                "https://meshkit.pro/jessie-empty-spool-weight",
+                "https://meshkit.pro/inland-empty-spool-weight"
               ]
             }' || true

@@ -368,4 +368,60 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
       expect(buf.byteLength).toBe(84 + 50 * buf.readUInt32LE(80));
     }
   });
+
+  test('Spool brand page: calculator, brand links, and the submission form validates before sending', async ({ page }) => {
+    await page.goto('/bambu-lab-empty-spool-weight');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    // Mini calculator: 650 g gross on the 250 g reusable spool → 400 g, 40%.
+    await expect(page.locator('#bsLeft')).toHaveText('400');
+    await expect(page.locator('#bsPct')).toHaveText('40%');
+    await page.fill('#bsGross', '200');
+    await expect(page.locator('#bsLeft')).toContainText('below tare');
+
+    // Brand prefilled, client-side validation blocks nonsense without a network call.
+    await expect(page.locator('#ssBrand')).toHaveValue('Bambu Lab');
+    let requests = 0;
+    page.on('request', (r) => { if (r.url().includes('firestore.googleapis.com')) requests++; });
+    await page.fill('#ssTare', '5');
+    // Submit via the form API: on the 390 px mobile project the consent banner can overlap the button.
+    await page.locator('#spoolSubmitForm').evaluate((f) => (f as HTMLFormElement).requestSubmit());
+    await expect(page.locator('#spoolSubmitMsg')).toContainText('between 20 g and 1500 g');
+    expect(requests).toBe(0);
+
+    // Database page lists the brand and links to it.
+    await page.goto('/empty-spool-weight-database');
+    await expect(page.locator('#spoolDbTable a[href="/bambu-lab-empty-spool-weight"]').first()).toBeVisible();
+    await expect(page.locator('#spoolSubmitForm')).toBeVisible();
+  });
+
+  test('Spool-left embed: brand ordering, tare math, custom tare, hostile host CSS isolated', async ({ page, baseURL }) => {
+    await page.setContent(`<!doctype html><html><head><style>select,input{font-size:40px!important;color:red!important}</style></head><body>
+      <script src="${baseURL}/embed/spool-left.js" data-brand="polymaker" data-title="Spool check"></script></body></html>`, { waitUntil: 'load' });
+    const host = page.locator('[data-meshkit-embed="spool-left"]');
+    await expect(host).toHaveCount(1);
+    const first = await host.evaluate((el) => {
+      const r = el.shadowRoot!;
+      const sel = r.querySelector('select') as HTMLSelectElement;
+      return { title: r.querySelector('h2')?.textContent, firstOption: sel.options[0].textContent, left: r.textContent, fontSize: getComputedStyle(sel).fontSize };
+    });
+    expect(first.title).toBe('Spool check');
+    expect(first.firstOption).toContain('Polymaker'); // data-brand puts the maker first
+    expect(first.left).toMatch(/510 g/); // 650 − 140
+    expect(first.left).toMatch(/51%/);
+    expect(first.fontSize).toBe('14px');
+
+    // Typing a custom tare switches the select to "custom" and recomputes.
+    await host.evaluate((el) => {
+      const r = el.shadowRoot!;
+      const tare = r.querySelectorAll('input')[1] as HTMLInputElement;
+      tare.value = '250';
+      tare.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const after = await host.evaluate((el) => ({ sel: (el.shadowRoot!.querySelector('select') as HTMLSelectElement).value, text: el.shadowRoot!.textContent }));
+    expect(after.sel).toBe('custom');
+    expect(after.text).toMatch(/400 g/);
+    expect(after.text).toContain('Powered by MeshKit');
+  });
 });

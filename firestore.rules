@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// MeshKit has no user accounts. The only thing a browser may do is append one
+// well-formed spool measurement to the submissions queue. Nothing is readable
+// from the client; approved rows are imported into src/data/spools.json at
+// build time by scripts/import-spool-submissions.ts.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function str(field, min, max) {
+      return request.resource.data[field] is string
+        && request.resource.data[field].size() >= min
+        && request.resource.data[field].size() <= max;
+    }
+    function optStr(field, max) {
+      return !(field in request.resource.data) || str(field, 0, max);
+    }
+    function num(field, min, max) {
+      return request.resource.data[field] is number
+        && request.resource.data[field] >= min
+        && request.resource.data[field] <= max;
+    }
+
+    match /spoolSubmissions/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'brand', 'line', 'spoolMaterial', 'tareG', 'netG', 'scale', 'note', 'credit',
+          'page', 'clientTime', 'formMs', 'website'
+        ])
+        && str('brand', 2, 60)
+        && str('line', 0, 80)
+        && request.resource.data.spoolMaterial in ['plastic', 'cardboard', 'other']
+        && num('tareG', 20, 1500)
+        && num('netG', 100, 10000)
+        && optStr('scale', 60)
+        && optStr('note', 280)
+        && optStr('credit', 40)
+        && str('page', 1, 120)
+        && str('clientTime', 10, 40)
+        // Honeypot must be empty and the form must have been open > 2 s.
+        && request.resource.data.website == ''
+        && num('formMs', 2000, 86400000);
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

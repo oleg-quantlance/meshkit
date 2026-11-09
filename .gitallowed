@@ -1,0 +1,5 @@
+# Firebase *web* API key for meshkit-e1c10. It is public by design (it ships in
+# the browser bundle; access is governed by firestore.rules) and is restricted
+# in Google Cloud to HTTP referrers on meshkit.pro and to the Firestore API only.
+src/data/firebase-public.json
+AIzaSyAMkXiyO6poFEH3ZBkMCH2mttAPnAZ9zo8
