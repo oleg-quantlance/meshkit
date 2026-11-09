@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && vite build -c vite.embed.config.ts",
+    "build": "tsc && vite build && npm run build:embed",
     "preview": "vite preview",
     "test": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "build:embed": "vite build -c vite.embed.config.ts"
+    "build:embed": "EMBED_ENTRY=print-cost vite build -c vite.embed.config.ts && EMBED_ENTRY=spool-left vite build -c vite.embed.config.ts"
   },
   "dependencies": {
     "fflate": "^0.8.0",

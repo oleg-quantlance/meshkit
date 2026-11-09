@@ -183,10 +183,37 @@
       </div>
     </section>
 
+    <section class="workbench tool-panel" style="margin-top:18px;">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>C. Second Widget: How Much Filament Is Left?</span>
+            <span style="color:var(--status-ok);">LIVE</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 10px;">
+            Gross spool weight minus the empty-spool tare from MeshKit's database. Optional <code>data-brand</code> puts one maker's spools first (e.g. <code>bambu-lab</code>, <code>polymaker</code>, <code>sunlu</code>).
+          </p>
+          <div class="code-box mono"><button type="button" id="emCopyBtn2" class="btn-primary">COPY</button><code id="emCode2">&lt;script src="https://meshkit.pro/embed/spool-left.js" data-brand="polymaker" async&gt;&lt;/script&gt;</code></div>
+          <p style="font-size:12px; color:var(--text-muted); margin:10px 0 0;">Same attributes as above for <code>data-theme</code>, <code>data-accent</code>, <code>data-title</code> and <code>data-compact</code>.</p>
+        </div>
+      </div>
+      <div class="wb-right">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>Live Preview</span>
+            <span class="mono" style="color:var(--text-muted);">spool-left.js</span>
+          </div>
+          <div class="embed-demo" id="emPreview2">
+            <script src="/embed/spool-left.js" data-brand="polymaker" async></script>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <article class="seo-content">
       <h2>What the Embeddable Calculator Does</h2>
       <p>
-        One <code>&lt;script&gt;</code> tag adds a working 3D print cost calculator to any web page. Visitors type filament grams, print hours, pick a material and a markup, and get a suggested price with the material, energy and wear breakdown — computed with the same <code>calculatePrintCost()</code> function that powers MeshKit's <a href="/3d-print-cost-calculator">full calculator</a> and <a href="/">G-code estimator</a>, so the numbers always agree. You set the defaults that fit your audience: your filament price, your currency, your printer's wattage and electricity rate, light or dark theme, and an accent colour to match your site.
+        One <code>&lt;script&gt;</code> tag adds a working 3D print cost calculator to any web page — and a second tag adds a "how much filament is left" calculator backed by the <a href="/empty-spool-weight-database">spool tare database</a>. Visitors type filament grams, print hours, pick a material and a markup, and get a suggested price with the material, energy and wear breakdown — computed with the same <code>calculatePrintCost()</code> function that powers MeshKit's <a href="/3d-print-cost-calculator">full calculator</a> and <a href="/">G-code estimator</a>, so the numbers always agree. You set the defaults that fit your audience: your filament price, your currency, your printer's wattage and electricity rate, light or dark theme, and an accent colour to match your site.
       </p>
       <p>
         The widget is 8 KB, has no dependencies, makes no network requests after loading, sets no cookies and sends nothing anywhere. It renders inside a Shadow DOM, so your page's CSS cannot break it and it cannot break your page. The only outbound link is the small "Powered by MeshKit" credit, which is required — it is how the widget stays free.

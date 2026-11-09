@@ -2424,6 +2424,18 @@ function initEmbedPage(): void {
   });
 
   render();
+
+  maybeEl('emCopyBtn2')?.addEventListener('click', async () => {
+    const text = maybeEl('emCode2')?.textContent ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+      maybeEl('emCopyBtn2')!.textContent = 'COPIED';
+      trackExportDownload('embed', 'snippet_spool');
+    } catch {
+      maybeEl('emCopyBtn2')!.textContent = 'SELECT & COPY';
+    }
+    setTimeout(() => { const b = maybeEl('emCopyBtn2'); if (b) b.textContent = 'COPY'; }, 2500);
+  });
 }
 
 
