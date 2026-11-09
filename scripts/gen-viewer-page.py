@@ -1,0 +1,295 @@
+#!/usr/bin/env python3
+"""Generates stl-viewer-online.html. Run from repo root."""
+from pathlib import Path
+import json, re, sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+gen = __import__("gen-converter-pages")  # reuse NAV_TABS / FOOTER_LINKS
+
+slug = "stl-viewer-online"
+url = f"https://meshkit.pro/{slug}"
+title = "STL Viewer Online — Free 3D File Viewer, No Upload"
+description = "View STL, 3MF and OBJ files in your browser: rotate, zoom, wireframe, top/front/side views, dimensions, volume, surface area and watertightness check. Nothing is uploaded."
+og_description = "Free browser-based STL/3MF/OBJ viewer with dimensions, volume and watertightness check. WebGL, zero upload."
+
+jsonld = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {"@type": "WebApplication", "name": "MeshKit STL Viewer", "url": url, "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}},
+        {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "MeshKit", "item": "https://meshkit.pro/"},
+            {"@type": "ListItem", "position": 2, "name": "STL Viewer Online", "item": url}]},
+    ],
+}
+
+html = f"""<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>{title}</title>
+  <meta name="description" content="{description}" />
+  <link rel="canonical" href="{url}" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="{title}" />
+  <meta property="og:description" content="{og_description}" />
+  <meta property="og:url" content="{url}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/{slug}.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{title}" />
+  <meta name="twitter:description" content="{og_description}" />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/{slug}.png" />
+  <script type="application/ld+json">
+  {json.dumps(jsonld, indent=2, ensure_ascii=False)}
+  </script>
+  <style>
+    .viewer-stage {{ position: relative; background: var(--bg-canvas); border-radius: 6px; overflow: hidden; min-height: 360px; flex: 1 1 auto; display: flex; }}
+    #viewerCanvas {{ display: block; width: 100%; height: 100%; min-height: 420px; flex: 1; cursor: grab; touch-action: none; }}
+    #viewerCanvas:active {{ cursor: grabbing; }}
+    .viewer-hud {{ position: absolute; left: 10px; top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }}
+    .viewer-hud button {{ font: 600 11px/1 var(--font-mono, monospace); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.18); background: rgba(20,20,19,0.75); color: #D4D3CD; cursor: pointer; }}
+    .viewer-hud button:hover {{ border-color: #FF5C1A; color: #fff; }}
+    .viewer-toggles {{ display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 12px; margin-top: 10px; }}
+    .viewer-toggles label {{ display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }}
+    #viewerFallback {{ padding: 24px; color: var(--status-warn); font-size: 13px; }}
+    @media (max-width: 720px) {{ #viewerCanvas {{ min-height: 300px; }} }}
+  </style>
+</head>
+<body data-page="viewer">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+{gen.NAV_TABS}
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Mesh tools">
+      <a href="/stl-viewer-online" class="active">STL Viewer</a>
+      <a href="/stl-repair-online">STL Repair</a>
+      <a href="/stl-volume-weight-calculator">STL Volume &amp; Weight</a>
+      <a href="/3mf-to-stl-converter">3MF to STL</a>
+      <a href="/obj-to-stl-converter">OBJ to STL</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">STL Viewer Online — Also Opens 3MF and OBJ, No Upload</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">RENDERER: WEBGL FLAT-SHADED · ORBIT CAMERA · Z-UP</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-viewer" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Mesh Input (.STL / .3MF / .OBJ)</span>
+            <span id="vwParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="vwDropzone" aria-label="Upload mesh file">
+            <label for="vwFileInput" class="hidden">Upload mesh file</label>
+            <input type="file" id="vwFileInput" accept=".stl,.3mf,.obj" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="vwFileName">[CLICK TO SELECT A MESH] OR DRAG .STL / .3MF / .OBJ HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="vwFileSub">Parsed in a Web Worker; rendered with WebGL in this tab only.</div>
+            <div class="btn-row">
+              <button type="button" id="vwBrowseBtn" class="btn-primary">BROWSE MESH...</button>
+              <button type="button" class="btn-secondary" data-viewer-sample="3mf">SAMPLE .3MF</button>
+              <button type="button" class="btn-secondary" data-viewer-sample="stl">SAMPLE .STL</button>
+              <button type="button" class="btn-secondary" data-viewer-sample="obj">SAMPLE .OBJ</button>
+            </div>
+            <div id="vwProgressBarWrap" class="progress-bar-wrap hidden" aria-label="Load progress">
+              <div id="vwProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Display</span>
+            <span style="color:var(--accent);">LOCAL</span>
+          </div>
+          <div class="viewer-toggles">
+            <label for="vwWireframeToggle"><input type="checkbox" id="vwWireframeToggle" /> Wireframe overlay</label>
+            <label for="vwGridToggle"><input type="checkbox" id="vwGridToggle" checked /> Bed grid (Z = 0)</label>
+            <button type="button" id="vwSnapshotBtn" class="btn-ghost">⬇ SAVE PNG PREVIEW</button>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); margin:10px 0 0;">
+            Drag to rotate · wheel or pinch to zoom · right-drag or shift-drag to pan. Faces facing away from you are tinted orange so inside-out shells are obvious.
+          </p>
+        </div>
+
+        <div class="wb-section mono" id="vwLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:140px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// MESH VIEWER LOG</div>
+          <div>Awaiting .STL, .3MF or .OBJ selection...</div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="viewer-stage">
+          <canvas id="viewerCanvas" aria-label="3D preview of the loaded mesh" role="img"></canvas>
+          <div id="viewerFallback" class="hidden"></div>
+          <div class="viewer-hud" aria-label="View presets">
+            <button type="button" data-viewer-view="iso">ISO</button>
+            <button type="button" data-viewer-view="top">TOP</button>
+            <button type="button" data-viewer-view="front">FRONT</button>
+            <button type="button" data-viewer-view="right">RIGHT</button>
+            <button type="button" data-viewer-view="fit">FIT</button>
+          </div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Dimensions</div>
+            <div class="kpi-val" id="vwKpiA" style="font-size:17px;">—</div>
+            <div class="kpi-sub">X × Y × Z, mm</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Triangles</div>
+            <div class="kpi-val" id="vwKpiB">—</div>
+            <div class="kpi-sub">facets rendered</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Volume</div>
+            <div class="kpi-val" id="vwKpiC">—</div>
+            <div class="kpi-sub" id="vwKpiCSub">surface area</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Mesh Health</div>
+            <div class="kpi-val" id="vwKpiD" style="font-size:15px;">—</div>
+            <div class="kpi-sub" id="vwKpiDSub">holes · non-manifold · orientation</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the Online STL Viewer Does</h2>
+      <p>
+        Before you slice, share or buy a model you usually want to look at it: is it the right size, is it standing up, is it closed, does it have the detail the thumbnail promised? This viewer opens <code>.stl</code> (binary or ASCII), <code>.3mf</code> (including Bambu Studio, OrcaSlicer, PrusaSlicer and Cura project files) and <code>.obj</code> directly in your browser, renders them with WebGL, and runs the same mesh audit as the <a href="/stl-repair-online">STL Repair</a> tool: dimensions, triangle count, volume, surface area, open edges, holes, non-manifold edges and whether the normals point outward.
+      </p>
+      <p>
+        The model is parsed in a Web Worker and drawn on a canvas in this tab. Nothing is uploaded, nothing is stored, and there is no account — close the tab and it is gone. Files up to 100 MB load in a second or two on a laptop; a few million triangles render smoothly on any machine with a GPU from the last decade.
+      </p>
+
+      <h2>How to View an STL, 3MF or OBJ in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop the file</strong> on the upload area, or click one of the three sample buttons to see the viewer working.</li>
+        <li><strong>Orbit:</strong> drag to rotate, scroll or pinch to zoom, right-drag (or shift-drag) to pan. Use the <strong>ISO / TOP / FRONT / RIGHT</strong> presets to check orientation and <strong>FIT</strong> to re-frame.</li>
+        <li><strong>Read the numbers:</strong> dimensions in millimetres, volume in cm³ (multiply by your filament's density for grams — or open <a href="/stl-volume-weight-calculator">Volume &amp; Weight</a>), and the mesh-health cell. Toggle <strong>Wireframe</strong> to inspect triangulation density; save a PNG preview for a listing or a forum post.</li>
+      </ol>
+
+      <h2>Worked Example: Reading the Mesh-Health Cell</h2>
+      <div class="formula-box">
+        WATERTIGHT · 0 holes · 0 non-manifold · normals outward &nbsp;→&nbsp; slice it<br/>
+        24 OPEN EDGES · 1 hole &nbsp;→&nbsp; an opening (a vase) or a missing face; repair if it should be solid<br/>
+        inside-out &nbsp;→&nbsp; signed volume is negative; the viewer tints back-faces orange so the whole shell looks orange<br/>
+        non-manifold &gt; 0 &nbsp;→&nbsp; an edge shared by 3+ faces; slicers may drop or fill it unpredictably
+      </div>
+      <p>
+        Volume is computed from signed tetrahedra (the divergence theorem), so it is only meaningful for closed shells; for an open mesh treat it as approximate. Surface area is exact for any triangle soup.
+      </p>
+
+      <h2>Why a Browser Viewer Instead of a Slicer?</h2>
+      <ul>
+        <li><strong>Speed:</strong> opening a slicer, importing, waiting for it to analyse — versus dropping a file on a tab.</li>
+        <li><strong>Privacy:</strong> a client's CAD or a commercial model never leaves your machine; most online viewers upload to a server first.</li>
+        <li><strong>Checking downloads:</strong> verify a Printables / Thingiverse / MakerWorld file is what it claims before committing to a print.</li>
+        <li><strong>3MF projects:</strong> see what is actually on the plate — components, transforms and units resolved — without launching the slicer that made it.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Colours, textures and materials are not displayed; everything is one flat-shaded material. Multiple objects in a 3MF or OBJ are merged into one view. The viewer requires WebGL; where it is unavailable the dimensions and audit still run and are shown without the 3D preview. Very large files (tens of millions of triangles) depend on your device's memory.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Is my file uploaded to view it?</summary>
+          <p>No. The file is read in a Web Worker and rendered with WebGL in this tab. The page makes no network request with your data.</p>
+        </details>
+        <details>
+          <summary>Why is the whole model orange?</summary>
+          <p>Faces whose normals point away from the camera are tinted orange. If every face is orange, the mesh is inside-out (negative signed volume). <a href="/stl-repair-online">STL Repair</a> flips it in one click.</p>
+        </details>
+        <details>
+          <summary>The model is lying on its side.</summary>
+          <p>The viewer is Z-up, like printers and slicers. A model that lies down was exported Y-up (Blender, Maya, glTF). For OBJ files, the <a href="/obj-to-stl-converter">OBJ to STL converter</a> has a one-click Y-up → Z-up option.</p>
+        </details>
+        <details>
+          <summary>Can I measure a specific feature?</summary>
+          <p>Not yet — the viewer reports overall dimensions, volume and surface area. Point-to-point measurement is on the roadmap.</p>
+        </details>
+        <details>
+          <summary>Does it open 3MF project files from Bambu Studio or PrusaSlicer?</summary>
+          <p>Yes. The plate layout, component transforms, Production-extension sub-parts and units are all resolved, and support/modifier objects are skipped, so you see the printable geometry as placed.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // What "Watertight" Means
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Every edge is shared by exactly two triangles with consistent winding. Zero boundary edges, zero non-manifold edges, positive signed volume. That is the condition a slicer needs to decide what is inside the part.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; REPAIR OPEN EDGES &amp; FLIPPED FACES</a>
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; WEIGHT &amp; MATERIAL COST FROM VOLUME</a>
+          <a href="/stl-to-3mf-converter" class="btn-secondary route-link">07 -&gt; PACKAGE AS 3MF FOR YOUR SLICER</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+{gen.FOOTER_LINKS}
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+"""
+
+(ROOT / f"{slug}.html").write_text(html, encoding="utf-8")
+words = len(re.sub(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>", " ", html).split())
+print(f"wrote {slug}.html (title {len(title)} chars, {words} words)")

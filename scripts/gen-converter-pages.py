@@ -25,6 +25,9 @@ FOOTER_LINKS = """        <a href="/">G-Code Cost</a>
         <a href="/3mf-to-stl-converter">3MF to STL</a>
         <a href="/stl-to-3mf-converter">STL to 3MF</a>
         <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/obj-to-stl-converter">OBJ to STL</a>
+        <a href="/stl-viewer-online">STL Viewer</a>
+        <a href="/embed">Embed Calculator</a>
         <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
         <a href="/filament-spool-weight-calculator">Spool Weight</a>
         <a href="/empty-spool-weight-database">Spool Tare DB</a>
@@ -349,6 +352,123 @@ PAGES = [
         </details>
       </div>""",
     },
+    {
+        "slug": "obj-to-stl-converter",
+        "action": "obj-to-stl",
+        "title": "Convert OBJ to STL Online — Free, No Upload",
+        "description": "Convert Wavefront .obj to binary or ASCII STL in your browser. Triangulates quads and n-gons, picks units (mm, cm, m, inch), fixes Y-up to Z-up, drops materials and UVs. Nothing is uploaded.",
+        "og_description": "Free browser-based OBJ to STL converter: polygon triangulation, unit scaling, Y-up fix, watertightness report — zero upload.",
+        "h1": "Convert OBJ to STL Online — Triangulated, Scaled, No Upload",
+        "spec_tag": "KERNEL: WAVEFRONT OBJ PARSER + FAN TRIANGULATOR",
+        "app_name": "MeshKit OBJ to STL Converter",
+        "breadcrumb": "OBJ to STL Converter",
+        "input_label": "A. Wavefront Mesh Input (.OBJ)",
+        "accept": ".obj",
+        "drop_text": "[CLICK TO SELECT .OBJ] OR DRAG MESH HERE",
+        "drop_sub": "Reads v / f records locally; materials, UVs and normals are ignored (STL has none).",
+        "browse": "BROWSE .OBJ...",
+        "sample": "LOAD SAMPLE .OBJ",
+        "get_sample": "⬇ GET TEST .OBJ",
+        "aria_upload": "Upload OBJ file",
+        "options_title": "B. Units, Up Axis &amp; STL Encoding",
+        "options_html": """            <div>
+              <label class="field-label" for="cvUnitSelect"><span>OBJ Units</span><span class="unit-tag">[scale → mm]</span></label>
+              <select id="cvUnitSelect">
+                <option value="millimeter" selected>Millimeters (×1) — CAD exports</option>
+                <option value="centimeter">Centimeters (×10)</option>
+                <option value="meter">Meters (×1000) — Blender, game assets</option>
+                <option value="inch">Inches (×25.4)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="cvUpAxisSelect"><span>Up Axis in File</span><span class="unit-tag">[orientation]</span></label>
+              <select id="cvUpAxisSelect">
+                <option value="z" selected>Z up (keep as-is)</option>
+                <option value="y">Y up (Blender / Maya / glTF) → rotate to Z up</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="cvFormatSelect"><span>STL Format</span><span class="unit-tag">[encoding]</span></label>
+              <select id="cvFormatSelect">
+                <option value="binary" selected>Binary STL (Compact)</option>
+                <option value="ascii">ASCII STL (Text)</option>
+              </select>
+            </div>""",
+        "log_title": "// OBJ → STL CONVERTER LOG",
+        "log_wait": "Awaiting .OBJ file selection...",
+        "kpi": [("Bounding Box", "X / Y / Z extents, mm"), ("Output Facets", "Triangles"), ("Output Size", "Binary STL"), ("OBJ Faces", "before triangulation")],
+        "export_status": "Select an .OBJ file to convert and export.",
+        "export_btn": "EXPORT .STL",
+        "related": [
+            ("/stl-repair-online", "02 -&gt; AUDIT &amp; REPAIR THE EXPORTED STL"),
+            ("/stl-viewer-online", "09 -&gt; PREVIEW THE RESULT IN THE 3D VIEWER"),
+            ("/stl-to-3mf-converter", "07 -&gt; PACKAGE AS 3MF FOR YOUR SLICER"),
+        ],
+        "reference_title": "Reference // Why Units and Up-Axis Matter",
+        "reference_text": "OBJ stores bare numbers. Blender exports in metres with Y up by default; CAD tools export millimetres with Z up. A 50 mm part exported from Blender arrives as 0.05 units lying on its side — pick <code>Meters</code> and <code>Y up</code> and it lands upright at 50 mm.",
+        "seo": """      <h2>What the Online OBJ to STL Converter Does</h2>
+      <p>
+        Wavefront OBJ is the lingua franca of 3D modelling, scanning and game art: Blender, Maya, ZBrush, Meshroom, Polycam and most photogrammetry apps export it. It stores vertices (<code>v</code>), faces (<code>f</code>) that can be triangles, quads or arbitrary polygons, plus normals, texture coordinates and material references that slicers do not use. STL — what every slicer, print service and mesh repair tool expects — stores triangles only. This converter reads the OBJ in your browser, fan-triangulates every polygon, resolves relative (negative) indices, merges all objects and groups into one mesh, applies the unit and up-axis you choose, and writes a binary or ASCII STL with recomputed facet normals.
+      </p>
+      <p>
+        Because OBJ has no units, the two options that matter most are <strong>units</strong> and <strong>up axis</strong>. Blender and most game pipelines write metres with Y up; CAD exporters write millimetres with Z up. Choose correctly here and the part lands in your slicer at the right size, standing on the bed. The mesh is audited for open edges and inverted winding before download, and nothing is uploaded — the file is parsed in a Web Worker on your machine (100 MB limit).
+      </p>
+
+      <h2>How to Convert OBJ to STL in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop the <code>.obj</code>:</strong> Only the <code>.obj</code> file is needed; the companion <code>.mtl</code> and textures are ignored because STL cannot carry colour.</li>
+        <li><strong>Set units and up axis:</strong> If the bounding box in the log reads 0.05 × 0.03 × 0.02 mm, your file is in metres — switch to <strong>Meters</strong>. If the model is lying on its side in the viewer or slicer, choose <strong>Y up → Z up</strong>.</li>
+        <li><strong>Export <code>.stl</code>:</strong> Binary is the default. The log lists how many faces were polygons, how many triangles came out, and whether the mesh is watertight. Open it in <a href="/stl-viewer-online">the viewer</a> to confirm orientation.</li>
+      </ol>
+
+      <h2>Worked Example: Fan Triangulation and Index Resolution</h2>
+      <div class="formula-box">
+        f 1 2 3 4 &nbsp;→&nbsp; triangles (1,2,3) and (1,3,4) &nbsp;·&nbsp; an n-gon with k corners becomes k − 2 triangles<br/>
+        f -3/1/1 -2/2/1 -1/3/1 &nbsp;→&nbsp; negative indices count back from the last vertex written so far<br/>
+        Sample vase: 193 vertices, 192 faces (168 quads + 24 cap triangles) → 360 STL facets, open top = 24 boundary edges<br/>
+        Blender default export: metres, Y up &nbsp;→&nbsp; choose Meters + Y up to get a 64 mm vase standing upright
+      </div>
+      <p>
+        Fan triangulation is exact for convex, planar polygons — which is what nearly every exporter writes. A non-planar or concave n-gon can produce a self-intersecting fan; if the log reports many open edges on a model that looked closed, re-export with "Triangulate faces" enabled in the source application.
+      </p>
+
+      <h2>Why Convert OBJ to STL?</h2>
+      <ul>
+        <li><strong>3D printing:</strong> slicers import OBJ unevenly (some ignore groups, some choke on UVs); STL is the safe path.</li>
+        <li><strong>Scans and sculpts:</strong> photogrammetry and ZBrush exports are OBJ by default; STL is what print services quote on.</li>
+        <li><strong>Mesh repair and measurement:</strong> MeshKit's <a href="/stl-repair-online">repair</a> and <a href="/stl-volume-weight-calculator">volume</a> tools work on STL.</li>
+        <li><strong>Stripping materials:</strong> a single geometry file with no dangling <code>.mtl</code> or texture references.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        Materials, per-vertex colours, texture coordinates and smoothing groups are discarded. Multiple objects become one STL; export each object separately if you need them apart. Free-form geometry (<code>curv</code>, <code>surf</code>, NURBS) and point or line elements are skipped. Faces referencing indices that do not exist are skipped and counted in the log.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Is my OBJ uploaded anywhere?</summary>
+          <p>No. Parsing, triangulation and STL writing run in a Web Worker in your browser. The only network requests the page makes are for its own assets and the sample file.</p>
+        </details>
+        <details>
+          <summary>My model comes out tiny / huge — what happened?</summary>
+          <p>OBJ has no unit, so the numbers are taken as millimetres by default. A Blender export in metres is 1,000× too small until you pick <strong>Meters</strong>. Check the bounding box in the log: it should match the real-world size you expect.</p>
+        </details>
+        <details>
+          <summary>The part is lying on its side in my slicer.</summary>
+          <p>The file is Y-up (Blender, Maya, glTF pipelines). Select <strong>Y up → Z up</strong>; the converter rotates the model so the original Y becomes Z, which is what printers and slicers assume.</p>
+        </details>
+        <details>
+          <summary>Do I need the .mtl file or textures?</summary>
+          <p>No. STL cannot store colour or textures, so the converter ignores <code>mtllib</code>/<code>usemtl</code> and <code>vt</code> records. Only the <code>.obj</code> itself is read.</p>
+        </details>
+        <details>
+          <summary>Why does the log report open edges when the model looked closed?</summary>
+          <p>Either the source genuinely has an opening (the sample vase does — its top is open), or a concave n-gon fan-triangulated badly, or vertices were duplicated along seams by the exporter. Run the STL through <a href="/stl-repair-online">STL Repair</a>, which welds coincident vertices and fills small holes.</p>
+        </details>
+      </div>""",
+    },
 ]
 
 
@@ -448,6 +568,8 @@ def render(p):
       <a href="/3mf-to-stl-converter"{' class="active"' if p['slug']=='3mf-to-stl-converter' else ''}>3MF to STL</a>
       <a href="/stl-to-3mf-converter"{' class="active"' if p['slug']=='stl-to-3mf-converter' else ''}>STL to 3MF</a>
       <a href="/stl-ascii-to-binary-converter"{' class="active"' if p['slug']=='stl-ascii-to-binary-converter' else ''}>STL ASCII ↔ Binary</a>
+      <a href="/obj-to-stl-converter"{' class="active"' if p['slug']=='obj-to-stl-converter' else ''}>OBJ to STL</a>
+      <a href="/stl-viewer-online">STL Viewer</a>
       <a href="/stl-repair-online">STL Repair</a>
     </nav>
 

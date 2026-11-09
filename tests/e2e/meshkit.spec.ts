@@ -169,4 +169,145 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
     await expect(page.locator('#cvFileName')).toContainText('accepts .stl files');
     await expect(page.locator('#cvParseState')).toHaveText('ERROR');
   });
+
+  test('OBJ to STL Converter: sample vase → 360 facets, unit switch rescales, Y-up fix rotates', async ({ page }) => {
+    await page.goto('/obj-to-stl-converter');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await expect(page.locator('#cvKpiB')).toHaveText('360');
+    await expect(page.locator('#cvKpiD')).toHaveText('192');
+    await expect(page.locator('#cvKpiA')).toContainText('48.00 × 48.00 × 64.00 mm');
+
+    await page.locator('#cvUnitSelect').selectOption('centimeter');
+    await expect(page.locator('#cvKpiA')).toContainText('480.00 × 480.00 × 640.00 mm');
+
+    await page.locator('#cvUnitSelect').selectOption('millimeter');
+    await page.locator('#cvUpAxisSelect').selectOption('y');
+    await expect(page.locator('#cvKpiA')).toContainText('48.00 × 64.00 × 48.00 mm');
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#cvDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('low-poly-vase.stl');
+    const path = await download.path();
+    if (path) expect(readFileSync(path).byteLength).toBe(84 + 50 * 360);
+  });
+
+  test('STL Viewer: loads all three sample formats, renders in WebGL, reports health, saves a PNG', async ({ page, browserName }) => {
+    await page.goto('/stl-viewer-online');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#vwParseState')).toHaveText('3MF');
+    await expect(page.locator('#vwKpiB')).toHaveText('204');
+    await expect(page.locator('#vwKpiD')).toHaveText('WATERTIGHT');
+
+    await page.locator('[data-viewer-sample="obj"]').click();
+    await expect(page.locator('#vwParseState')).toHaveText('OBJ');
+    await expect(page.locator('#vwKpiD')).toContainText('OPEN EDGES');
+
+    await page.locator('[data-viewer-sample="stl"]').click();
+    await expect(page.locator('#vwParseState')).toHaveText('STL');
+    await expect(page.locator('#vwKpiB')).toHaveText('10');
+
+    // WebGL actually drew something: the canvas is not uniformly the clear colour.
+    const hasWebGl = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl'));
+    if (hasWebGl) {
+      await expect(page.locator('#viewerCanvas')).toBeVisible();
+      const distinctColours = await page.evaluate(() => {
+        const c = document.getElementById('viewerCanvas') as HTMLCanvasElement;
+        const gl = c.getContext('webgl')!;
+        const px = new Uint8Array(c.width * c.height * 4);
+        gl.readPixels(0, 0, c.width, c.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        const seen = new Set<number>();
+        for (let i = 0; i < px.length; i += 4 * 97) seen.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]);
+        return seen.size;
+      });
+      expect(distinctColours).toBeGreaterThan(3);
+
+      await page.locator('[data-viewer-view="top"]').click();
+      await page.locator('#vwWireframeToggle').check();
+      const downloadPromise = page.waitForEvent('download');
+      await page.locator('#vwSnapshotBtn').click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toBe('defective-cube-preview.png');
+    } else {
+      test.info().annotations.push({ type: 'note', description: `no WebGL in ${browserName}; metrics-only path verified` });
+      await expect(page.locator('#viewerFallback')).toBeVisible();
+    }
+
+    await page.locator('#vwFileInput').setInputFiles({ name: 'nope.step', mimeType: 'text/plain', buffer: Buffer.from('ISO-10303-21;') });
+    await expect(page.locator('#vwFileName')).toContainText('accepts .stl files');
+  });
+
+  test('Embed page: live preview renders the widget, snippet tracks options, copy works', async ({ page, context, browserName }) => {
+    if (browserName === 'chromium') {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    }
+    await page.goto('/embed');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    // The widget mounted inside the preview with a shadow root and computed the default example.
+    const host = page.locator('#emPreview [data-meshkit-embed="print-cost"]');
+    await expect(host).toHaveCount(1);
+    const text = await host.evaluate((el) => el.shadowRoot?.textContent ?? '');
+    expect(text).toContain('Powered by MeshKit');
+    expect(text).toMatch(/\$7\.01/); // 45 g @ $22/kg: (0.99 + 0.084 + 1.05) × 1.1 = 2.3364 → ×3 = 7.01
+
+    // Change options → snippet updates and the preview re-renders with the new currency.
+    await page.fill('#emCurrency', '€');
+    await page.fill('#emPrice', '30');
+    await page.selectOption('#emTheme', 'dark');
+    await expect(page.locator('#emCode')).toContainText('data-price-per-kg="30"');
+    await expect(page.locator('#emCode')).toContainText('data-currency="€"');
+    await expect(page.locator('#emCode')).toContainText('data-theme="dark"');
+    await expect
+      .poll(async () => host.evaluate((el) => el.shadowRoot?.textContent ?? ''), { timeout: 5000 })
+      .toMatch(/€8\.20/); // 45 g @ €30/kg: (1.35 + 0.084 + 1.05) × 1.1 = 2.7324 → ×3 = 8.20
+
+    if (browserName === 'chromium') {
+      await page.click('#emCopyBtn');
+      await expect(page.locator('#emCopyState')).toHaveText('COPIED');
+      const clip = await page.evaluate(() => navigator.clipboard.readText());
+      expect(clip).toContain('https://meshkit.pro/embed/print-cost.js');
+    }
+  });
+
+  test('Embed widget on a third-party page: isolated styles, configurable, credit link intact', async ({ page, baseURL }) => {
+    await page.setContent(`<!doctype html><html><head><style>input{background:red!important;font-size:40px!important}</style></head><body>
+      <h1>Host page</h1>
+      <script src="${baseURL}/embed/print-cost.js" data-price-per-kg="25" data-currency="£" data-accent="#123456" data-title="Quote your print" data-watts="200" data-kwh="0.30"></script>
+      <p>after</p></body></html>`, { waitUntil: 'load' });
+
+    const host = page.locator('[data-meshkit-embed="print-cost"]');
+    await expect(host).toHaveCount(1);
+    // Mounted right after the script tag, before the <p>.
+    expect(await host.evaluate((el) => el.nextElementSibling?.tagName)).toBe('P');
+
+    const sr = await host.evaluate((el) => {
+      const root = el.shadowRoot!;
+      const input = root.querySelector('input') as HTMLInputElement;
+      const link = root.querySelector('a') as HTMLAnchorElement;
+      return {
+        title: root.querySelector('h2')?.textContent,
+        fontSize: getComputedStyle(input).fontSize,
+        bg: getComputedStyle(input).backgroundColor,
+        href: link.href,
+        target: link.target,
+        rel: link.rel,
+        text: root.textContent ?? '',
+      };
+    });
+    expect(sr.title).toBe('Quote your print');
+    expect(sr.fontSize).toBe('14px'); // host !important rules did not leak in
+    expect(sr.bg).not.toBe('rgb(255, 0, 0)');
+    expect(sr.href).toContain('meshkit.pro/3d-print-cost-calculator?utm_source=embed');
+    expect(sr.target).toBe('_blank');
+    expect(sr.rel).toContain('noopener');
+    expect(sr.text).toContain('200 W · £0.3/kWh');
+    expect(sr.text).toMatch(/£\d+\.\d\d/);
+  });
 });

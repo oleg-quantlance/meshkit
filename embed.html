@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>Embed a 3D Print Cost Calculator on Your Site — Free</title>
+  <meta name="description" content="Add a free 3D print cost calculator to your blog, Etsy shop page or makerspace site with one script tag. 8 KB, no dependencies, no tracking, your own filament price and currency. Live demo and copy-paste code." />
+  <link rel="canonical" href="https://meshkit.pro/embed" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Embed a 3D Print Cost Calculator on Your Site — Free" />
+  <meta property="og:description" content="One script tag adds a 3D print cost calculator to any page. 8 KB, no dependencies, no tracking, configurable price and currency." />
+  <meta property="og:url" content="https://meshkit.pro/embed" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/embed.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Embed a 3D Print Cost Calculator on Your Site — Free" />
+  <meta name="twitter:description" content="One script tag adds a 3D print cost calculator to any page. 8 KB, no dependencies, no tracking, configurable price and currency." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/embed.png" />
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "MeshKit Embeddable Print Cost Calculator",
+      "url": "https://meshkit.pro/embed",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "MeshKit",
+          "item": "https://meshkit.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Embed Calculator",
+          "item": "https://meshkit.pro/embed"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <style>
+    .embed-demo { padding: 18px; background: var(--bg-subtle); border-radius: 8px; }
+    .code-box { position: relative; background: var(--bg-canvas); color: #D4D3CD; border-radius: 6px; padding: 14px 110px 14px 14px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+    .code-box button { position: absolute; top: 10px; right: 10px; }
+    .opt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .opt-table th, .opt-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .opt-table code { font-size: 12px; }
+  </style>
+</head>
+<body data-page="embed">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Cost tools">
+      <a href="/">G-Code Time Estimator</a>
+      <a href="/3d-print-cost-calculator">Manual Cost Calculator</a>
+      <a href="/embed" class="active">Embed Calculator</a>
+      <a href="/filament-spool-weight-calculator">Spool Weight</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Embed a 3D Print Cost Calculator on Your Site</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">WIDGET: 8 KB IIFE · SHADOW DOM · 0 DEPENDENCIES · 0 TRACKING</span>
+        <span>SAME MATH AS THE FULL CALCULATOR</span>
+      </div>
+    </div>
+
+    <section id="panel-embed" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Configure Your Snippet</span>
+            <span style="color:var(--status-ok);">LIVE</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="emPrice"><span>Default price per kg</span><span class="unit-tag">[your filament]</span></label>
+              <input type="number" id="emPrice" value="22" min="0" step="0.5" />
+            </div>
+            <div>
+              <label class="field-label" for="emCurrency"><span>Currency symbol</span><span class="unit-tag">[prefix]</span></label>
+              <input type="text" id="emCurrency" value="$" maxlength="4" />
+            </div>
+            <div>
+              <label class="field-label" for="emTheme"><span>Theme</span><span class="unit-tag">[host page]</span></label>
+              <select id="emTheme">
+                <option value="light" selected>Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="emAccent"><span>Accent colour</span><span class="unit-tag">[hex]</span></label>
+              <input type="text" id="emAccent" value="#C43E0B" maxlength="9" />
+            </div>
+            <div>
+              <label class="field-label" for="emWatts"><span>Printer draw</span><span class="unit-tag">[W]</span></label>
+              <input type="number" id="emWatts" value="150" min="0" step="10" />
+            </div>
+            <div>
+              <label class="field-label" for="emKwh"><span>Electricity</span><span class="unit-tag">[per kWh]</span></label>
+              <input type="number" id="emKwh" value="0.16" min="0" step="0.01" />
+            </div>
+            <div>
+              <label class="field-label" for="emTitle"><span>Widget title</span><span class="unit-tag">[text]</span></label>
+              <input type="text" id="emTitle" value="3D Print Cost Calculator" maxlength="80" />
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Copy the Snippet</span>
+            <span id="emCopyState" style="color:var(--accent);">PASTE ANYWHERE IN YOUR HTML</span>
+          </div>
+          <div class="code-box mono" id="emCodeBox"><button type="button" id="emCopyBtn" class="btn-primary">COPY</button><code id="emCode">&lt;script src="https://meshkit.pro/embed/print-cost.js" data-price-per-kg="22" data-currency="$" async&gt;&lt;/script&gt;</code></div>
+          <p style="font-size:12px; color:var(--text-muted); margin:10px 0 0;">
+            Works in WordPress (Custom HTML block), Squarespace / Wix (embed block), Shopify (Custom Liquid), Ghost, Webflow, plain HTML, and Etsy-adjacent landing pages. Not inside the Etsy listing itself — Etsy strips scripts.
+          </p>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>Live Preview</span>
+            <span class="mono" style="color:var(--text-muted);">renders exactly as on your page</span>
+          </div>
+          <div class="embed-demo" id="emPreview">
+            <script src="/embed/print-cost.js" data-price-per-kg="22" data-currency="$" async></script>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the Embeddable Calculator Does</h2>
+      <p>
+        One <code>&lt;script&gt;</code> tag adds a working 3D print cost calculator to any web page. Visitors type filament grams, print hours, pick a material and a markup, and get a suggested price with the material, energy and wear breakdown — computed with the same <code>calculatePrintCost()</code> function that powers MeshKit's <a href="/3d-print-cost-calculator">full calculator</a> and <a href="/">G-code estimator</a>, so the numbers always agree. You set the defaults that fit your audience: your filament price, your currency, your printer's wattage and electricity rate, light or dark theme, and an accent colour to match your site.
+      </p>
+      <p>
+        The widget is 8 KB, has no dependencies, makes no network requests after loading, sets no cookies and sends nothing anywhere. It renders inside a Shadow DOM, so your page's CSS cannot break it and it cannot break your page. The only outbound link is the small "Powered by MeshKit" credit, which is required — it is how the widget stays free.
+      </p>
+
+      <h2>How to Embed It in 3 Steps</h2>
+      <ol>
+        <li><strong>Set your defaults</strong> in section A. Price per kg and currency are the ones that matter; everything else has sane defaults.</li>
+        <li><strong>Copy the snippet</strong> from section B. It updates live as you change the options.</li>
+        <li><strong>Paste it</strong> where you want the calculator to appear: a WordPress Custom HTML block, a Squarespace / Wix / Webflow embed element, a Shopify Custom Liquid section, or straight into your HTML. It renders right where the tag sits.</li>
+      </ol>
+
+      <h2>Configuration Options</h2>
+      <table class="opt-table">
+        <thead><tr><th>Attribute</th><th>Default</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>data-price-per-kg</code></td><td><code>22</code></td><td>Pre-filled filament price; visitors can change it</td></tr>
+          <tr><td><code>data-currency</code></td><td><code>$</code></td><td>Prefix shown before amounts (<code>€</code>, <code>£</code>, <code>CA$</code> …)</td></tr>
+          <tr><td><code>data-theme</code></td><td><code>light</code></td><td><code>light</code> or <code>dark</code></td></tr>
+          <tr><td><code>data-accent</code></td><td><code>#C43E0B</code></td><td>Colour of the price and the focus ring (hex, rgb() or a CSS colour name)</td></tr>
+          <tr><td><code>data-watts</code></td><td><code>150</code></td><td>Printer power draw used for the energy line</td></tr>
+          <tr><td><code>data-kwh</code></td><td><code>0.16</code></td><td>Electricity price per kWh in your currency</td></tr>
+          <tr><td><code>data-wear-rate</code></td><td><code>0.3</code></td><td>Machine wear and maintenance per print hour</td></tr>
+          <tr><td><code>data-failure-pct</code></td><td><code>10</code></td><td>Failed-print buffer added to unit cost</td></tr>
+          <tr><td><code>data-markup</code></td><td><code>3</code></td><td>Pre-filled markup multiplier</td></tr>
+          <tr><td><code>data-title</code></td><td><code>3D Print Cost Calculator</code></td><td>Heading text</td></tr>
+          <tr><td><code>data-compact</code></td><td><code>false</code></td><td>Tighter grid for sidebars</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Worked Example: What the Widget Computes</h2>
+      <div class="formula-box">
+        Material = grams ÷ 1000 × price_per_kg<br/>
+        Energy = watts ÷ 1000 × hours × price_per_kWh &nbsp;·&nbsp; Wear = hours × wear_rate<br/>
+        Unit cost = (Material + Energy + Wear) × (1 + failure% ÷ 100)<br/>
+        Suggested price = Unit cost × markup &nbsp;·&nbsp; Profit = price − unit cost<br/>
+        45 g PLA at $22/kg, 3.5 h at 150 W and $0.16/kWh, 10% buffer, 3× markup → unit cost $2.34, price $7.01
+      </div>
+
+      <h2>Who Uses It</h2>
+      <ul>
+        <li><strong>3D-printing bloggers and YouTubers</strong> adding an interactive element to "how much does it cost to print" articles.</li>
+        <li><strong>Sellers of printed goods</strong> showing a transparent "price your custom print" tool on their own storefront.</li>
+        <li><strong>Print farms and makerspaces</strong> publishing their per-gram and per-hour pricing so customers can self-quote.</li>
+        <li><strong>Teachers and libraries</strong> explaining print economics on a course or lab page.</li>
+      </ul>
+
+      <h2>Limitations</h2>
+      <p>
+        The embed covers the common case: material, energy, wear, failure buffer and a markup multiplier. Marketplace fees, target-margin pricing, time-correction factors and per-channel comparisons live in the <a href="/3d-print-cost-calculator">full calculator</a>, which the credit link opens. The widget cannot run inside platforms that strip scripts (Etsy listings, Medium posts, most email tools).
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Does the widget track my visitors?</summary>
+          <p>No. It loads one 8 KB script from meshkit.pro and then runs entirely in the visitor's browser. No cookies, no analytics, no requests back to us. The credit link carries a UTM tag so we can see which sites send people, nothing more.</p>
+        </details>
+        <details>
+          <summary>Can I remove the "Powered by MeshKit" link?</summary>
+          <p>No — it is the only thing we ask in return for hosting and maintaining the widget. It is small, opens in a new tab, and uses your accent colour so it does not clash with your design.</p>
+        </details>
+        <details>
+          <summary>Will it slow down my page?</summary>
+          <p>The tag is <code>async</code>, so it never blocks rendering. 8 KB (3.5 KB over the wire) is smaller than most icons. It renders in about a millisecond once loaded.</p>
+        </details>
+        <details>
+          <summary>Will updates break my page?</summary>
+          <p>The URL is stable and the attributes are a contract: new options may be added, existing ones keep working. Styling is isolated in a Shadow DOM, so neither side's CSS leaks.</p>
+        </details>
+        <details>
+          <summary>Can I self-host the script?</summary>
+          <p>You may, but you lose automatic fixes and the numbers may drift from the live calculator over time. Hot-linking is the supported path; the file is served with CORS and a one-hour cache.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // Why Shadow DOM
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          The widget attaches a shadow root to a div it inserts after its own script tag. Styles inside start from <code>all: initial</code>, so a host page's resets, grid systems and button styles cannot reach in, and the widget's styles cannot reach out.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/3d-print-cost-calculator" class="btn-secondary route-link">01B -&gt; FULL COST CALCULATOR WITH FEES &amp; MARGINS</a>
+          <a href="/" class="btn-secondary route-link">01 -&gt; G-CODE TIME &amp; COST FROM A REAL FILE</a>
+          <a href="/filament-spool-weight-calculator" class="btn-secondary route-link">05 -&gt; HOW MUCH FILAMENT IS LEFT ON THE SPOOL</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/3mf-to-stl-converter">3MF to STL</a>
+        <a href="/stl-to-3mf-converter">STL to 3MF</a>
+        <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/obj-to-stl-converter">OBJ to STL</a>
+        <a href="/stl-viewer-online">STL Viewer</a>
+        <a href="/embed">Embed Calculator</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

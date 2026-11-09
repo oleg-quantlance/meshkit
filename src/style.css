@@ -63,11 +63,12 @@
   --bg-canvas: #161615;
   --text-main: #141413;
   --text-muted: #5C5B57;
-  --text-faint: #8A8882;
+  /* WCAG AA on #FAF9F5 and on #FFFFFF: faint 4.85:1, accent 4.93:1 (white text on accent 5.2:1). */
+  --text-faint: #6F6E68;
   --border: #C8C5BC;
   --border-strong: #141413;
-  --accent: #E04F16;
-  --accent-hover: #C43E0B;
+  --accent: #C43E0B;
+  --accent-hover: #A83508;
   --status-ok: #156D3B;
   --status-warn: #B45309;
 }
@@ -80,7 +81,7 @@
   --bg-canvas: #0C0C0B;
   --text-main: #EDEDEA;
   --text-muted: #9E9D97;
-  --text-faint: #666560;
+  --text-faint: #8A8882; /* 5.5:1 on the dark canvas; the old #666560 was 3.35:1 */
   --border: #32322F;
   --border-strong: #52524E;
   --accent: #FF5C1A;
