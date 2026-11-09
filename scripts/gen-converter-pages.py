@@ -35,6 +35,7 @@ FOOTER_LINKS = """        <a href="/">G-Code Cost</a>
         <a href="/empty-spool-weight-database">Spool Tare DB</a>
         <a href="/filament-grams-to-meters">Grams to Meters</a>
         <a href="/about">About</a>
+        <a href="/about#feedback">Feedback</a>
         <a href="/methodology">Methodology</a>
         <a href="/privacy">Privacy</a>"""
 

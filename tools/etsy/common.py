@@ -45,7 +45,7 @@ NUM1 = "#,##0.0"
 NUM0 = "#,##0"
 DATE = "yyyy-mm-dd"
 
-SUPPORT = "Support: message me on Etsy, or admin@quantlance.com (include the version number above)."
+SUPPORT = "Support: message me on Etsy, use meshkit.pro/about#feedback, or email meshkit@quantlance.com (include the version number above)."
 LICENCE = ("Licence: personal and small-business use. You may not resell, share or redistribute this file "
            "or copies of it.")
 OPEN_NOTE = ("Google Sheets: upload the file to Drive, open it, then File > Make a copy (or File > Import). "

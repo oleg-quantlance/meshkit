@@ -83,7 +83,12 @@
         When analytics consent is granted, MeshKit sends only aggregate interaction events (`file_load_success` with coarse size bucket `&lt;1 MB`, `1–10 MB`, `10–50 MB`, `&gt;50 MB` and parse duration in milliseconds; `file_load_error` with error code; `calculate`; `export_download`; `sample_load`; and `internal_tool_link`). File names and file contents are never included in analytics parameters.
       </p>
 
-      <h2 class="mono" style="font-size:16px; margin-top:24px;">3. Manage Your Analytics Consent</h2>
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">3. Voluntary Submissions (Spool Tare &amp; Feedback Forms)</h2>
+      <p>
+        If you voluntarily submit an empty-spool measurement on the <a href="/empty-spool-weight-database">Spool Tare Database</a> or a message via the <a href="/about#feedback">Feedback form</a>, MeshKit stores only the fields you type (such as spool weights, optional credit name, feedback text, and an optional reply email) plus submission timestamp in Google Cloud Firestore so the maintainer can review or reply. Reply emails are never published, sold, or used for marketing. To request deletion of a submitted message or email address, send a note through the <a href="/about#feedback">Feedback form</a>.
+      </p>
+
+      <h2 class="mono" style="font-size:16px; margin-top:24px;">4. Manage Your Analytics Consent</h2>
       <p>You can update your analytics preference for this browser at any time:</p>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;">
         <button type="button" id="privacyGrantBtn" class="btn-primary">GRANT ANALYTICS CONSENT</button>
@@ -113,6 +118,7 @@
         <a href="/empty-spool-weight-database">Spool Tare DB</a>
         <a href="/filament-grams-to-meters">Grams to Meters</a>
         <a href="/about">About</a>
+        <a href="/about#feedback">Feedback</a>
         <a href="/methodology">Methodology</a>
         <a href="/privacy">Privacy</a>
       </div>

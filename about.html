@@ -92,6 +92,54 @@
       </div>
     </section>
 
+    <section class="wb-section" id="feedback" style="margin-top:18px;">
+      <div class="section-head">
+        <span>Send Feedback or Report an Issue</span>
+        <span id="feedbackState" class="mono" style="color:var(--status-ok);">DIRECT TO MAINTAINER</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+        Found a parser edge case, a formula question, a missing filament preset, or need help with a MeshKit spreadsheet? Send a note below. No account required; include an email only if you want a reply.
+      </p>
+      <form id="feedbackForm" class="field-grid" novalidate data-page="/about">
+        <div>
+          <label class="field-label" for="fbTopic"><span>Category *</span><span class="unit-tag">[topic]</span></label>
+          <select id="fbTopic" name="topic">
+            <option value="bug">Bug or file parsing issue</option>
+            <option value="formula">Formula or methodology question</option>
+            <option value="feature">Tool or feature request</option>
+            <option value="spreadsheet">Spreadsheet template support</option>
+            <option value="spool_tare">Empty spool tare database</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="fbReplyEmail"><span>Reply email</span><span class="unit-tag">[optional]</span></label>
+          <input type="email" id="fbReplyEmail" name="replyEmail" maxlength="254" autocomplete="email" placeholder="you@example.com (leave blank for anonymous)" />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label class="field-label" for="fbToolRef"><span>Tool or page</span><span class="unit-tag">[optional]</span></label>
+          <input type="text" id="fbToolRef" name="toolRef" maxlength="120" placeholder="e.g. /3mf-to-stl-converter or Bambu Studio 3MF" />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label class="field-label" for="fbMessage"><span>Message *</span><span class="unit-tag">[10–1500 chars]</span></label>
+          <textarea id="fbMessage" name="message" rows="4" minlength="10" maxlength="1500" required placeholder="What happened, expected vs actual numbers, or what would make MeshKit more useful…" style="width:100%; background:var(--bg-input, var(--bg-page)); color:var(--text-main); border:1px solid var(--border-strong); padding:8px 10px; font-family:inherit; font-size:13px; resize:vertical;"></textarea>
+        </div>
+        <div class="hidden" aria-hidden="true">
+          <label for="fbWebsite">Website</label>
+          <input type="text" id="fbWebsite" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button type="submit" id="feedbackBtn" class="btn-primary">SEND FEEDBACK</button>
+          <span id="feedbackMsg" class="mono" style="font-size:12px; color:var(--text-muted);">Protected against automated spam · no account needed</span>
+        </div>
+      </form>
+      <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-subtle, var(--border-strong)); font-size:12px; color:var(--text-muted); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span>Prefer email (e.g. to attach a screenshot)?</span>
+        <button type="button" id="revealDirectEmailBtn" class="btn-secondary" style="padding:3px 8px; font-size:11px;">SHOW EMAIL ADDRESS</button>
+        <span id="revealDirectEmailSlot"></span>
+      </div>
+    </section>
+
     <footer class="site-footer mono">
       <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
       <div class="footer-links">
@@ -113,6 +161,7 @@
         <a href="/empty-spool-weight-database">Spool Tare DB</a>
         <a href="/filament-grams-to-meters">Grams to Meters</a>
         <a href="/about">About</a>
+        <a href="/about#feedback">Feedback</a>
         <a href="/methodology">Methodology</a>
         <a href="/privacy">Privacy</a>
       </div>

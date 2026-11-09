@@ -43,6 +43,32 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    match /feedbackSubmissions/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'topic', 'message', 'replyEmail', 'toolRef',
+          'page', 'clientTime', 'formMs', 'website'
+        ])
+        && request.resource.data.topic in [
+          'bug', 'formula', 'feature', 'spreadsheet', 'spool_tare', 'other'
+        ]
+        && str('message', 10, 1500)
+        && !request.resource.data.message.matches('(?is).*(https?://.*https?://.*https?://|<\\s*a\\s+href\\s*=|\\[\\s*url\\s*=).*')
+        && str('replyEmail', 0, 254)
+        && (
+          request.resource.data.replyEmail == ''
+          || request.resource.data.replyEmail.matches('^[^@\\s\\r\\n]{1,64}@[^@\\s\\r\\n]{1,185}\\.[^@\\s\\r\\n]{2,24}$')
+        )
+        && str('toolRef', 0, 120)
+        && str('page', 1, 120)
+        && request.resource.data.page.matches('^/.*')
+        && str('clientTime', 10, 40)
+        // Honeypot must be empty and the form must have been open >= 3.5 s.
+        && request.resource.data.website == ''
+        && num('formMs', 3500, 86400000);
+      allow read, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

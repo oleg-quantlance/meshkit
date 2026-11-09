@@ -54,6 +54,7 @@ import { loadMesh, transformScale, transformSimplify, type LoadMeshResult, type 
 import type { ScaleOptions, LengthUnit } from './core/scale';
 import type { SimplifyOptions } from './core/simplify';
 import { submitSpoolMeasurement, validateSpoolSubmission } from './core/submit';
+import { submitFeedback, validateFeedbackSubmission } from './core/feedback';
 import { MeshViewer } from './viewer/webgl';
 import {
   initAnalyticsConsentMode,
@@ -2702,3 +2703,80 @@ initEmbedPage();
 initTransformPage();
 initSpoolSubmitForm();
 initSpoolBrandPage();
+initFeedbackForm();
+
+function initFeedbackForm(): void {
+  const revealBtn = maybeEl<HTMLButtonElement>('revealDirectEmailBtn');
+  const revealSlot = maybeEl('revealDirectEmailSlot');
+  if (revealBtn && revealSlot) {
+    revealBtn.addEventListener('click', (e) => {
+      if (!e.isTrusted) return;
+      const addr = ['meshkit', 'quantlance.com'].join('@');
+      const link = document.createElement('a');
+      link.setAttribute('href', `mailto:${addr}`);
+      link.className = 'mono';
+      link.textContent = addr;
+      revealSlot.replaceChildren(link);
+      revealBtn.classList.add('hidden');
+    });
+  }
+
+  const form = maybeEl<HTMLFormElement>('feedbackForm');
+  if (!form) return;
+  const msg = getEl('feedbackMsg');
+  const state = maybeEl('feedbackState');
+  const btn = getEl<HTMLButtonElement>('feedbackBtn');
+  const toolInput = maybeEl<HTMLInputElement>('fbToolRef');
+  const openedAt = performance.now();
+  let lastSubmittedAt = 0;
+
+  if (toolInput && !toolInput.value) {
+    const fromParam = new URLSearchParams(window.location.search).get('from') ?? '';
+    if (/^\/[a-z0-9-]{0,80}$/.test(fromParam)) {
+      toolInput.value = fromParam;
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const now = performance.now();
+    if (lastSubmittedAt > 0 && now - lastSubmittedAt < 60000) {
+      msg.textContent = 'Please wait a minute before sending another message.';
+      msg.style.color = 'var(--status-warn)';
+      return;
+    }
+
+    const fd = new FormData(form);
+    const raw: Record<string, unknown> = {};
+    fd.forEach((v, k) => {
+      raw[k] = typeof v === 'string' ? v : '';
+    });
+    raw.page = form.getAttribute('data-page') || window.location.pathname;
+    raw.formMs = now - openedAt;
+
+    const v = validateFeedbackSubmission(raw);
+    if (!v.ok) {
+      msg.textContent = v.error;
+      msg.style.color = 'var(--status-warn)';
+      return;
+    }
+
+    btn.disabled = true;
+    msg.style.color = 'var(--text-muted)';
+    msg.textContent = 'Sending…';
+    const res = await submitFeedback(v.data);
+    btn.disabled = false;
+
+    if (res.ok) {
+      lastSubmittedAt = performance.now();
+      msg.textContent = `Thanks — message received (ref ${res.id.slice(0, 6)}).`;
+      msg.style.color = 'var(--status-ok)';
+      if (state) state.textContent = 'RECEIVED';
+      form.reset();
+      trackCalculate('feedback_submission');
+    } else {
+      msg.textContent = res.error;
+      msg.style.color = 'var(--status-warn)';
+    }
+  });
+}
