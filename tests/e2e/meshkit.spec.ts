@@ -169,4 +169,76 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
     await expect(page.locator('#cvFileName')).toContainText('accepts .stl files');
     await expect(page.locator('#cvParseState')).toHaveText('ERROR');
   });
+
+  test('OBJ to STL Converter: sample vase → 360 facets, unit switch rescales, Y-up fix rotates', async ({ page }) => {
+    await page.goto('/obj-to-stl-converter');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#cvParseState')).toHaveText('OK');
+    await expect(page.locator('#cvKpiB')).toHaveText('360');
+    await expect(page.locator('#cvKpiD')).toHaveText('192');
+    await expect(page.locator('#cvKpiA')).toContainText('48.00 × 48.00 × 64.00 mm');
+
+    await page.locator('#cvUnitSelect').selectOption('centimeter');
+    await expect(page.locator('#cvKpiA')).toContainText('480.00 × 480.00 × 640.00 mm');
+
+    await page.locator('#cvUnitSelect').selectOption('millimeter');
+    await page.locator('#cvUpAxisSelect').selectOption('y');
+    await expect(page.locator('#cvKpiA')).toContainText('48.00 × 64.00 × 48.00 mm');
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#cvDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('low-poly-vase.stl');
+    const path = await download.path();
+    if (path) expect(readFileSync(path).byteLength).toBe(84 + 50 * 360);
+  });
+
+  test('STL Viewer: loads all three sample formats, renders in WebGL, reports health, saves a PNG', async ({ page, browserName }) => {
+    await page.goto('/stl-viewer-online');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#vwParseState')).toHaveText('3MF');
+    await expect(page.locator('#vwKpiB')).toHaveText('204');
+    await expect(page.locator('#vwKpiD')).toHaveText('WATERTIGHT');
+
+    await page.locator('[data-viewer-sample="obj"]').click();
+    await expect(page.locator('#vwParseState')).toHaveText('OBJ');
+    await expect(page.locator('#vwKpiD')).toContainText('OPEN EDGES');
+
+    await page.locator('[data-viewer-sample="stl"]').click();
+    await expect(page.locator('#vwParseState')).toHaveText('STL');
+    await expect(page.locator('#vwKpiB')).toHaveText('10');
+
+    // WebGL actually drew something: the canvas is not uniformly the clear colour.
+    const hasWebGl = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl'));
+    if (hasWebGl) {
+      await expect(page.locator('#viewerCanvas')).toBeVisible();
+      const distinctColours = await page.evaluate(() => {
+        const c = document.getElementById('viewerCanvas') as HTMLCanvasElement;
+        const gl = c.getContext('webgl')!;
+        const px = new Uint8Array(c.width * c.height * 4);
+        gl.readPixels(0, 0, c.width, c.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        const seen = new Set<number>();
+        for (let i = 0; i < px.length; i += 4 * 97) seen.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]);
+        return seen.size;
+      });
+      expect(distinctColours).toBeGreaterThan(3);
+
+      await page.locator('[data-viewer-view="top"]').click();
+      await page.locator('#vwWireframeToggle').check();
+      const downloadPromise = page.waitForEvent('download');
+      await page.locator('#vwSnapshotBtn').click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toBe('defective-cube-preview.png');
+    } else {
+      test.info().annotations.push({ type: 'note', description: `no WebGL in ${browserName}; metrics-only path verified` });
+      await expect(page.locator('#viewerFallback')).toBeVisible();
+    }
+
+    await page.locator('#vwFileInput').setInputFiles({ name: 'nope.step', mimeType: 'text/plain', buffer: Buffer.from('ISO-10303-21;') });
+    await expect(page.locator('#vwFileName')).toContainText('accepts .stl files');
+  });
 });

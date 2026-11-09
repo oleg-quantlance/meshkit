@@ -3,6 +3,8 @@ export const FILE_LIMITS = {
   stl: 100 * 1024 * 1024,   // 100 MB
   step: 50 * 1024 * 1024,   // 50 MB
   threemf: 100 * 1024 * 1024, // 100 MB (zip; expands in memory)
+  obj: 100 * 1024 * 1024,
+  mesh: 100 * 1024 * 1024, // viewer: any of stl / 3mf / obj
 } as const;
 
 export const ACCEPTED_EXTENSIONS: Record<ToolFileKind, string[]> = {
@@ -10,9 +12,11 @@ export const ACCEPTED_EXTENSIONS: Record<ToolFileKind, string[]> = {
   stl: ['.stl'],
   step: ['.step', '.stp'],
   threemf: ['.3mf'],
+  obj: ['.obj'],
+  mesh: ['.stl', '.3mf', '.obj'],
 };
 
-export type ToolFileKind = 'gcode' | 'stl' | 'step' | 'threemf';
+export type ToolFileKind = 'gcode' | 'stl' | 'step' | 'threemf' | 'obj' | 'mesh';
 
 export type ValidationErrorCode =
   | 'empty'

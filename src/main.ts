@@ -40,14 +40,18 @@ import {
 } from './core/step';
 import {
   convert3mfToStl,
+  convertObjToStl,
   convertStlEncoding,
   convertStlTo3mf,
+  type ObjToStlResult,
   type StlEncoding,
   type StlEncodingResult,
   type StlTo3mfResult,
   type ThreeMfToStlResult,
 } from './core/convert';
 import type { ConvertWorkerRequest } from './workers/convert.worker';
+import { loadMesh, type LoadMeshResult } from './core/convert';
+import { MeshViewer } from './viewer/webgl';
 import {
   initAnalyticsConsentMode,
   updateAnalyticsConsent,
@@ -1826,8 +1830,8 @@ function initGramsMetersPage(): void {
 // One controller, three pages. Each page declares the same element ids with a
 // prefix (cv*) and a data-converter attribute on <body> naming the action.
 // =========================================================================
-type ConvertAction = ConvertWorkerRequest['action'];
-type ConvertAnyResult = ThreeMfToStlResult | StlTo3mfResult | StlEncodingResult;
+type ConvertAction = Exclude<ConvertWorkerRequest['action'], 'load-mesh'>;
+type ConvertAnyResult = ThreeMfToStlResult | StlTo3mfResult | StlEncodingResult | ObjToStlResult;
 
 interface ConverterPageConfig {
   action: ConvertAction;
@@ -1848,9 +1852,18 @@ function formatBytes(n: number): string {
 }
 
 function runConversionLocally(req: ConvertWorkerRequest): ConvertAnyResult {
-  if (req.action === '3mf-to-stl') return convert3mfToStl(req.buffer, req.options);
-  if (req.action === 'stl-to-3mf') return convertStlTo3mf(req.buffer, req.options);
-  return convertStlEncoding(req.buffer, req.options);
+  switch (req.action) {
+    case '3mf-to-stl':
+      return convert3mfToStl(req.buffer, req.options);
+    case 'stl-to-3mf':
+      return convertStlTo3mf(req.buffer, req.options);
+    case 'obj-to-stl':
+      return convertObjToStl(req.buffer, req.options);
+    case 'stl-encoding':
+      return convertStlEncoding(req.buffer, req.options);
+    default:
+      throw new Error('not a conversion');
+  }
 }
 
 function initConverterPage(): void {
@@ -1895,6 +1908,19 @@ function initConverterPage(): void {
         target: (maybeEl<HTMLSelectElement>('cvTargetSelect')?.value || 'auto') as StlEncoding | 'auto',
       }),
       logTitle: 'STL ASCII ↔ BINARY LOG',
+    },
+    'obj-to-stl': {
+      action,
+      inputKind: 'obj',
+      samplePath: '/samples/low-poly-vase.obj',
+      sampleName: 'low-poly-vase.obj',
+      outputName: (name) => `${name.replace(/\.obj$/i, '')}.stl`,
+      readOptions: () => ({
+        outputFormat: (maybeEl<HTMLSelectElement>('cvFormatSelect')?.value === 'ascii' ? 'ascii' : 'binary') as StlEncoding,
+        unit: (maybeEl<HTMLSelectElement>('cvUnitSelect')?.value || 'millimeter') as 'millimeter' | 'centimeter' | 'meter' | 'inch',
+        yUpToZUp: maybeEl<HTMLSelectElement>('cvUpAxisSelect')?.value === 'y',
+      }),
+      logTitle: 'OBJ → STL CONVERTER LOG',
     },
   };
   const cfg = configs[action];
@@ -1975,9 +2001,12 @@ function initConverterPage(): void {
 
     const kpiD = getEl('cvKpiD');
     const kpiDSub = maybeEl('cvKpiDSub');
-    if (cfg.action === '3mf-to-stl' && 'info' in res) {
+    if (cfg.action === '3mf-to-stl' && 'info' in res && 'meshes' in res.info) {
       kpiD.textContent = `${res.info.meshes.length}`;
       if (kpiDSub) kpiDSub.textContent = `mesh object(s) · unit ${res.info.unit}`;
+    } else if (cfg.action === 'obj-to-stl' && 'info' in res && 'faceCount' in res.info) {
+      kpiD.textContent = res.info.faceCount.toLocaleString();
+      if (kpiDSub) kpiDSub.textContent = `OBJ faces (${res.info.polygonFaceCount.toLocaleString()} polygons split)`;
     } else if (cfg.action === 'stl-to-3mf' && 'vertexCount' in res) {
       kpiD.textContent = res.vertexCount.toLocaleString();
       if (kpiDSub) kpiDSub.textContent = `welded vertices (from ${(res.triangleCount * 3).toLocaleString()})`;
@@ -2044,14 +2073,14 @@ function initConverterPage(): void {
     void runConversion();
   });
 
-  ['cvFormatSelect', 'cvUnitSelect', 'cvTargetSelect', 'cvObjectName'].forEach((id) => {
+  ['cvFormatSelect', 'cvUnitSelect', 'cvTargetSelect', 'cvObjectName', 'cvUpAxisSelect'].forEach((id) => {
     maybeEl(id)?.addEventListener('change', () => void runConversion());
   });
   maybeEl('cvObjectName')?.addEventListener('input', debounce(() => void runConversion(), 250));
 
   maybeEl('cvDownloadBtn')?.addEventListener('click', () => {
     if (!lastResult) {
-      renderError(`Select a valid ${cfg.inputKind === 'threemf' ? '.3MF' : '.STL'} file before exporting.`);
+      renderError(`Select a valid ${cfg.inputKind === 'threemf' ? '.3MF' : cfg.inputKind === 'obj' ? '.OBJ' : '.STL'} file before exporting.`);
       return;
     }
     const filename = cfg.outputName(activeName, lastResult);
@@ -2099,6 +2128,218 @@ function initConverterPage(): void {
   });
 }
 
+
+// =========================================================================
+// TOOL 09: STL / 3MF / OBJ VIEWER
+// =========================================================================
+type ViewerLoadResult =
+  | { ok: true; kind: 'stl' | '3mf' | 'obj'; positions: Float32Array; metrics: StlAuditMetrics; logs: string[]; inputBytes: number }
+  | { ok: false; errorCode: string; error: string };
+
+function trianglesToPositions(res: Extract<LoadMeshResult, { ok: true }>): Float32Array {
+  const n = res.triangles.length;
+  const positions = new Float32Array(n * 9);
+  for (let i = 0; i < n; i++) {
+    const t = res.triangles[i];
+    positions.set([t.v0.x, t.v0.y, t.v0.z, t.v1.x, t.v1.y, t.v1.z, t.v2.x, t.v2.y, t.v2.z], i * 9);
+  }
+  return positions;
+}
+
+function initViewerPage(): void {
+  const canvas = maybeEl<HTMLCanvasElement>('viewerCanvas');
+  if (!canvas) return;
+
+  const logBox = getEl('vwLogBox');
+  const progressBarWrap = maybeEl('vwProgressBarWrap');
+  const progressBarFill = maybeEl('vwProgressBarFill');
+  const fallback = maybeEl('viewerFallback');
+
+  let viewer: MeshViewer | null = null;
+  try {
+    viewer = new MeshViewer(canvas);
+  } catch (err) {
+    canvas.classList.add('hidden');
+    fallback?.classList.remove('hidden');
+    if (fallback) fallback.textContent = `${(err as Error).message} Metrics below still work; the 3D preview needs WebGL.`;
+  }
+
+  let activeName = 'calibration-cube-and-boss.3mf';
+
+  function setProgress(pct: number | null): void {
+    if (!progressBarWrap || !progressBarFill) return;
+    if (pct === null) {
+      progressBarWrap.classList.add('hidden');
+      progressBarFill.style.width = '0%';
+    } else {
+      progressBarWrap.classList.remove('hidden');
+      progressBarFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    }
+  }
+
+  function renderError(message: string): void {
+    setProgress(null);
+    const state = getEl('vwParseState');
+    state.textContent = 'ERROR';
+    state.style.color = 'var(--status-warn)';
+    getEl('vwFileName').textContent = message;
+    ['vwKpiA', 'vwKpiB', 'vwKpiC', 'vwKpiD'].forEach((id) => {
+      const el = maybeEl(id);
+      if (el) el.textContent = '—';
+    });
+    logBox.innerHTML = `<div style="color:#FF5C1A; margin-bottom:8px;">// MESH VIEWER — VALIDATION ERROR</div><div style="color:var(--status-warn);">${message}</div>`;
+  }
+
+  async function loadViaWorker(buffer: ArrayBuffer, filename: string): Promise<ViewerLoadResult> {
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await runWithTimeout(
+          new Promise<ViewerLoadResult>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/convert.worker.ts', import.meta.url), { type: 'module' });
+            worker.onmessage = (ev) => {
+              worker.terminate();
+              resolve(ev.data.result as ViewerLoadResult);
+            };
+            worker.onerror = (err) => {
+              worker.terminate();
+              reject(err);
+            };
+            const copy = buffer.slice(0);
+            worker.postMessage({ action: 'load-mesh', buffer: copy, options: { filename } } satisfies ConvertWorkerRequest, [copy]);
+          }),
+          (timeoutMsg) => renderError(timeoutMsg)
+        );
+      } catch {
+        // fall through
+      }
+    }
+    const res = loadMesh(filename, buffer);
+    if (!res.ok) return res;
+    return { ok: true, kind: res.kind, positions: trianglesToPositions(res), metrics: res.metrics, logs: res.logs, inputBytes: res.inputBytes };
+  }
+
+  async function loadBuffer(buffer: ArrayBuffer, filename: string, notice?: string): Promise<void> {
+    activeName = filename;
+    const t0 = performance.now();
+    setProgress(30);
+    const prefix = notice ? `${notice} — ` : '';
+    getEl('vwFileName').textContent = `${prefix}FILE LOADED: ${filename} (${formatBytes(buffer.byteLength)})`;
+    const res = await loadViaWorker(buffer, filename);
+    setProgress(100);
+    setTimeout(() => setProgress(null), 250);
+    if (!res.ok) {
+      trackFileLoadError('mesh', res.errorCode);
+      renderError(res.error);
+      return;
+    }
+    trackFileLoadSuccess('mesh_viewer', res.kind, res.inputBytes, performance.now() - t0);
+
+    const m = res.metrics;
+    const state = getEl('vwParseState');
+    state.textContent = res.kind.toUpperCase();
+    state.style.color = 'var(--status-ok)';
+    getEl('vwKpiA').textContent = `${m.bboxMm.sizeX.toFixed(2)} × ${m.bboxMm.sizeY.toFixed(2)} × ${m.bboxMm.sizeZ.toFixed(2)} mm`;
+    getEl('vwKpiB').textContent = m.triangleCount.toLocaleString();
+    getEl('vwKpiC').textContent = `${m.volumeCm3.toFixed(2)} cm³`;
+    const kpiCSub = maybeEl('vwKpiCSub');
+    if (kpiCSub) kpiCSub.textContent = `${m.surfaceAreaCm2.toFixed(1)} cm² surface`;
+    getEl('vwKpiD').textContent = m.isWatertight ? 'WATERTIGHT' : `${m.boundaryEdges} OPEN EDGES`;
+    getEl('vwKpiD').style.color = m.isWatertight ? 'var(--status-ok)' : 'var(--status-warn)';
+    const kpiDSub = maybeEl('vwKpiDSub');
+    if (kpiDSub) kpiDSub.textContent = `${m.holes} hole(s) · ${m.nonManifoldEdges} non-manifold · ${m.isInsideOut ? 'inside-out' : 'normals outward'}`;
+
+    logBox.innerHTML = [
+      `<div style="color:#FF5C1A; margin-bottom:8px;">// MESH VIEWER LOG — ${filename}</div>`,
+      ...res.logs.map((line) => `<div>[OK] ${line}</div>`),
+      `<div>[OK] Bounding box ${m.bboxMm.minX.toFixed(2)}…${m.bboxMm.maxX.toFixed(2)} × ${m.bboxMm.minY.toFixed(2)}…${m.bboxMm.maxY.toFixed(2)} × ${m.bboxMm.minZ.toFixed(2)}…${m.bboxMm.maxZ.toFixed(2)} mm</div>`,
+      `<div>[OK] ${m.weldedVertexCount.toLocaleString()} unique vertices, ${m.degenerateFaces} degenerate, ${m.flippedFaces} flipped</div>`,
+      viewer ? `<div>[OK] Rendered ${m.triangleCount.toLocaleString()} triangles in WebGL — drag to rotate, wheel to zoom, right-drag to pan</div>` : '',
+    ].join('');
+
+    if (viewer) {
+      viewer.setMesh(res.positions);
+    }
+  }
+
+  wireDropzone(
+    'vwDropzone',
+    'vwFileInput',
+    'vwBrowseBtn',
+    'mesh',
+    (file, notice) => {
+      setProgress(15);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer;
+        if (buffer) void loadBuffer(buffer, file.name, notice);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    (message) => renderError(message)
+  );
+
+  const samples: Record<string, string> = {
+    '3mf': '/samples/calibration-cube-and-boss.3mf',
+    stl: '/samples/defective-cube.stl',
+    obj: '/samples/low-poly-vase.obj',
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-viewer-sample]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const key = btn.getAttribute('data-viewer-sample') || '3mf';
+      trackSampleLoad(`mesh_viewer_${key}`);
+      setProgress(15);
+      try {
+        const resp = await fetch(samples[key]);
+        if (!resp.ok) throw new Error('fetch failed');
+        const buf = await resp.arrayBuffer();
+        await loadBuffer(buf, samples[key].split('/').pop() || key);
+      } catch {
+        renderError('The sample could not be fetched. Check your connection and retry.');
+      }
+    });
+  });
+
+  maybeEl('vwWireframeToggle')?.addEventListener('change', (e) => {
+    if (!viewer) return;
+    viewer.showWireframe = (e.target as HTMLInputElement).checked;
+    viewer.invalidate();
+  });
+  maybeEl('vwGridToggle')?.addEventListener('change', (e) => {
+    if (!viewer) return;
+    viewer.showGrid = (e.target as HTMLInputElement).checked;
+    viewer.invalidate();
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-viewer-view]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const v = btn.getAttribute('data-viewer-view') as 'iso' | 'top' | 'front' | 'right' | 'fit';
+      if (!viewer) return;
+      if (v === 'fit') viewer.resetView();
+      else viewer.setView(v);
+    });
+  });
+  maybeEl('vwSnapshotBtn')?.addEventListener('click', () => {
+    if (!viewer) return;
+    const url = viewer.snapshotDataUrl();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeName.replace(/\.(stl|3mf|obj)$/i, '')}-preview.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    trackExportDownload('mesh_viewer', 'png');
+  });
+
+  fetch(samples['3mf'])
+    .then((r) => (r.ok ? r.arrayBuffer() : null))
+    .then((buf) => {
+      if (buf) void loadBuffer(buf, 'calibration-cube-and-boss.3mf');
+    })
+    .catch(() => {
+      /* nothing to preload */
+    });
+}
+
 initPrivacyPageControls();
 wireInternalLinkAnalytics();
 initGcodeAndCostPage();
@@ -2110,3 +2351,4 @@ initSpoolPage();
 initSpoolDatabasePage();
 initGramsMetersPage();
 initConverterPage();
+initViewerPage();

@@ -7,6 +7,8 @@
  */
 import { auditTriangles, exportAsciiStl, exportBinaryStl, parseStl, type StlAuditMetrics } from './stl';
 import { export3mf, parse3mf, type ThreeMfParseInfo, type ThreeMfUnit } from './threemf';
+import { parseObj, type ObjParseInfo, type ObjUnit } from './obj';
+import type { Triangle } from './stl';
 
 export type StlEncoding = 'binary' | 'ascii';
 
@@ -201,4 +203,86 @@ export function convertStlEncoding(
       `Size ${inputBytes.toLocaleString()} → ${outputBytes.toLocaleString()} bytes (×${(outputBytes / inputBytes).toFixed(2)})`,
     ],
   };
+}
+
+// ---------------------------------------------------------------------------
+// OBJ → STL
+// ---------------------------------------------------------------------------
+
+export type ObjToStlResult =
+  | (ConversionSummary & {
+      ok: true;
+      outputFormat: StlEncoding;
+      binaryStl?: ArrayBuffer;
+      asciiStl?: string;
+      info: ObjParseInfo;
+    })
+  | { ok: false; errorCode: ConvertErrorCode; error: string };
+
+export interface ObjToStlOptions {
+  outputFormat?: StlEncoding;
+  unit?: ObjUnit;
+  yUpToZUp?: boolean;
+}
+
+export function convertObjToStl(input: ArrayBuffer | Uint8Array | string, options: ObjToStlOptions = {}): ObjToStlResult {
+  const outputFormat: StlEncoding = options.outputFormat === 'ascii' ? 'ascii' : 'binary';
+  const parsed = parseObj(input, { unit: options.unit, yUpToZUp: options.yUpToZUp });
+  if (!parsed.ok) return parsed;
+
+  const metrics = auditTriangles(parsed.triangles, 'ascii');
+  const inputBytes = typeof input === 'string' ? new TextEncoder().encode(input).byteLength : input.byteLength;
+  const logs = [
+    ...parsed.info.logs,
+    `Triangles: ${parsed.triangles.length.toLocaleString()}${metrics.isWatertight ? ' (watertight)' : ` (${metrics.boundaryEdges} open edges)`}`,
+    ...(metrics.isInsideOut ? ['Signed volume is negative — faces are wound inward; run STL Repair to flip them'] : []),
+  ];
+
+  if (outputFormat === 'ascii') {
+    const asciiStl = exportAsciiStl(parsed.triangles, 'meshkit_obj_export');
+    return { ok: true, outputFormat, asciiStl, info: parsed.info, inputBytes, outputBytes: new TextEncoder().encode(asciiStl).byteLength, triangleCount: parsed.triangles.length, metrics, logs };
+  }
+  const binaryStl = exportBinaryStl(parsed.triangles);
+  return { ok: true, outputFormat, binaryStl, info: parsed.info, inputBytes, outputBytes: binaryStl.byteLength, triangleCount: parsed.triangles.length, metrics, logs };
+}
+
+// ---------------------------------------------------------------------------
+// Viewer: load STL / 3MF / OBJ into triangles by extension sniffing
+// ---------------------------------------------------------------------------
+
+export type MeshKind = 'stl' | '3mf' | 'obj';
+
+export type LoadMeshResult =
+  | { ok: true; kind: MeshKind; triangles: Triangle[]; metrics: StlAuditMetrics; logs: string[]; inputBytes: number }
+  | { ok: false; errorCode: ConvertErrorCode; error: string };
+
+export function detectMeshKind(filename: string, bytes: Uint8Array): MeshKind {
+  const ext = filename.toLowerCase().slice(filename.lastIndexOf('.'));
+  if (ext === '.3mf') return '3mf';
+  if (ext === '.obj') return 'obj';
+  if (ext === '.stl') return 'stl';
+  // Sniff: zip magic → 3mf; otherwise STL.
+  if (bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b) return '3mf';
+  return 'stl';
+}
+
+export function loadMesh(filename: string, input: ArrayBuffer | Uint8Array): LoadMeshResult {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const kind = detectMeshKind(filename, bytes);
+  if (kind === '3mf') {
+    const r = parse3mf(bytes);
+    if (!r.ok) return r;
+    const metrics = auditTriangles(r.triangles, 'binary');
+    return { ok: true, kind, triangles: r.triangles, metrics, inputBytes: bytes.byteLength, logs: [`3MF: ${r.info.meshes.length} mesh object(s), unit ${r.info.unit}`, ...r.info.logs] };
+  }
+  if (kind === 'obj') {
+    const r = parseObj(bytes);
+    if (!r.ok) return r;
+    const metrics = auditTriangles(r.triangles, 'ascii');
+    return { ok: true, kind, triangles: r.triangles, metrics, inputBytes: bytes.byteLength, logs: r.info.logs };
+  }
+  const r = parseStl(bytes);
+  if (!r.ok) return r;
+  const metrics = auditTriangles(r.triangles, r.format);
+  return { ok: true, kind, triangles: r.triangles, metrics, inputBytes: bytes.byteLength, logs: [`${r.format.toUpperCase()} STL, ${r.triangles.length.toLocaleString()} facets`] };
 }

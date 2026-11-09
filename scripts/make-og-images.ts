@@ -10,6 +10,8 @@ const CARDS: Array<{ slug: string; title: string; sub: string }> = [
   { slug: '3mf-to-stl-converter', title: '3MF → STL CONVERTER', sub: 'Bambu · Orca · PrusaSlicer · Cura projects → one STL' },
   { slug: 'stl-to-3mf-converter', title: 'STL → 3MF CONVERTER', sub: 'Welded, compressed, unit-tagged 3MF packages' },
   { slug: 'stl-ascii-to-binary-converter', title: 'STL ASCII ↔ BINARY', sub: 'Auto-detect encoding · exact geometry · 4–6× smaller' },
+  { slug: 'obj-to-stl-converter', title: 'OBJ → STL CONVERTER', sub: 'Quads & n-gons triangulated · units · Y-up fix' },
+  { slug: 'stl-viewer-online', title: 'STL / 3MF / OBJ VIEWER', sub: 'WebGL orbit · dimensions · volume · watertight check' },
 ];
 
 function svg(title: string, sub: string): string {
