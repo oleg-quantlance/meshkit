@@ -1,20 +1,32 @@
 {
-  "lastVerified": "2026-11-01",
-  "disclaimer": "Typical empty spool weights; spools vary by production batch. Weigh an empty spool of the same brand once to confirm.",
+  "lastVerified": "2026-11-09",
+  "disclaimer": "Typical empty spool weights; spools vary by production batch and humidity. Weigh an empty spool of the same brand once to confirm. Community rows are medians of user-submitted measurements.",
+  "makers": [
+    { "slug": "bambu-lab", "name": "Bambu Lab", "note": "Reusable plastic spool used across PLA/PETG/ABS lines plus refill spools; cardboard variants ship with some regions and lines." },
+    { "slug": "polymaker", "name": "Polymaker", "note": "PolyLite, PolyTerra and PolyMax 1 kg on cardboard spools; older stock on plastic." },
+    { "slug": "elegoo", "name": "Elegoo", "note": "Rapid PLA+ and PETG 1 kg on cardboard spools." },
+    { "slug": "overture", "name": "Overture", "note": "PLA, PLA+ and PETG 1 kg on cardboard spools with plastic hubs on some batches." },
+    { "slug": "sunlu", "name": "Sunlu", "note": "Black plastic spools on standard lines; lighter cardboard 'eco' spools on newer stock." },
+    { "slug": "esun", "name": "eSUN", "note": "Plastic spools on PLA+ and PETG 1 kg; some lines moved to cardboard." },
+    { "slug": "prusament", "name": "Prusament", "note": "Prusa Research hexagonal plastic spool, 1 kg and 2 kg." },
+    { "slug": "hatchbox", "name": "Hatchbox", "note": "Plastic 1 kg spools on PLA/PETG/ABS." },
+    { "slug": "jessie", "name": "Jessie (Printed Solid)", "note": "Jessie Premium PLA 1 kg plastic spools." },
+    { "slug": "inland", "name": "Inland (Micro Center)", "note": "Cardboard 1 kg spools on PLA+ / PETG; older plastic stock exists." }
+  ],
   "spools": [
-    { "id": "bambu-reusable", "brand": "Bambu Lab reusable spool", "material": "Plastic", "tareG": 250 },
-    { "id": "bambu-cardboard", "brand": "Bambu Lab cardboard spool", "material": "Cardboard", "tareG": 132 },
-    { "id": "polymaker-1kg", "brand": "Polymaker 1 kg", "material": "Cardboard", "tareG": 140 },
-    { "id": "elegoo-1kg", "brand": "Elegoo 1 kg", "material": "Cardboard", "tareG": 132 },
-    { "id": "overture-1kg", "brand": "Overture 1 kg", "material": "Cardboard", "tareG": 168 },
-    { "id": "sunlu-plastic-1kg", "brand": "Sunlu 1 kg (black)", "material": "Plastic", "tareG": 195 },
-    { "id": "sunlu-eco-1kg", "brand": "Sunlu 1 kg (eco)", "material": "Cardboard", "tareG": 140 },
-    { "id": "esun-plastic-1kg", "brand": "eSUN 1 kg", "material": "Plastic", "tareG": 225 },
-    { "id": "prusament-hex-1kg", "brand": "Prusament 1 kg (hex)", "material": "Plastic", "tareG": 202 },
-    { "id": "hatchbox-1kg", "brand": "Hatchbox 1 kg", "material": "Plastic", "tareG": 238 },
-    { "id": "jessie-1kg", "brand": "Jessie Premium 1 kg", "material": "Plastic", "tareG": 240 },
-    { "id": "inland-1kg", "brand": "Inland (Micro Center) 1 kg", "material": "Cardboard", "tareG": 130 },
-    { "id": "generic-cardboard", "brand": "Generic cardboard (fallback)", "material": "Cardboard", "tareG": 140 },
-    { "id": "generic-plastic", "brand": "Generic plastic (fallback)", "material": "Plastic", "tareG": 220 }
+    { "id": "bambu-reusable", "maker": "bambu-lab", "brand": "Bambu Lab reusable spool", "line": "Reusable spool (PLA Basic, PETG HF, ABS, …)", "material": "Plastic", "netG": 1000, "tareG": 250, "measurements": [{ "tareG": 250, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "bambu-cardboard", "maker": "bambu-lab", "brand": "Bambu Lab cardboard spool", "line": "Cardboard spool", "material": "Cardboard", "netG": 1000, "tareG": 132, "measurements": [{ "tareG": 132, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "polymaker-1kg", "maker": "polymaker", "brand": "Polymaker 1 kg", "line": "PolyLite / PolyTerra 1 kg", "material": "Cardboard", "netG": 1000, "tareG": 140, "measurements": [{ "tareG": 140, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "elegoo-1kg", "maker": "elegoo", "brand": "Elegoo 1 kg", "line": "Rapid PLA+ / PETG 1 kg", "material": "Cardboard", "netG": 1000, "tareG": 132, "measurements": [{ "tareG": 132, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "overture-1kg", "maker": "overture", "brand": "Overture 1 kg", "line": "PLA / PLA+ / PETG 1 kg", "material": "Cardboard", "netG": 1000, "tareG": 168, "measurements": [{ "tareG": 168, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "sunlu-plastic-1kg", "maker": "sunlu", "brand": "Sunlu 1 kg (black)", "line": "Standard black plastic spool", "material": "Plastic", "netG": 1000, "tareG": 195, "measurements": [{ "tareG": 195, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "sunlu-eco-1kg", "maker": "sunlu", "brand": "Sunlu 1 kg (eco)", "line": "Eco cardboard spool", "material": "Cardboard", "netG": 1000, "tareG": 140, "measurements": [{ "tareG": 140, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "esun-plastic-1kg", "maker": "esun", "brand": "eSUN 1 kg", "line": "PLA+ / PETG 1 kg plastic", "material": "Plastic", "netG": 1000, "tareG": 225, "measurements": [{ "tareG": 225, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "prusament-hex-1kg", "maker": "prusament", "brand": "Prusament 1 kg (hex)", "line": "Hexagonal plastic spool 1 kg", "material": "Plastic", "netG": 1000, "tareG": 202, "measurements": [{ "tareG": 202, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "hatchbox-1kg", "maker": "hatchbox", "brand": "Hatchbox 1 kg", "line": "PLA / PETG / ABS 1 kg", "material": "Plastic", "netG": 1000, "tareG": 238, "measurements": [{ "tareG": 238, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "jessie-1kg", "maker": "jessie", "brand": "Jessie Premium 1 kg", "line": "Jessie Premium PLA 1 kg", "material": "Plastic", "netG": 1000, "tareG": 240, "measurements": [{ "tareG": 240, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "inland-1kg", "maker": "inland", "brand": "Inland (Micro Center) 1 kg", "line": "PLA+ / PETG 1 kg cardboard", "material": "Cardboard", "netG": 1000, "tareG": 130, "measurements": [{ "tareG": 130, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "generic-cardboard", "maker": null, "brand": "Generic cardboard (fallback)", "line": "Any 1 kg cardboard spool", "material": "Cardboard", "netG": 1000, "tareG": 140, "measurements": [{ "tareG": 140, "source": "meshkit", "date": "2026-11-01" }] },
+    { "id": "generic-plastic", "maker": null, "brand": "Generic plastic (fallback)", "line": "Any 1 kg plastic spool", "material": "Plastic", "netG": 1000, "tareG": 220, "measurements": [{ "tareG": 220, "source": "meshkit", "date": "2026-11-01" }] }
   ]
 }

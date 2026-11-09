@@ -109,28 +109,86 @@
             <th>Brand and Spool</th>
             <th>Spool Material</th>
             <th>Typical Empty Tare (g)</th>
+            <th>Measurements</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>Bambu Lab reusable spool</td><td>Plastic</td><td>250 g</td></tr>
-          <tr><td>Bambu Lab cardboard spool</td><td>Cardboard</td><td>132 g</td></tr>
-          <tr><td>Polymaker 1 kg</td><td>Cardboard</td><td>140 g</td></tr>
-          <tr><td>Elegoo 1 kg</td><td>Cardboard</td><td>132 g</td></tr>
-          <tr><td>Overture 1 kg</td><td>Cardboard</td><td>168 g</td></tr>
-          <tr><td>Sunlu 1 kg (black)</td><td>Plastic</td><td>195 g</td></tr>
-          <tr><td>Sunlu 1 kg (eco)</td><td>Cardboard</td><td>140 g</td></tr>
-          <tr><td>eSUN 1 kg</td><td>Plastic</td><td>225 g</td></tr>
-          <tr><td>Prusament 1 kg (hex)</td><td>Plastic</td><td>202 g</td></tr>
-          <tr><td>Hatchbox 1 kg</td><td>Plastic</td><td>238 g</td></tr>
-          <tr><td>Jessie Premium 1 kg</td><td>Plastic</td><td>240 g</td></tr>
-          <tr><td>Inland (Micro Center) 1 kg</td><td>Cardboard</td><td>130 g</td></tr>
-          <tr><td>Generic cardboard (fallback)</td><td>Cardboard</td><td>140 g</td></tr>
-          <tr><td>Generic plastic (fallback)</td><td>Plastic</td><td>220 g</td></tr>
+          <tr><td><a href="/bambu-lab-empty-spool-weight">Bambu Lab reusable spool</a></td><td>Plastic</td><td>250 g</td><td>1</td></tr>
+          <tr><td><a href="/bambu-lab-empty-spool-weight">Bambu Lab cardboard spool</a></td><td>Cardboard</td><td>132 g</td><td>1</td></tr>
+          <tr><td><a href="/polymaker-empty-spool-weight">Polymaker 1 kg</a></td><td>Cardboard</td><td>140 g</td><td>1</td></tr>
+          <tr><td><a href="/elegoo-empty-spool-weight">Elegoo 1 kg</a></td><td>Cardboard</td><td>132 g</td><td>1</td></tr>
+          <tr><td><a href="/overture-empty-spool-weight">Overture 1 kg</a></td><td>Cardboard</td><td>168 g</td><td>1</td></tr>
+          <tr><td><a href="/sunlu-empty-spool-weight">Sunlu 1 kg (black)</a></td><td>Plastic</td><td>195 g</td><td>1</td></tr>
+          <tr><td><a href="/sunlu-empty-spool-weight">Sunlu 1 kg (eco)</a></td><td>Cardboard</td><td>140 g</td><td>1</td></tr>
+          <tr><td><a href="/esun-empty-spool-weight">eSUN 1 kg</a></td><td>Plastic</td><td>225 g</td><td>1</td></tr>
+          <tr><td><a href="/prusament-empty-spool-weight">Prusament 1 kg (hex)</a></td><td>Plastic</td><td>202 g</td><td>1</td></tr>
+          <tr><td><a href="/hatchbox-empty-spool-weight">Hatchbox 1 kg</a></td><td>Plastic</td><td>238 g</td><td>1</td></tr>
+          <tr><td><a href="/jessie-empty-spool-weight">Jessie Premium 1 kg</a></td><td>Plastic</td><td>240 g</td><td>1</td></tr>
+          <tr><td><a href="/inland-empty-spool-weight">Inland (Micro Center) 1 kg</a></td><td>Cardboard</td><td>130 g</td><td>1</td></tr>
+          <tr><td>Generic cardboard (fallback)</td><td>Cardboard</td><td>140 g</td><td>1</td></tr>
+          <tr><td>Generic plastic (fallback)</td><td>Plastic</td><td>220 g</td><td>1</td></tr>
         </tbody>
       </table>
       <p class="field-hint" style="margin-top:12px;">
         Disclaimer: Typical empty spool weights; spools vary by production batch and ambient humidity (cardboard spools can shift by 3–6 g). Weigh an empty spool of the same brand once for highest accuracy.
       </p>
+      <p class="field-hint" style="margin-top:10px;"><strong>Per-brand pages:</strong> <a href="/bambu-lab-empty-spool-weight">Bambu Lab</a> · <a href="/polymaker-empty-spool-weight">Polymaker</a> · <a href="/elegoo-empty-spool-weight">Elegoo</a> · <a href="/overture-empty-spool-weight">Overture</a> · <a href="/sunlu-empty-spool-weight">Sunlu</a> · <a href="/esun-empty-spool-weight">eSUN</a> · <a href="/prusament-empty-spool-weight">Prusament</a> · <a href="/hatchbox-empty-spool-weight">Hatchbox</a> · <a href="/jessie-empty-spool-weight">Jessie (Printed Solid)</a> · <a href="/inland-empty-spool-weight">Inland (Micro Center)</a></p>
+
+    <section class="wb-section" id="spoolSubmitSection" style="margin-top:18px;">
+      <div class="section-head">
+        <span>Submit Your Measurement</span>
+        <span id="spoolSubmitState" class="mono" style="color:var(--status-ok);">COMMUNITY</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+        Weighed an empty spool? Add it. Submissions are reviewed by a human before they appear; approved rows are credited with the name you give. No account needed. We store only what is in this form.
+      </p>
+      <form id="spoolSubmitForm" class="field-grid" novalidate data-page="/empty-spool-weight-database">
+        <div>
+          <label class="field-label" for="ssBrand"><span>Brand *</span><span class="unit-tag">[maker]</span></label>
+          <input type="text" id="ssBrand" name="brand" value="" maxlength="60" required placeholder="e.g. Polymaker" />
+        </div>
+        <div>
+          <label class="field-label" for="ssLine"><span>Product line / spool type</span><span class="unit-tag">[optional]</span></label>
+          <input type="text" id="ssLine" name="line" maxlength="80" placeholder="e.g. PolyTerra 1 kg cardboard" />
+        </div>
+        <div>
+          <label class="field-label" for="ssMaterial"><span>Spool material *</span><span class="unit-tag">[core]</span></label>
+          <select id="ssMaterial" name="spoolMaterial">
+            <option value="cardboard">Cardboard</option>
+            <option value="plastic" selected>Plastic</option>
+            <option value="other">Other / mixed</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="ssTare"><span>Empty spool weight *</span><span class="unit-tag">[g]</span></label>
+          <input type="number" id="ssTare" name="tareG" min="20" max="1500" step="0.1" required placeholder="e.g. 141.5" />
+        </div>
+        <div>
+          <label class="field-label" for="ssNet"><span>Filament net weight *</span><span class="unit-tag">[g]</span></label>
+          <input type="number" id="ssNet" name="netG" min="100" max="10000" step="1" value="1000" required />
+        </div>
+        <div>
+          <label class="field-label" for="ssScale"><span>Scale used</span><span class="unit-tag">[optional]</span></label>
+          <input type="text" id="ssScale" name="scale" maxlength="60" placeholder="e.g. 0.1 g kitchen scale" />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label class="field-label" for="ssNote"><span>Note</span><span class="unit-tag">[optional, 280 chars]</span></label>
+          <input type="text" id="ssNote" name="note" maxlength="280" placeholder="Batch date, region, anything odd about the spool" />
+        </div>
+        <div>
+          <label class="field-label" for="ssCredit"><span>Credit name</span><span class="unit-tag">[optional]</span></label>
+          <input type="text" id="ssCredit" name="credit" maxlength="40" placeholder="Shown next to your row" />
+        </div>
+        <div class="hidden" aria-hidden="true">
+          <label for="ssWebsite">Website</label>
+          <input type="text" id="ssWebsite" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button type="submit" id="spoolSubmitBtn" class="btn-primary">SUBMIT MEASUREMENT</button>
+          <span id="spoolSubmitMsg" class="mono" style="font-size:12px; color:var(--text-muted);">Reviewed before publishing · no account · no tracking</span>
+        </div>
+      </form>
+    </section>
     </section>
 
     <article class="seo-content">

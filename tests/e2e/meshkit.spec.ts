@@ -368,4 +368,30 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
       expect(buf.byteLength).toBe(84 + 50 * buf.readUInt32LE(80));
     }
   });
+
+  test('Spool brand page: calculator, brand links, and the submission form validates before sending', async ({ page }) => {
+    await page.goto('/bambu-lab-empty-spool-weight');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    // Mini calculator: 650 g gross on the 250 g reusable spool → 400 g, 40%.
+    await expect(page.locator('#bsLeft')).toHaveText('400');
+    await expect(page.locator('#bsPct')).toHaveText('40%');
+    await page.fill('#bsGross', '200');
+    await expect(page.locator('#bsLeft')).toContainText('below tare');
+
+    // Brand prefilled, client-side validation blocks nonsense without a network call.
+    await expect(page.locator('#ssBrand')).toHaveValue('Bambu Lab');
+    let requests = 0;
+    page.on('request', (r) => { if (r.url().includes('firestore.googleapis.com')) requests++; });
+    await page.fill('#ssTare', '5');
+    await page.click('#spoolSubmitBtn');
+    await expect(page.locator('#spoolSubmitMsg')).toContainText('between 20 g and 1500 g');
+    expect(requests).toBe(0);
+
+    // Database page lists the brand and links to it.
+    await page.goto('/empty-spool-weight-database');
+    await expect(page.locator('#spoolDbTable a[href="/bambu-lab-empty-spool-weight"]').first()).toBeVisible();
+    await expect(page.locator('#spoolSubmitForm')).toBeVisible();
+  });
 });

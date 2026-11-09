@@ -53,6 +53,7 @@ import type { ConvertWorkerRequest } from './workers/convert.worker';
 import { loadMesh, transformScale, transformSimplify, type LoadMeshResult, type TransformResult } from './core/convert';
 import type { ScaleOptions, LengthUnit } from './core/scale';
 import type { SimplifyOptions } from './core/simplify';
+import { submitSpoolMeasurement, validateSpoolSubmission } from './core/submit';
 import { MeshViewer } from './viewer/webgl';
 import {
   initAnalyticsConsentMode,
@@ -2605,6 +2606,74 @@ function initTransformPage(): void {
   void fetchSample().then((buf) => { if (buf) loadBuffer(buf, samplePath.split('/').pop()!); });
 }
 
+
+// =========================================================================
+// SPOOL DATABASE: community submission form (database page + brand pages)
+// and the per-brand "how much is left" mini calculator.
+// =========================================================================
+function initSpoolSubmitForm(): void {
+  const form = maybeEl<HTMLFormElement>('spoolSubmitForm');
+  if (!form) return;
+  const msg = getEl('spoolSubmitMsg');
+  const state = maybeEl('spoolSubmitState');
+  const btn = getEl<HTMLButtonElement>('spoolSubmitBtn');
+  const openedAt = performance.now();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const raw: Record<string, unknown> = {};
+    fd.forEach((v, k) => { raw[k] = typeof v === 'string' ? v : ''; });
+    raw.page = form.getAttribute('data-page') || window.location.pathname;
+    raw.formMs = performance.now() - openedAt;
+    const v = validateSpoolSubmission(raw);
+    if (!v.ok) {
+      msg.textContent = v.error;
+      msg.style.color = 'var(--status-warn)';
+      return;
+    }
+    btn.disabled = true;
+    msg.style.color = 'var(--text-muted)';
+    msg.textContent = 'Sending…';
+    const res = await submitSpoolMeasurement(v.data);
+    btn.disabled = false;
+    if (res.ok) {
+      msg.textContent = `Thanks — received (ref ${res.id.slice(0, 6)}). It will appear after review.`;
+      msg.style.color = 'var(--status-ok)';
+      if (state) state.textContent = 'RECEIVED';
+      form.reset();
+      trackCalculate('spool_submission');
+    } else {
+      msg.textContent = res.error;
+      msg.style.color = 'var(--status-warn)';
+    }
+  });
+}
+
+function initSpoolBrandPage(): void {
+  const spoolSel = maybeEl<HTMLSelectElement>('bsSpool');
+  const gross = maybeEl<HTMLInputElement>('bsGross');
+  if (!spoolSel || !gross) return;
+  const calc = () => {
+    const tare = parseStrictNumber(spoolSel.value);
+    const g = parseStrictNumber(gross.value);
+    const net = 1000;
+    if (!Number.isFinite(tare) || !Number.isFinite(g) || g < 0) {
+      getEl('bsLeft').textContent = '—'; getEl('bsPct').textContent = '—'; getEl('bsMeters').textContent = '—';
+      return;
+    }
+    const left = Math.max(0, g - tare);
+    getEl('bsLeft').textContent = left.toFixed(0);
+    getEl('bsPct').textContent = `${Math.min(999, (left / net) * 100).toFixed(0)}%`;
+    const meters = gramsToMeters(left, 1.24, 1.75);
+    getEl('bsMeters').textContent = meters.ok ? meters.meters.toFixed(1) : '—';
+    if (g > 0 && g < tare) getEl('bsLeft').textContent = `0 (below tare by ${(tare - g).toFixed(0)} g)`;
+  };
+  spoolSel.addEventListener('change', calc);
+  gross.addEventListener('input', debounce(calc, 100));
+  calc();
+}
+
 initPrivacyPageControls();
 wireInternalLinkAnalytics();
 initGcodeAndCostPage();
@@ -2619,3 +2688,5 @@ initConverterPage();
 initViewerPage();
 initEmbedPage();
 initTransformPage();
+initSpoolSubmitForm();
+initSpoolBrandPage();
