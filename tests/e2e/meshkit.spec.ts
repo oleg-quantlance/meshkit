@@ -310,4 +310,62 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
     expect(sr.text).toContain('200 W · £0.3/kWh');
     expect(sr.text).toMatch(/£\d+\.\d\d/);
   });
+
+  test('Scale & Units Fixer: guesses inches on the vase, converts, fits to size, rotates Y-up', async ({ page }) => {
+    await page.goto('/stl-scale-units-fixer');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#txParseState')).toHaveText('OK');
+    // Vase is 48 × 48 × 64 "units" — plausible as inches, medium confidence → not auto-applied.
+    await expect(page.locator('#txGuess')).toContainText('Guess: authored in');
+    await expect(page.locator('#txFromUnit')).toHaveValue('mm');
+    await expect(page.locator('#txKpiA')).toHaveText('48.00 × 48.00 × 64.00');
+
+    await page.selectOption('#txFromUnit', 'inch');
+    await expect(page.locator('#txKpiA')).toHaveText('1219.20 × 1219.20 × 1625.60');
+
+    await page.selectOption('#txFromUnit', 'mm');
+    await page.selectOption('#txFitAxis', 'z');
+    await page.fill('#txFitSize', '100');
+    await expect(page.locator('#txKpiA')).toHaveText('75.00 × 75.00 × 100.00');
+
+    // Orientation is applied before fit, so "fit Z to 100" now refers to the rotated model's Z
+    // (the file's 48-unit Y) → 100 × 133.33 × 100.
+    await page.selectOption('#txUpAxis', 'y');
+    await expect(page.locator('#txKpiA')).toHaveText('100.00 × 133.33 × 100.00');
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#txDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('low-poly-vase-scaled.stl');
+    const path = await download.path();
+    if (path) expect(readFileSync(path).byteLength).toBe(84 + 50 * 360);
+  });
+
+  test('Simplifier: halves the sample, stays watertight, exact target honoured, download size matches', async ({ page }) => {
+    await page.goto('/stl-simplifier-online');
+    const declineBtn = page.locator('#consentDeclineBtn');
+    if (await declineBtn.isVisible()) await declineBtn.click();
+
+    await expect(page.locator('#txParseState')).toHaveText('OK');
+    const kept = Number((await page.locator('#txKpiB').textContent())!.replace(/,/g, ''));
+    expect(kept).toBeLessThanOrEqual(104); // 204 × 50% (+ rounding)
+    expect(kept).toBeGreaterThan(60);
+    await expect(page.locator('#txKpiD')).toHaveText('WATERTIGHT');
+    await expect(page.locator('#txLogBox')).toContainText('edge collapses');
+
+    await page.fill('#txTarget', '60');
+    await expect.poll(async () => Number((await page.locator('#txKpiB').textContent())!.replace(/,/g, ''))).toBeLessThanOrEqual(62);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#txDownloadBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('calibration-cube-and-boss-simplified.stl');
+    const path = await download.path();
+    if (path) {
+      const buf = readFileSync(path);
+      expect(buf.byteLength).toBe(84 + 50 * buf.readUInt32LE(80));
+    }
+  });
 });

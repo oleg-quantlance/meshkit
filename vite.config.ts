@@ -19,6 +19,8 @@ export default defineConfig({
         objToStl: resolve(__dirname, 'obj-to-stl-converter.html'),
         stlViewer: resolve(__dirname, 'stl-viewer-online.html'),
         embed: resolve(__dirname, 'embed.html'),
+        stlScale: resolve(__dirname, 'stl-scale-units-fixer.html'),
+        stlSimplifier: resolve(__dirname, 'stl-simplifier-online.html'),
         resinCalculator: resolve(__dirname, 'resin-3d-print-cost-calculator.html'),
         spoolCalculator: resolve(__dirname, 'filament-spool-weight-calculator.html'),
         spoolDatabase: resolve(__dirname, 'empty-spool-weight-database.html'),

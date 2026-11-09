@@ -9,6 +9,8 @@ import { auditTriangles, exportAsciiStl, exportBinaryStl, parseStl, type StlAudi
 import { export3mf, parse3mf, type ThreeMfParseInfo, type ThreeMfUnit } from './threemf';
 import { parseObj, type ObjParseInfo, type ObjUnit } from './obj';
 import type { Triangle } from './stl';
+import { applyScale, guessUnit, type ScaleOptions, type UnitGuess } from './scale';
+import { simplifyMesh, type SimplifyOptions } from './simplify';
 
 export type StlEncoding = 'binary' | 'ascii';
 
@@ -285,4 +287,62 @@ export function loadMesh(filename: string, input: ArrayBuffer | Uint8Array): Loa
   if (!r.ok) return r;
   const metrics = auditTriangles(r.triangles, r.format);
   return { ok: true, kind, triangles: r.triangles, metrics, inputBytes: bytes.byteLength, logs: [`${r.format.toUpperCase()} STL, ${r.triangles.length.toLocaleString()} facets`] };
+}
+
+// ---------------------------------------------------------------------------
+// Scale / units fixer and simplifier: any mesh in (STL/3MF/OBJ) → binary STL out
+// ---------------------------------------------------------------------------
+
+export type TransformResult =
+  | (ConversionSummary & {
+      ok: true;
+      binaryStl: ArrayBuffer;
+      before: StlAuditMetrics;
+      guess: UnitGuess;
+      /** Simplifier only. */
+      collapses?: number;
+      uniformFactor?: number;
+    })
+  | { ok: false; errorCode: ConvertErrorCode; error: string };
+
+export function transformScale(filename: string, input: ArrayBuffer | Uint8Array, options: ScaleOptions): TransformResult {
+  const loaded = loadMesh(filename, input);
+  if (!loaded.ok) return loaded;
+  const r = applyScale(loaded.triangles, options);
+  const binaryStl = exportBinaryStl(r.triangles);
+  return {
+    ok: true,
+    binaryStl,
+    before: r.before,
+    metrics: r.after,
+    guess: guessUnit(r.before),
+    uniformFactor: r.uniformFactor,
+    inputBytes: input.byteLength,
+    outputBytes: binaryStl.byteLength,
+    triangleCount: r.triangles.length,
+    logs: [...loaded.logs, ...r.logs],
+  };
+}
+
+export function transformSimplify(filename: string, input: ArrayBuffer | Uint8Array, options: SimplifyOptions): TransformResult {
+  const loaded = loadMesh(filename, input);
+  if (!loaded.ok) return loaded;
+  const r = simplifyMesh(loaded.triangles, options);
+  const binaryStl = exportBinaryStl(r.triangles);
+  return {
+    ok: true,
+    binaryStl,
+    before: r.before,
+    metrics: r.after,
+    guess: guessUnit(r.before),
+    collapses: r.collapses,
+    inputBytes: input.byteLength,
+    outputBytes: binaryStl.byteLength,
+    triangleCount: r.outputTriangles,
+    logs: [...loaded.logs, ...r.logs, `Binary STL ${formatKb(input.byteLength)} → ${formatKb(binaryStl.byteLength)}`],
+  };
+}
+
+function formatKb(n: number): string {
+  return n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(2)} MB` : `${(n / 1024).toFixed(1)} KB`;
 }
