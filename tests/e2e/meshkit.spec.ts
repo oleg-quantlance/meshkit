@@ -385,7 +385,8 @@ test.describe('MeshKit Section 9.4 E2E, Accessibility & Consent Mode v2', () => 
     let requests = 0;
     page.on('request', (r) => { if (r.url().includes('firestore.googleapis.com')) requests++; });
     await page.fill('#ssTare', '5');
-    await page.click('#spoolSubmitBtn');
+    // Submit via the form API: on the 390 px mobile project the consent banner can overlap the button.
+    await page.locator('#spoolSubmitForm').evaluate((f) => (f as HTMLFormElement).requestSubmit());
     await expect(page.locator('#spoolSubmitMsg')).toContainText('between 20 g and 1500 g');
     expect(requests).toBe(0);
 
