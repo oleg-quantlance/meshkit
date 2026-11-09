@@ -16,6 +16,8 @@ const TOOL_PAGES = [
   { file: 'obj-to-stl-converter.html', canonical: 'https://meshkit.pro/obj-to-stl-converter' },
   { file: 'stl-viewer-online.html', canonical: 'https://meshkit.pro/stl-viewer-online' },
   { file: 'embed.html', canonical: 'https://meshkit.pro/embed' },
+  { file: 'stl-scale-units-fixer.html', canonical: 'https://meshkit.pro/stl-scale-units-fixer' },
+  { file: 'stl-simplifier-online.html', canonical: 'https://meshkit.pro/stl-simplifier-online' },
   { file: 'resin-3d-print-cost-calculator.html', canonical: 'https://meshkit.pro/resin-3d-print-cost-calculator' },
   { file: 'filament-spool-weight-calculator.html', canonical: 'https://meshkit.pro/filament-spool-weight-calculator' },
   { file: 'empty-spool-weight-database.html', canonical: 'https://meshkit.pro/empty-spool-weight-database' },
@@ -99,7 +101,7 @@ describe('Section 7 & 10: Multi-page SEO, Accessibility & Schema Audit', () => {
     }
   });
 
-  it('public/sitemap.xml and public/robots.txt exist and cover all 18 canonical URLs', () => {
+  it('public/sitemap.xml and public/robots.txt exist and cover all 20 canonical URLs', () => {
     const robots = readFileSync(resolve(ROOT, 'public/robots.txt'), 'utf-8');
     expect(robots).toContain('Sitemap: https://meshkit.pro/sitemap.xml');
 

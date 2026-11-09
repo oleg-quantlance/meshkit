@@ -50,7 +50,9 @@ import {
   type ThreeMfToStlResult,
 } from './core/convert';
 import type { ConvertWorkerRequest } from './workers/convert.worker';
-import { loadMesh, type LoadMeshResult } from './core/convert';
+import { loadMesh, transformScale, transformSimplify, type LoadMeshResult, type TransformResult } from './core/convert';
+import type { ScaleOptions, LengthUnit } from './core/scale';
+import type { SimplifyOptions } from './core/simplify';
 import { MeshViewer } from './viewer/webgl';
 import {
   initAnalyticsConsentMode,
@@ -1830,7 +1832,7 @@ function initGramsMetersPage(): void {
 // One controller, three pages. Each page declares the same element ids with a
 // prefix (cv*) and a data-converter attribute on <body> naming the action.
 // =========================================================================
-type ConvertAction = Exclude<ConvertWorkerRequest['action'], 'load-mesh'>;
+type ConvertAction = Exclude<ConvertWorkerRequest['action'], 'load-mesh' | 'scale' | 'simplify'>;
 type ConvertAnyResult = ThreeMfToStlResult | StlTo3mfResult | StlEncodingResult | ObjToStlResult;
 
 interface ConverterPageConfig {
@@ -2423,6 +2425,186 @@ function initEmbedPage(): void {
   render();
 }
 
+
+// =========================================================================
+// TOOLS 11–12: STL SCALE & UNITS FIXER, MESH SIMPLIFIER
+// Both load any mesh (STL/3MF/OBJ), apply a transform, export binary STL.
+// =========================================================================
+function initTransformPage(): void {
+  const modeAttr = document.body.getAttribute('data-transform');
+  if ((modeAttr !== 'scale' && modeAttr !== 'simplify') || !maybeEl('txDropzone')) return;
+  const mode: 'scale' | 'simplify' = modeAttr;
+
+  const logBox = getEl('txLogBox');
+  const progressBarWrap = maybeEl('txProgressBarWrap');
+  const progressBarFill = maybeEl('txProgressBarFill');
+  let activeBuffer: ArrayBuffer | null = null;
+  let activeName = mode === 'scale' ? 'low-poly-vase.obj' : 'calibration-cube-and-boss.3mf';
+  let lastResult: Extract<TransformResult, { ok: true }> | null = null;
+  let guessApplied = false;
+
+  function setProgress(pct: number | null): void {
+    if (!progressBarWrap || !progressBarFill) return;
+    if (pct === null) { progressBarWrap.classList.add('hidden'); progressBarFill.style.width = '0%'; }
+    else { progressBarWrap.classList.remove('hidden'); progressBarFill.style.width = `${Math.max(0, Math.min(100, pct))}%`; }
+  }
+
+  function renderError(message: string): void {
+    setProgress(null);
+    const state = getEl('txParseState');
+    state.textContent = 'ERROR';
+    state.style.color = 'var(--status-warn)';
+    getEl('txFileName').textContent = message;
+    ['txKpiA', 'txKpiB', 'txKpiC', 'txKpiD'].forEach((id) => { const el = maybeEl(id); if (el) el.textContent = '—'; });
+    getEl('txExportStatus').textContent = message;
+    logBox.innerHTML = `<div style="color:#FF5C1A; margin-bottom:8px;">// ${mode === 'scale' ? 'SCALE & UNITS' : 'SIMPLIFIER'} — VALIDATION ERROR</div><div style="color:var(--status-warn);">${message}</div>`;
+    lastResult = null;
+  }
+
+  function num(id: string, fallback: number): number {
+    const v = parseStrictNumber(maybeEl<HTMLInputElement>(id)?.value ?? '');
+    return Number.isFinite(v) ? v : fallback;
+  }
+
+  function readScaleOptions(): ScaleOptions {
+    const fitSize = num('txFitSize', 0);
+    const fitAxis = (maybeEl<HTMLSelectElement>('txFitAxis')?.value || 'none') as 'none' | 'x' | 'y' | 'z' | 'max';
+    return {
+      fromUnit: (maybeEl<HTMLSelectElement>('txFromUnit')?.value || 'mm') as LengthUnit,
+      toUnit: (maybeEl<HTMLSelectElement>('txToUnit')?.value || 'mm') as LengthUnit,
+      factor: num('txFactor', 1) || 1,
+      axisFactors: [num('txAxisX', 1) || 1, num('txAxisY', 1) || 1, num('txAxisZ', 1) || 1],
+      fitAxis: fitAxis === 'none' || fitSize <= 0 ? undefined : fitAxis,
+      fitSize: fitSize > 0 ? fitSize : undefined,
+      yUpToZUp: maybeEl<HTMLSelectElement>('txUpAxis')?.value === 'y',
+      mirror: ((maybeEl<HTMLSelectElement>('txMirror')?.value || 'none') === 'none' ? null : maybeEl<HTMLSelectElement>('txMirror')!.value) as 'x' | 'y' | 'z' | null,
+      centerXY: maybeEl<HTMLInputElement>('txCenter')?.checked ?? false,
+      dropToBed: maybeEl<HTMLInputElement>('txDrop')?.checked ?? true,
+    };
+  }
+
+  function readSimplifyOptions(): SimplifyOptions {
+    const pct = Math.min(100, Math.max(1, num('txRatio', 50)));
+    const target = num('txTarget', 0);
+    return {
+      ratio: pct / 100,
+      targetTriangles: target > 0 ? Math.round(target) : undefined,
+      boundaryWeight: num('txBoundary', 100),
+      preventFlips: maybeEl<HTMLInputElement>('txPreventFlips')?.checked ?? true,
+    };
+  }
+
+  async function run(): Promise<void> {
+    if (!activeBuffer) return;
+    setProgress(30);
+    const t0 = performance.now();
+    const options = mode === 'scale' ? readScaleOptions() : readSimplifyOptions();
+    let res: TransformResult;
+    const payload = { ...options, filename: activeName };
+    if (typeof Worker !== 'undefined') {
+      try {
+        res = await runWithTimeout(
+          new Promise<TransformResult>((resolve, reject) => {
+            const worker = new Worker(new URL('./workers/convert.worker.ts', import.meta.url), { type: 'module' });
+            worker.onmessage = (ev) => { worker.terminate(); resolve(ev.data.result as TransformResult); };
+            worker.onerror = (err) => { worker.terminate(); reject(err); };
+            const copy = activeBuffer!.slice(0);
+            worker.postMessage({ action: mode, buffer: copy, options: payload } as ConvertWorkerRequest, [copy]);
+          }),
+          (msg) => renderError(msg)
+        );
+      } catch {
+        res = mode === 'scale' ? transformScale(activeName, activeBuffer, options as ScaleOptions) : transformSimplify(activeName, activeBuffer, options as SimplifyOptions);
+      }
+    } else {
+      res = mode === 'scale' ? transformScale(activeName, activeBuffer, options as ScaleOptions) : transformSimplify(activeName, activeBuffer, options as SimplifyOptions);
+    }
+    setProgress(100);
+    setTimeout(() => setProgress(null), 250);
+    if (!res.ok) { trackFileLoadError('mesh', res.errorCode); renderError(res.error); return; }
+    lastResult = res;
+    trackCalculate(mode);
+    trackFileLoadSuccess(mode, 'mesh', res.inputBytes, performance.now() - t0);
+
+    // First load on the scale page: surface the unit guess once.
+    const guessEl = maybeEl('txGuess');
+    if (guessEl) {
+      guessEl.textContent = `Guess: authored in ${res.guess.unit} (${res.guess.confidence} confidence) — ${res.guess.reason}`;
+      if (!guessApplied && mode === 'scale' && res.guess.confidence === 'high' && res.guess.unit !== 'mm') {
+        const sel = maybeEl<HTMLSelectElement>('txFromUnit');
+        if (sel && sel.value === 'mm') { sel.value = res.guess.unit; guessApplied = true; void run(); return; }
+      }
+      guessApplied = true;
+    }
+
+    const state = getEl('txParseState');
+    state.textContent = 'OK';
+    state.style.color = 'var(--status-ok)';
+    const b = res.before, m = res.metrics;
+    getEl('txKpiA').textContent = `${m.bboxMm.sizeX.toFixed(2)} × ${m.bboxMm.sizeY.toFixed(2)} × ${m.bboxMm.sizeZ.toFixed(2)}`;
+    const kpiASub = maybeEl('txKpiASub');
+    if (kpiASub) kpiASub.textContent = `was ${b.bboxMm.sizeX.toFixed(2)} × ${b.bboxMm.sizeY.toFixed(2)} × ${b.bboxMm.sizeZ.toFixed(2)}`;
+    getEl('txKpiB').textContent = res.triangleCount.toLocaleString();
+    const kpiBSub = maybeEl('txKpiBSub');
+    if (kpiBSub) kpiBSub.textContent = mode === 'simplify' ? `from ${b.triangleCount.toLocaleString()} (${((res.triangleCount / b.triangleCount) * 100).toFixed(1)}%)` : 'triangles';
+    getEl('txKpiC').textContent = formatBytes(res.outputBytes);
+    const kpiCSub = maybeEl('txKpiCSub');
+    if (kpiCSub) kpiCSub.textContent = `from ${formatBytes(res.inputBytes)}`;
+    getEl('txKpiD').textContent = m.isWatertight ? 'WATERTIGHT' : `${m.boundaryEdges} OPEN EDGES`;
+    getEl('txKpiD').style.color = m.isWatertight ? 'var(--status-ok)' : 'var(--status-warn)';
+    const kpiDSub = maybeEl('txKpiDSub');
+    if (kpiDSub) kpiDSub.textContent = `${m.volumeCm3.toFixed(3)} cm³ · ${m.isInsideOut ? 'inside-out' : 'normals outward'}`;
+    getEl('txExportStatus').textContent = `Ready: ${res.triangleCount.toLocaleString()} facets, ${formatBytes(res.outputBytes)} binary STL.`;
+    logBox.innerHTML = [
+      `<div style="color:#FF5C1A; margin-bottom:8px;">// ${mode === 'scale' ? 'SCALE & UNITS LOG' : 'SIMPLIFIER LOG'} — ${activeName}</div>`,
+      ...res.logs.map((l) => `<div>[OK] ${l}</div>`),
+    ].join('');
+  }
+
+  function loadBuffer(buffer: ArrayBuffer, filename: string, notice?: string): void {
+    activeBuffer = buffer;
+    activeName = filename;
+    guessApplied = false;
+    getEl('txFileName').textContent = `${notice ? `${notice} — ` : ''}FILE LOADED: ${filename} (${formatBytes(buffer.byteLength)})`;
+    void run();
+  }
+
+  wireDropzone('txDropzone', 'txFileInput', 'txBrowseBtn', 'mesh', (file, notice) => {
+    setProgress(15);
+    const reader = new FileReader();
+    reader.onload = (ev) => { const buf = ev.target?.result as ArrayBuffer; if (buf) loadBuffer(buf, file.name, notice); };
+    reader.readAsArrayBuffer(file);
+  }, (message) => renderError(message));
+
+  const debouncedRun = debounce(() => void run(), 200);
+  ['txFromUnit', 'txToUnit', 'txFactor', 'txAxisX', 'txAxisY', 'txAxisZ', 'txFitAxis', 'txFitSize', 'txUpAxis', 'txMirror', 'txCenter', 'txDrop',
+   'txRatio', 'txTarget', 'txBoundary', 'txPreventFlips'].forEach((id) => {
+    maybeEl(id)?.addEventListener('input', debouncedRun);
+    maybeEl(id)?.addEventListener('change', () => void run());
+  });
+  maybeEl<HTMLInputElement>('txRatio')?.addEventListener('input', () => {
+    const out = maybeEl('txRatioOut'); if (out) out.textContent = `${maybeEl<HTMLInputElement>('txRatio')!.value}%`;
+  });
+
+  maybeEl('txDownloadBtn')?.addEventListener('click', () => {
+    if (!lastResult) { renderError('Load a mesh first.'); return; }
+    const base = activeName.replace(/\.(stl|3mf|obj)$/i, '');
+    downloadBlobFile(`${base}-${mode === 'scale' ? 'scaled' : 'simplified'}.stl`, new Blob([lastResult.binaryStl], { type: 'application/octet-stream' }));
+    trackExportDownload(mode, 'binary_stl');
+  });
+
+  const samplePath = mode === 'scale' ? '/samples/low-poly-vase.obj' : '/samples/calibration-cube-and-boss.3mf';
+  async function fetchSample(): Promise<ArrayBuffer | null> {
+    try { const r = await fetch(samplePath); return r.ok ? await r.arrayBuffer() : null; } catch { return null; }
+  }
+  maybeEl('txSampleBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation(); trackSampleLoad(mode); setProgress(15);
+    const buf = await fetchSample();
+    if (buf) loadBuffer(buf, samplePath.split('/').pop()!); else renderError('The sample could not be fetched. Check your connection and retry.');
+  });
+  void fetchSample().then((buf) => { if (buf) loadBuffer(buf, samplePath.split('/').pop()!); });
+}
+
 initPrivacyPageControls();
 wireInternalLinkAnalytics();
 initGcodeAndCostPage();
@@ -2436,3 +2618,4 @@ initGramsMetersPage();
 initConverterPage();
 initViewerPage();
 initEmbedPage();
+initTransformPage();

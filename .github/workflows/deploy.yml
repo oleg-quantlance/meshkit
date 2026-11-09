@@ -86,6 +86,8 @@ jobs:
                 "https://meshkit.pro/stl-ascii-to-binary-converter",
                 "https://meshkit.pro/obj-to-stl-converter",
                 "https://meshkit.pro/stl-viewer-online",
-                "https://meshkit.pro/embed"
+                "https://meshkit.pro/embed",
+                "https://meshkit.pro/stl-scale-units-fixer",
+                "https://meshkit.pro/stl-simplifier-online"
               ]
             }' || true

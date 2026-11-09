@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>Reduce STL File Size Online — Mesh Simplifier</title>
+  <meta name="description" content="Simplify STL, 3MF or OBJ meshes in your browser with quadric edge-collapse decimation: cut triangle count and file size 2–20× while keeping shape, volume and watertightness. Nothing is uploaded." />
+  <link rel="canonical" href="https://meshkit.pro/stl-simplifier-online" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="Reduce STL File Size Online — Mesh Simplifier" />
+  <meta property="og:description" content="Browser-side mesh decimation: reduce STL triangles and file size 2–20× with quadric edge collapse. Watertight, zero upload." />
+  <meta property="og:url" content="https://meshkit.pro/stl-simplifier-online" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/stl-simplifier-online.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Reduce STL File Size Online — Mesh Simplifier" />
+  <meta name="twitter:description" content="Browser-side mesh decimation: reduce STL triangles and file size 2–20× with quadric edge collapse. Watertight, zero upload." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/stl-simplifier-online.png" />
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "MeshKit Mesh Simplifier",
+      "url": "https://meshkit.pro/stl-simplifier-online",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "MeshKit",
+          "item": "https://meshkit.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "STL Simplifier",
+          "item": "https://meshkit.pro/stl-simplifier-online"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body data-page="transform" data-transform="simplify">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Mesh tools">
+      <a href="/stl-scale-units-fixer">Scale &amp; Units</a>
+      <a href="/stl-simplifier-online" class="active">Simplifier</a>
+      <a href="/stl-viewer-online">STL Viewer</a>
+      <a href="/stl-repair-online">STL Repair</a>
+      <a href="/3mf-to-stl-converter">3MF to STL</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">Reduce STL File Size — Online Mesh Simplifier, No Upload</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">KERNEL: QUADRIC EDGE COLLAPSE (GARLAND–HECKBERT) · FLIP GUARD</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-transform" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Mesh Input (.STL / .3MF / .OBJ)</span>
+            <span id="txParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="txDropzone" aria-label="Upload mesh file">
+            <label for="txFileInput" class="hidden">Upload mesh file</label>
+            <input type="file" id="txFileInput" accept=".stl,.3mf,.obj" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="txFileName">[CLICK TO SELECT A MESH] OR DRAG .STL / .3MF / .OBJ HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Parsed and transformed in a Web Worker; exported as binary STL.</div>
+            <div class="btn-row">
+              <button type="button" id="txBrowseBtn" class="btn-primary">BROWSE MESH...</button>
+              <button type="button" id="txSampleBtn" class="btn-secondary">LOAD SAMPLE .3MF</button>
+            </div>
+            <div id="txProgressBarWrap" class="progress-bar-wrap hidden" aria-label="Progress">
+              <div id="txProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+          
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Reduction Target</span>
+            <span style="color:var(--accent);">LIVE</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="txRatio"><span>Keep</span><span class="unit-tag" id="txRatioOut">50%</span></label>
+              <input type="range" id="txRatio" min="2" max="100" value="50" step="1" />
+            </div>
+            <div>
+              <label class="field-label" for="txTarget"><span>…or exact triangle count</span><span class="unit-tag">[overrides %]</span></label>
+              <input type="number" id="txTarget" value="" placeholder="e.g. 20000" min="4" step="100" />
+            </div>
+            <div>
+              <label class="field-label" for="txBoundary"><span>Boundary stiffness</span><span class="unit-tag">[open edges]</span></label>
+              <input type="number" id="txBoundary" value="100" min="0" max="10000" step="10" />
+            </div>
+            <div>
+              <label class="field-label" for="txPreventFlips"><span>Prevent face flips</span><span class="unit-tag">[recommended]</span></label>
+              <input type="checkbox" id="txPreventFlips" checked />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section mono" id="txLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// SIMPLIFIER LOG</div>
+          <div>Awaiting mesh selection...</div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Dimensions</div>
+            <div class="kpi-val" id="txKpiA" style="font-size:17px;">—</div>
+            <div class="kpi-sub" id="txKpiASub">unchanged</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Triangles</div>
+            <div class="kpi-val" id="txKpiB">—</div>
+            <div class="kpi-sub" id="txKpiBSub">after reduction</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Size</div>
+            <div class="kpi-val" id="txKpiC">—</div>
+            <div class="kpi-sub" id="txKpiCSub">binary STL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Mesh Health</div>
+            <div class="kpi-val" id="txKpiD" style="font-size:17px;">—</div>
+            <div class="kpi-sub" id="txKpiDSub">volume · orientation</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="txExportStatus">Load a mesh to begin.</span>
+          <button type="button" id="txDownloadBtn" class="btn-primary">EXPORT SIMPLIFIED .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the Mesh Simplifier Does</h2>
+      <p>
+        A 3D scan, a ZBrush sculpt or a CAD export at "very fine" tolerance easily produces a million triangles and a 50 MB STL that chokes slicers, upload forms and email. Most of those triangles describe flat or gently curved regions that a few hundred could represent just as well. This tool runs quadric edge-collapse decimation — the same algorithm as MeshLab's <em>Quadric Edge Collapse Decimation</em> and Blender's <em>Decimate › Collapse</em> — in your browser: it welds the mesh, scores every edge by how much collapsing it would move the surface, and removes the cheapest edges first until your target is reached. Open edges are pinned so holes and rims stay where they are, and a flip guard rejects collapses that would turn a face inside out.
+      </p>
+      <p>
+        Typical results: a 1,000,000-triangle scan to 100,000 (10× smaller file) with no visible change at print resolution; a CAD export halved with zero change to flat faces. The audit shows triangles, file size, volume change and whether the mesh is still watertight, so you can see exactly what you traded. STL, 3MF and OBJ are accepted; the output is binary STL. Nothing is uploaded.
+      </p>
+
+      <h2>How to Reduce an STL in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop the mesh.</strong> It loads at 50% reduction immediately so you can see the effect; the log reports the welded vertex count and any open edges.</li>
+        <li><strong>Set the target.</strong> Use the <strong>Keep %</strong> slider or type an <strong>exact triangle count</strong> (most slicers are happy below 500k; marketplace uploads often want under 50 MB; Frame-TV/web previews under 50k). Watch the volume change in the log — under 0.5% is invisible on a print.</li>
+        <li><strong>Export.</strong> Check the mesh-health cell says watertight (if the input was), then <strong>Export simplified .STL</strong>. For an even smaller file, package the result as <a href="/stl-to-3mf-converter">3MF</a>.</li>
+      </ol>
+
+      <h2>Worked Example: What the Numbers Mean</h2>
+      <div class="formula-box">
+        Binary STL size = 84 + 50 × N bytes &nbsp;→&nbsp; 1,000,000 facets = 50 MB; 100,000 facets = 5 MB<br/>
+        Quadric error = squared distance of the new vertex from the planes of its original faces (model units²)<br/>
+        Sample sphere, 6,240 → 1,248 facets (20%): volume −0.4%, still watertight, max error 0.012 mm<br/>
+        20 mm cube at 50%: refused with an error cap — every cube collapse removes a corner, so there is nothing cheap to remove
+      </div>
+      <p>
+        Decimation is lossy by design. The log's "max accepted error" is the furthest any surviving vertex moved from the original surface; keep it under your nozzle width (0.4 mm) and the print cannot tell the difference. Sharp edges survive because collapsing across them is expensive; dense, flat regions go first.
+      </p>
+
+      <h2>When to Simplify</h2>
+      <ul>
+        <li><strong>Scans and sculpts</strong> before slicing — slicer performance scales with triangle count, not print quality.</li>
+        <li><strong>Marketplace uploads</strong> with size limits (Printables, Thingiverse, MakerWorld, Etsy digital files).</li>
+        <li><strong>Web and Frame-TV previews</strong> where a 20k-triangle mesh renders instantly and a 2M one does not.</li>
+        <li><strong>Emailing or messaging</strong> a model to a client or a print service.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        The simplifier preserves topology: it will not fill holes or merge separate shells (use <a href="/stl-repair-online">STL Repair</a> first for that). Very aggressive targets on thin-walled parts can pinch walls; the flip guard prevents inverted faces but not thinning. Textures, colours and per-face attributes are not carried over. Extremely large inputs are limited by browser memory — roughly 2–3 million triangles on a typical laptop.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Will simplifying change how the print looks?</summary>
+          <p>Not if the max accepted error stays below your layer height / nozzle width. The log reports it; typical 5–10× reductions on scans land around 0.01–0.05 mm, far below what an FDM printer can resolve.</p>
+        </details>
+        <details>
+          <summary>Why did it stop above my target?</summary>
+          <p>Every remaining collapse would flip a face (the guard refuses them) or the mesh is already at its minimum sensible complexity — a cube cannot go below 12 triangles. Untick "Prevent face flips" only if you accept possible artefacts.</p>
+        </details>
+        <details>
+          <summary>What does "boundary stiffness" do?</summary>
+          <p>Open edges (holes, rims, cut faces) get an extra penalty so they keep their shape. Raise it if a rim is drifting; lower it (or 0) if you want open edges simplified as aggressively as the interior.</p>
+        </details>
+        <details>
+          <summary>Is this the same as "Decimate" in Blender?</summary>
+          <p>Same family of algorithm (quadric edge collapse with boundary preservation). Results are comparable; this one runs in a browser tab without installing anything, and reports watertightness and volume change directly.</p>
+        </details>
+        <details>
+          <summary>Is my file uploaded?</summary>
+          <p>No. Welding, scoring and collapsing run in a Web Worker in your browser; the result is written to a binary STL and offered as a download.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // Why Scans Are Huge
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          Photogrammetry and sculpting tools emit uniform triangles everywhere — a flat face gets as many as a curved edge. Decimation collapses the edges that change the surface least first, so flat and gently curved areas lose most of their triangles while edges, holes and fine detail keep theirs.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-viewer-online" class="btn-secondary route-link">09 -&gt; COMPARE BEFORE / AFTER IN THE VIEWER (WIREFRAME)</a>
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; REPAIR FIRST IF THE INPUT HAS HOLES</a>
+          <a href="/stl-to-3mf-converter" class="btn-secondary route-link">07 -&gt; PACKAGE AS 3MF FOR A FURTHER 3–5× SAVING</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/3mf-to-stl-converter">3MF to STL</a>
+        <a href="/stl-to-3mf-converter">STL to 3MF</a>
+        <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/obj-to-stl-converter">OBJ to STL</a>
+        <a href="/stl-viewer-online">STL Viewer</a>
+        <a href="/stl-scale-units-fixer">Scale &amp; Units</a>
+        <a href="/stl-simplifier-online">Simplifier</a>
+        <a href="/embed">Embed Calculator</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -13,6 +13,8 @@ const CARDS: Array<{ slug: string; title: string; sub: string }> = [
   { slug: 'obj-to-stl-converter', title: 'OBJ → STL CONVERTER', sub: 'Quads & n-gons triangulated · units · Y-up fix' },
   { slug: 'stl-viewer-online', title: 'STL / 3MF / OBJ VIEWER', sub: 'WebGL orbit · dimensions · volume · watertight check' },
   { slug: 'embed', title: 'EMBED A COST CALCULATOR', sub: 'One script tag · 8 KB · no tracking · your prices' },
+  { slug: 'stl-scale-units-fixer', title: 'STL SCALE & UNITS FIXER', sub: 'inch → mm · fit to size · Y-up → Z-up · drop to bed' },
+  { slug: 'stl-simplifier-online', title: 'REDUCE STL FILE SIZE', sub: 'Quadric edge collapse · watertight · 2–20× smaller' },
 ];
 
 function svg(title: string, sub: string): string {

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5HR12TP216"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5HR12TP216');
+  </script>
+  <title>STL Scale & Units Fixer Online — Inch to mm, Resize</title>
+  <meta name="description" content="Fix an STL, 3MF or OBJ that imports 25× too small or lying on its side: convert inches/cm/m to mm, scale by factor, fit to an exact size, Y-up to Z-up, mirror, centre and drop to the bed. Browser-side, no upload." />
+  <link rel="canonical" href="https://meshkit.pro/stl-scale-units-fixer" />
+  <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta property="og:title" content="STL Scale & Units Fixer Online — Inch to mm, Resize" />
+  <meta property="og:description" content="Resize and fix units of STL/3MF/OBJ in your browser: inch→mm, fit to size, Y-up→Z-up, mirror, drop to bed. Zero upload." />
+  <meta property="og:url" content="https://meshkit.pro/stl-scale-units-fixer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://meshkit.pro/og-images/stl-scale-units-fixer.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="STL Scale & Units Fixer Online — Inch to mm, Resize" />
+  <meta name="twitter:description" content="Resize and fix units of STL/3MF/OBJ in your browser: inch→mm, fit to size, Y-up→Z-up, mirror, drop to bed. Zero upload." />
+  <meta name="twitter:image" content="https://meshkit.pro/og-images/stl-scale-units-fixer.png" />
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "MeshKit STL Scale & Units Fixer",
+      "url": "https://meshkit.pro/stl-scale-units-fixer",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "MeshKit",
+          "item": "https://meshkit.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "STL Scale & Units Fixer",
+          "item": "https://meshkit.pro/stl-scale-units-fixer"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body data-page="transform" data-transform="scale">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">MK</div>
+        <div>
+          <span class="mono" style="font-weight:700; font-size:14px;">MESHKIT</span>
+          <span class="mono" style="font-size:11px; color:var(--text-faint); margin-left:6px;">CAD &amp; PRINT LEDGER</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main tools">
+        <a href="/" class="tab-btn">01 G-CODE COST</a>
+        <a href="/stl-repair-online" class="tab-btn">02 STL REPAIR</a>
+        <a href="/step-to-stl-converter" class="tab-btn">03 STEP TO STL</a>
+        <a href="/resin-3d-print-cost-calculator" class="tab-btn">04 SLA RESIN</a>
+        <a href="/filament-spool-weight-calculator" class="tab-btn">05 SPOOL WEIGHT</a>
+      </nav>
+
+      <button type="button" class="theme-btn" id="themeToggle">
+        THEME: PAPER [LIGHT]
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <nav class="sub-nav" aria-label="Mesh tools">
+      <a href="/stl-scale-units-fixer" class="active">Scale &amp; Units</a>
+      <a href="/stl-simplifier-online">Simplifier</a>
+      <a href="/stl-viewer-online">STL Viewer</a>
+      <a href="/stl-repair-online">STL Repair</a>
+      <a href="/3mf-to-stl-converter">3MF to STL</a>
+    </nav>
+
+    <div class="spec-strip">
+      <div>
+        <h1 class="spec-title" id="toolTitle">STL Scale &amp; Units Fixer — Inch to mm, Fit to Size, Z-Up, No Upload</h1>
+      </div>
+      <div class="spec-meta mono">
+        <span id="toolSpecTag">KERNEL: AFFINE TRANSFORM · UNIT GUESS FROM EXTENT</span>
+        <span>EXECUTION: LOCAL BROWSER BUFFER (0 BYTES UPLOADED)</span>
+      </div>
+    </div>
+
+    <section id="panel-transform" class="workbench tool-panel">
+      <div class="wb-left">
+        <div class="wb-section">
+          <div class="section-head">
+            <span>A. Mesh Input (.STL / .3MF / .OBJ)</span>
+            <span id="txParseState" style="color:var(--status-ok);">READY</span>
+          </div>
+          <div class="drop-area" id="txDropzone" aria-label="Upload mesh file">
+            <label for="txFileInput" class="hidden">Upload mesh file</label>
+            <input type="file" id="txFileInput" accept=".stl,.3mf,.obj" class="hidden" />
+            <div class="mono" style="font-weight:600; font-size:12px;" id="txFileName">[CLICK TO SELECT A MESH] OR DRAG .STL / .3MF / .OBJ HERE</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Parsed and transformed in a Web Worker; exported as binary STL.</div>
+            <div class="btn-row">
+              <button type="button" id="txBrowseBtn" class="btn-primary">BROWSE MESH...</button>
+              <button type="button" id="txSampleBtn" class="btn-secondary">LOAD SAMPLE .OBJ</button>
+            </div>
+            <div id="txProgressBarWrap" class="progress-bar-wrap hidden" aria-label="Progress">
+              <div id="txProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+          <p id="txGuess" class="mono" style="font-size:12px; color:var(--text-muted); margin:10px 0 0;">Guess: load a file to detect its likely unit.</p>
+        </div>
+
+        <div class="wb-section">
+          <div class="section-head">
+            <span>B. Units, Scale &amp; Orientation</span>
+            <span style="color:var(--accent);">LIVE</span>
+          </div>
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="txFromUnit"><span>File is in</span><span class="unit-tag">[source unit]</span></label>
+              <select id="txFromUnit">
+                <option value="mm" selected>Millimeters</option>
+                <option value="cm">Centimeters</option>
+                <option value="m">Meters</option>
+                <option value="inch">Inches</option>
+                <option value="foot">Feet</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="txToUnit"><span>Write as</span><span class="unit-tag">[target unit]</span></label>
+              <select id="txToUnit">
+                <option value="mm" selected>Millimeters (slicers)</option>
+                <option value="inch">Inches</option>
+                <option value="cm">Centimeters</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="txFactor"><span>Extra factor</span><span class="unit-tag">[×]</span></label>
+              <input type="number" id="txFactor" value="1" step="0.01" min="0.0001" />
+            </div>
+            <div>
+              <label class="field-label" for="txFitAxis"><span>Fit to size</span><span class="unit-tag">[axis]</span></label>
+              <select id="txFitAxis">
+                <option value="none" selected>Off</option>
+                <option value="x">X extent</option>
+                <option value="y">Y extent</option>
+                <option value="z">Z extent (height)</option>
+                <option value="max">Largest extent</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="txFitSize"><span>Target size</span><span class="unit-tag">[target unit]</span></label>
+              <input type="number" id="txFitSize" value="" placeholder="e.g. 100" step="0.1" min="0" />
+            </div>
+            <div>
+              <label class="field-label" for="txUpAxis"><span>Up axis in file</span><span class="unit-tag">[orientation]</span></label>
+              <select id="txUpAxis">
+                <option value="z" selected>Z up (keep)</option>
+                <option value="y">Y up → rotate to Z up</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="txMirror"><span>Mirror</span><span class="unit-tag">[plane]</span></label>
+              <select id="txMirror">
+                <option value="none" selected>None</option>
+                <option value="x">Across X</option>
+                <option value="y">Across Y</option>
+                <option value="z">Across Z</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="txAxisX"><span>Per-axis ×X</span><span class="unit-tag">[stretch]</span></label>
+              <input type="number" id="txAxisX" value="1" step="0.01" />
+            </div>
+            <div>
+              <label class="field-label" for="txAxisY"><span>Per-axis ×Y</span><span class="unit-tag">[stretch]</span></label>
+              <input type="number" id="txAxisY" value="1" step="0.01" />
+            </div>
+            <div>
+              <label class="field-label" for="txAxisZ"><span>Per-axis ×Z</span><span class="unit-tag">[stretch]</span></label>
+              <input type="number" id="txAxisZ" value="1" step="0.01" />
+            </div>
+            <div>
+              <label class="field-label" for="txCenter"><span>Centre on origin (XY)</span><span class="unit-tag">[placement]</span></label>
+              <input type="checkbox" id="txCenter" />
+            </div>
+            <div>
+              <label class="field-label" for="txDrop"><span>Drop to bed (Z = 0)</span><span class="unit-tag">[placement]</span></label>
+              <input type="checkbox" id="txDrop" checked />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-right">
+        <div class="wb-section mono" id="txLogBox" style="background:var(--bg-canvas); color:#D4D3CD; font-size:12px; min-height:180px;">
+          <div style="color:#FF5C1A; margin-bottom:8px;">// SCALE & UNITS LOG</div>
+          <div>Awaiting mesh selection...</div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <div class="kpi-label">Dimensions</div>
+            <div class="kpi-val" id="txKpiA" style="font-size:17px;">—</div>
+            <div class="kpi-sub" id="txKpiASub">after, in target unit</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Triangles</div>
+            <div class="kpi-val" id="txKpiB">—</div>
+            <div class="kpi-sub" id="txKpiBSub">unchanged</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Output Size</div>
+            <div class="kpi-val" id="txKpiC">—</div>
+            <div class="kpi-sub" id="txKpiCSub">binary STL</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Mesh Health</div>
+            <div class="kpi-val" id="txKpiD" style="font-size:17px;">—</div>
+            <div class="kpi-sub" id="txKpiDSub">volume · orientation</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <span class="mono" style="font-size:12px; color:var(--text-muted);" id="txExportStatus">Load a mesh to begin.</span>
+          <button type="button" id="txDownloadBtn" class="btn-primary">EXPORT SCALED .STL</button>
+        </div>
+      </div>
+    </section>
+
+    <article class="seo-content">
+      <h2>What the STL Scale &amp; Units Fixer Does</h2>
+      <p>
+        The most common "broken" STL is not broken at all — it is in the wrong unit. STL, OBJ and some 3MF exports carry no unit information, slicers assume millimetres, and a part designed in inches imports at 1/25.4 of its size (a 4-inch bracket becomes a 4 mm one). Blender exports metres by default, so a 60 mm part arrives as 0.06 units and looks empty. The second most common problem is orientation: Y-up exports from Blender, Maya and glTF pipelines land on their side. This tool fixes both, plus the long tail: exact fit-to-size, uniform or per-axis scaling, mirroring for left/right-hand parts, centring and dropping to the bed.
+      </p>
+      <p>
+        It opens <code>.stl</code> (binary or ASCII), <code>.3mf</code> and <code>.obj</code>, guesses the authoring unit from the largest extent and pre-selects it when confident, applies your choices, audits the result (watertightness, volume, orientation) and exports a binary STL in millimetres or the unit you pick. Everything runs in a Web Worker in your browser; nothing is uploaded.
+      </p>
+
+      <h2>How to Fix Units in 3 Steps</h2>
+      <ol>
+        <li><strong>Drop the file.</strong> The log shows the bounding box and a unit guess with its reasoning (for example "largest extent 2.36 — plausible as inches, 60 mm").</li>
+        <li><strong>Confirm or override.</strong> Set <em>File is in</em> to the unit the designer used; leave <em>Write as</em> on millimetres for any slicer. Use <strong>Fit to size</strong> when you know the real-world dimension ("this should be 100 mm tall"), which overrides guessing entirely.</li>
+        <li><strong>Orient and place.</strong> Choose <strong>Y up → Z up</strong> for Blender/Maya exports, tick <strong>Drop to bed</strong> so Z starts at 0, optionally <strong>Centre</strong> on the origin, then <strong>Export scaled .STL</strong>.</li>
+      </ol>
+
+      <h2>Worked Example: Blender Export</h2>
+      <div class="formula-box">
+        Blender default export: metres, Y up &nbsp;→&nbsp; a 60 mm vase arrives as 0.06 units, lying on its side<br/>
+        File is in: Meters (×1000) &nbsp;·&nbsp; Up axis: Y up → Z up &nbsp;·&nbsp; Drop to bed &nbsp;⇒&nbsp; 48 × 48 × 64 mm, standing, Z min = 0<br/>
+        Inch-authored bracket 4.000 × 1.250 × 0.375 &nbsp;→&nbsp; ×25.4 &nbsp;⇒&nbsp; 101.60 × 31.75 × 9.53 mm<br/>
+        Fit Z to 100 mm on a 64 mm model &nbsp;⇒&nbsp; uniform ×1.5625; volume scales by 1.5625³ = 3.81×
+      </div>
+      <p>
+        Mirroring and negative per-axis factors invert the mesh; the tool flips triangle winding automatically so normals stay outward and the volume stays positive. Per-axis stretching changes proportions deliberately — use it for calibration compensation (a known 0.4% shrink in X, for instance), not for unit fixing.
+      </p>
+
+      <h2>When to Use This Instead of the Slicer</h2>
+      <ul>
+        <li><strong>Sharing the file:</strong> fixing units in your slicer fixes it only on your machine; the downloaded STL stays wrong for everyone else.</li>
+        <li><strong>Print services and quote tools</strong> read the file as-is; an inch-authored part gets quoted at 1/16,387th of its real volume.</li>
+        <li><strong>Batch consistency:</strong> set the correct numbers once, then every slicer, viewer and marketplace agrees.</li>
+        <li><strong>Exact target sizes:</strong> "make this 120 mm wide" is one field here; slicer scale dialogs often round or lock aspect ratios awkwardly.</li>
+      </ul>
+
+      <h2>Technical Limitations</h2>
+      <p>
+        The unit guess is a heuristic based on the assumption that the model is a printable part between roughly 5 mm and 500 mm; sculptures and miniatures can fool it, which is why it only pre-selects at high confidence and always shows its reasoning. 3MF unit attributes are honoured on load, so a correctly tagged 3MF is already in millimetres before your settings apply. Output is STL only; use <a href="/stl-to-3mf-converter">STL to 3MF</a> afterwards if you need a unit-tagged package.
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How do I know if my STL is in inches?</summary>
+          <p>Open it here and read the bounding box. If a part you expect to be ~100 mm shows as ~4, it is in inches; if it shows as ~0.1, it is in metres. The log states the guess and why. When in doubt, use <strong>Fit to size</strong> with a dimension you know.</p>
+        </details>
+        <details>
+          <summary>Does scaling change wall thickness?</summary>
+          <p>Yes — uniform scaling scales everything, including walls, holes and clearances. A model scaled ×0.5 has half-thickness walls and half-size screw holes. Check minimum features after large changes.</p>
+        </details>
+        <details>
+          <summary>Will mirroring break my mesh?</summary>
+          <p>No. Mirroring reverses triangle winding; the tool flips it back so every face still points outward. The mesh-health cell confirms "normals outward" and a positive volume.</p>
+        </details>
+        <details>
+          <summary>Why is "Drop to bed" on by default?</summary>
+          <p>Most slicers place the model on the bed anyway, but viewers, quote tools and marketplace previews do not. A Z-min of 0 is the convention everything agrees on, and it costs nothing.</p>
+        </details>
+        <details>
+          <summary>Is my file uploaded?</summary>
+          <p>No. Parsing, transformation and export run in a Web Worker in your browser. The exported STL is generated from memory as a download.</p>
+        </details>
+      </div>
+    </article>
+
+    <section class="doc-grid">
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Reference // The 25.4 Problem
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">
+          STL stores bare numbers. Slicers assume millimetres. A model authored in inches imports at 1/25.4 of its size; one authored in metres (Blender's default) at 1/1000. The fixer reads the largest extent and guesses the unit, then rewrites the numbers so the slicer sees what the designer meant.
+        </p>
+      </div>
+      <div>
+        <h2 style="font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; margin:0 0 10px;" class="mono">
+          Pipeline // Direct Tool Routing
+        </h2>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <a href="/stl-viewer-online" class="btn-secondary route-link">09 -&gt; CHECK SIZE &amp; ORIENTATION IN THE VIEWER</a>
+          <a href="/stl-repair-online" class="btn-secondary route-link">02 -&gt; REPAIR OPEN EDGES &amp; FLIPPED FACES</a>
+          <a href="/stl-volume-weight-calculator" class="btn-secondary route-link">02B -&gt; WEIGHT &amp; COST FROM THE NEW VOLUME</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer mono">
+      <div>MESHKIT // LOCAL BROWSER 3D PRINTING UTILITY SUITE</div>
+      <div class="footer-links">
+        <a href="/">G-Code Cost</a>
+        <a href="/3d-print-cost-calculator">Manual Cost</a>
+        <a href="/stl-repair-online">STL Repair</a>
+        <a href="/stl-volume-weight-calculator">STL Weight</a>
+        <a href="/step-to-stl-converter">STEP to STL</a>
+        <a href="/3mf-to-stl-converter">3MF to STL</a>
+        <a href="/stl-to-3mf-converter">STL to 3MF</a>
+        <a href="/stl-ascii-to-binary-converter">STL ASCII/Binary</a>
+        <a href="/obj-to-stl-converter">OBJ to STL</a>
+        <a href="/stl-viewer-online">STL Viewer</a>
+        <a href="/stl-scale-units-fixer">Scale &amp; Units</a>
+        <a href="/stl-simplifier-online">Simplifier</a>
+        <a href="/embed">Embed Calculator</a>
+        <a href="/resin-3d-print-cost-calculator">SLA Resin</a>
+        <a href="/filament-spool-weight-calculator">Spool Weight</a>
+        <a href="/empty-spool-weight-database">Spool Tare DB</a>
+        <a href="/filament-grams-to-meters">Grams to Meters</a>
+        <a href="/about">About</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
