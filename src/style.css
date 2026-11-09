@@ -425,7 +425,7 @@ input.input-invalid, select.input-invalid {
   color: var(--text-faint);
   font-size: 10px;
 }
-input[type="number"], select {
+input[type="number"], input[type="text"], input[type="email"], select, textarea {
   width: 100%;
   background: var(--bg-input);
   color: var(--text-main);
@@ -436,7 +436,7 @@ input[type="number"], select {
   font-weight: 500;
   border-radius: 0;
 }
-input[type="number"]:focus, select:focus, button:focus-visible, a:focus-visible, .drop-area:focus-visible {
+input[type="number"]:focus, input[type="text"]:focus, input[type="email"]:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible, .drop-area:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-color: var(--accent);
