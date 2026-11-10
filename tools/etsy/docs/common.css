@@ -43,7 +43,24 @@ body {
   print-color-adjust: exact;
 }
 .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
+a.sheets-btn {
+  display: inline-block;
+  background: var(--text-main);
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 9pt;
+  padding: 2.5pt 8pt;
+  border-radius: 4pt;
+  text-decoration: none;
+  margin-left: 4pt;
+  white-space: nowrap;
+}
+a.site-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
 strong { font-weight: 600; }
 
 /* One .sheet = one printed page. */

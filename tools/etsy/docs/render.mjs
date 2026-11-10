@@ -81,7 +81,7 @@ function substitute(html, doc, args) {
     out = out.replaceAll('{{SHEETS_LINK}}', escapeHtml(link));
   } else {
     out = out.replace(
-      /<a href="\{\{SHEETS_LINK\}\}">\{\{SHEETS_LINK\}\}<\/a>/g,
+      /<a[^>]*href="\{\{SHEETS_LINK\}\}"[^>]*>[^<]*<\/a>/g,
       '<em>link in the listing\'s download page</em>'
     );
   }
